@@ -52,11 +52,12 @@ See [`research-config.example.yml`](research-config.example.yml) for every field
 
 ## Tiers
 
-- **Core** (installs by default, zero external services): memory architecture, paper template + build engine, rules, hooks, notifications, the BibTeX reference adapter, and the file-based data tier.
+- **Core** (installs by default, zero external services): memory architecture, paper template + build engine, rules, hooks, notifications, the BibTeX reference adapter, the file-based data tier, and the writing skills (`/draft`, `/cover-letter`, `/revision-response`, `/peer-review`, `/literature-scan`, `/gold-standard`).
 - **Corpus memory** (shipped, opt-in): a two-layer episodic + semantic memory over your literature and projects.
-- **Add-on modules** (documented, enable in config): local/managed databases, Zotero library tooling, QC/figure/peer-review agent suites, scheduled background jobs.
+- **Config-selectable backends**: local/managed databases (`docs/database.md`) and reference managers including Zotero (`docs/integrations.md`).
+- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): the QC (`/qc-team`) and figure-design (`/figure`) agent suites, weekly library tooling, and scheduled background jobs.
 
-See [`docs/`](docs/) for the database, integrations, and add-on guides.
+See [`docs/`](docs/) for the database and integrations guides.
 
 ---
 

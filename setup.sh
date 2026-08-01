@@ -26,10 +26,21 @@ if [ ! -f research-config.yml ]; then
   exit 1
 fi
 
-# Ensure PyYAML (only dependency the renderer needs)
+# Ensure PyYAML (the only dependency the renderer needs). Best-effort across a
+# few install strategies; a failed attempt must NOT abort setup (a PEP-668
+# "externally-managed-environment" pip error would otherwise kill the run under
+# `set -e`). If every strategy fails we stop with a clear, actionable message.
 if ! python3 -c "import yaml" >/dev/null 2>&1; then
   echo "Installing PyYAML (required by the renderer)…"
-  python3 -m pip install --quiet pyyaml
+  if   python3 -m pip install --quiet pyyaml >/dev/null 2>&1; then :
+  elif python3 -m pip install --quiet --user pyyaml >/dev/null 2>&1; then :
+  elif python3 -m pip install --quiet --break-system-packages pyyaml >/dev/null 2>&1; then :
+  fi
+fi
+if ! python3 -c "import yaml" >/dev/null 2>&1; then
+  echo "  Could not auto-install PyYAML. Install it, then re-run ./setup.sh:"
+  echo "    python3 -m pip install pyyaml       (or use pipx / a virtualenv)"
+  exit 1
 fi
 
 echo "→ Rendering templates…"

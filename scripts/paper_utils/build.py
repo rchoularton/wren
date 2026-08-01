@@ -16,7 +16,13 @@ from pathlib import Path
 # Add parent to path for imports when run directly
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from paper_utils.word_builder import build_paper
+try:
+    from paper_utils.word_builder import build_paper
+except ImportError as e:
+    print(f"Missing a dependency for building Word documents: {e.name}")
+    print("Install the paper toolchain first, then retry:")
+    print("    npm run paper:setup      (runs: pip install -r requirements.txt)")
+    sys.exit(1)
 from paper_utils.paths import get_paper_config, get_latest_markdown
 
 

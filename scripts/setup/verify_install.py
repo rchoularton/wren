@@ -8,13 +8,15 @@ Checks the automatable parts of the acceptance gate:
   3. hooks are present and executable
   4. the derived memory-slug directory can be located under ~/.claude/projects
   5. the example paper is intact
-  6. scrub_check passes on the publishable tree
 
 Prints a green/red summary. Non-zero exit if any hard check fails.
+
+Note: this does NOT run scrub_check. scrub_check is a maintainer publish gate
+(catches secrets/home paths before publishing the kit to npm); a user's own home
+path in their own gitignored research-config.yml is expected, not a leak.
 """
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -98,19 +100,6 @@ def main() -> None:
         ok("example-paper template present")
     else:
         warn("papers/example-paper/STATUS.md missing")
-
-    # 6. scrub check
-    try:
-        subprocess.check_output(
-            [sys.executable, str(PROJECT_ROOT / "scripts" / "setup" / "scrub_check.py")],
-            cwd=PROJECT_ROOT, stderr=subprocess.STDOUT,
-        )
-        ok("scrub_check clean")
-    except subprocess.CalledProcessError as e:
-        fail("scrub_check found leaks (see: npm run setup:scrub-check)")
-        hard_failures += 1
-    except Exception:
-        warn("scrub_check could not run")
 
     print()
     if hard_failures:

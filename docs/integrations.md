@@ -28,7 +28,7 @@ There is **no turnkey Mendeley MCP** today. Mendeley offers a REST API (OAuth 2.
 1. In Mendeley Reference Manager, export your library as BibTeX.
 2. Save it as `references/library.bib` and set `references.provider: bibtex`.
 
-You get everything the drafting/ref-check skills need. A future `mendeley` module (a thin MCP wrapper over the REST API) is the place to add live sync — contributions welcome.
+You get everything the drafting and literature skills need. A future `mendeley` module (a thin MCP wrapper over the REST API) is the place to add live sync — contributions welcome.
 
 ---
 

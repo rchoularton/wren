@@ -61,10 +61,15 @@ It proposes a short learning and, on your approval, writes a `learning_<date>_*.
 Put some Markdown in `papers/my-first-paper/drafts/`, then:
 
 ```bash
+npm run paper:setup                     # one-time: installs python-docx + markdown
 npm run paper:status
 npm run paper:build my-first-paper      # Markdown → .docx
 npm run paper:extract my-first-paper    # .docx → Markdown (round-trip)
 ```
+
+> `paper:setup` is a one-time step — the Word build/extract engine needs
+> `python-docx` and `markdown` (in `requirements.txt`). Scaffolding itself
+> doesn't install them, so run this once before your first build.
 
 ## Where things live
 
@@ -74,11 +79,12 @@ npm run paper:extract my-first-paper    # .docx → Markdown (round-trip)
 | Read how memory is organised | `CLAUDE_REFERENCE.md` → Memory Architecture |
 | Set up a real database | `docs/database.md` |
 | Connect Zotero / other MCPs | `docs/integrations.md` |
-| Enable an add-on suite | `research-config.yml` → `tiers:` |
+| Toggle corpus memory | `research-config.yml` → `tiers.research_memory` |
 
 ## Troubleshooting
 
 - **Hooks not firing?** `python3 scripts/setup/install_hooks.py` (makes them executable). Confirm `.claude/settings.json` exists.
 - **`{{TOKENS}}` still in CLAUDE.md?** Re-run `./setup.sh` — the renderer didn't complete.
 - **PyYAML error?** `python3 -m pip install pyyaml`.
+- **`paper:build` says "Missing a dependency" / `No module named 'docx'`?** Run `npm run paper:setup` once.
 - **Verify anytime:** `npm run setup:verify`.

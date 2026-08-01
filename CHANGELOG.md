@@ -3,6 +3,41 @@
 All notable changes to `create-research-assistant` are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [0.2.0] — 2026-08-01
+
+Fixes a scaffold-time install failure reported on a real machine, hardens the
+setup pipeline, and ships four writing skills.
+
+### Fixed
+- **Install no longer fails at verify.** `scrub_check` (a maintainer publish gate)
+  was running as a hard check during a user's install; with no git repo in the
+  fresh project it scanned the gitignored `research-config.yml` and flagged the
+  user's own home path. Removed it from `verify_install`; the scaffolder now runs
+  `git init`; and `scrub_check`'s no-git fallback excludes rendered/user files.
+- **PyYAML bootstrap** in `setup.sh` no longer aborts on PEP-668
+  "externally-managed" Python — it tries `--user` / `--break-system-packages` and
+  prints clear guidance instead of hard-failing.
+- **Config writing is YAML-safe.** Interactive answers containing quotes,
+  backslashes, or newlines no longer produce invalid `research-config.yml`.
+- **`paper:build` / `paper:extract`** now print a clear "run `npm run paper:setup`"
+  message when `python-docx` / `markdown` aren't installed, instead of a traceback;
+  QUICKSTART documents the one-time `paper:setup` step.
+- **Memory slug** now matches Claude Code's real project-dir encoding (all
+  non-alphanumerics → `-`), so cross-session memory loads for project paths that
+  contain spaces or other punctuation. Single shared sanitizer across the scripts.
+
+### Added
+- Four writing skills, genericised from the source system:
+  `/cover-letter`, `/revision-response`, `/peer-review`, `/literature-scan`.
+  These make the drafting → submission phases of the pipeline real.
+
+### Changed
+- Docs are honest about what ships: `/qc-team` and `/figure` are labelled
+  **planned** (not live pipeline steps); removed the dead `qc_suite` /
+  `figure_suite` / `librarian` config flags that nothing consumed.
+- Made the external-sync wording in `paper:status` provider-neutral (the sync
+  folder is optional; it previously named one cloud provider).
+
 ## [0.1.0] — 2026-08-01
 
 Initial public release. A generic, agentic research assistant for Claude Code,

@@ -11,7 +11,6 @@ so there is nothing to copy. This script just:
 from __future__ import annotations
 
 import os
-import re
 import shutil
 import stat
 import sys
@@ -24,7 +23,9 @@ MEMORY_SEED = PROJECT_ROOT / ".claude" / "memory-seed" / "MEMORY.md"
 
 def seed_memory_dir() -> None:
     """Create the Claude Code per-project memory dir and seed MEMORY.md if absent."""
-    slug = re.sub(r"[/.]", "-", str(PROJECT_ROOT))
+    # Single source of truth for the slug (same script dir on sys.path).
+    from render_templates import derive_memory_slug
+    slug = derive_memory_slug(str(PROJECT_ROOT))
     mem = Path.home() / ".claude" / "projects" / slug / "memory"
     mem.mkdir(parents=True, exist_ok=True)
     target = mem / "MEMORY.md"

@@ -43,11 +43,14 @@ def load_config() -> dict:
 def derive_memory_slug(root: str) -> str:
     """Claude Code stores per-project memory under ~/.claude/projects/<slug>/.
 
-    The slug is the absolute project path with path separators and dots
-    replaced by hyphens (leading separator becomes a leading hyphen).
+    The slug is the absolute project path with every non-alphanumeric character
+    (path separators, dots, spaces, underscores, …) replaced by a hyphen, so a
+    leading separator becomes a leading hyphen. This mirrors Claude Code's own
+    cwd→slug encoding: anything short of it (e.g. leaving spaces intact) yields a
+    slug Claude Code never looks under, so cross-session memory silently fails.
     """
     p = str(Path(root).resolve())
-    return re.sub(r"[/.]", "-", p)
+    return re.sub(r"[^A-Za-z0-9]", "-", p)
 
 
 def dig(cfg: dict, *keys, default=""):

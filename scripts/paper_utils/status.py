@@ -83,10 +83,14 @@ def get_sync_status(paper_id: str) -> dict:
             status['onedrive_files'].sort(key=lambda x: x['modified'], reverse=True)
         else:
             status['sync_status'] = 'onedrive_not_found'
-            status['suggestion'] = f"OneDrive path not found. Check if it exists:\n  {onedrive_dir}"
+            status['suggestion'] = f"Sync folder not found. Check it exists:\n  {onedrive_dir}"
     else:
         status['sync_status'] = 'no_onedrive_config'
-        status['suggestion'] = "No OneDrive path configured in config.json"
+        status['suggestion'] = (
+            "No external sync folder configured. Set 'onedrive_path' in the "
+            "paper's config.json to mirror drafts with a cloud folder "
+            "(OneDrive, Dropbox, etc.) — optional."
+        )
 
     # Determine sync status
     if status['onedrive_available'] and status['project_files'] and status['onedrive_files']:

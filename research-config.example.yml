@@ -84,9 +84,6 @@ scheduler:
 notifications:
   enabled: true                       # macOS terminal-notifier; auto-off elsewhere
 
-# --- Optional tiers to install -----------------------------------------------
+# --- Optional tiers ----------------------------------------------------------
 tiers:
-  research_memory: true               # two-layer corpus memory engine (off by default in use)
-  qc_suite: false                     # adversarial QC review agents
-  figure_suite: false                 # figure design/critic agents
-  librarian: false                    # weekly Zotero library audit
+  research_memory: true               # two-layer corpus memory engine (grep-queryable)

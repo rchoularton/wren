@@ -16,7 +16,13 @@ from pathlib import Path
 # Add parent to path for imports when run directly
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from paper_utils.extract import extract_paper, extract_to_sync
+try:
+    from paper_utils.extract import extract_paper, extract_to_sync
+except ImportError as e:
+    print(f"Missing a dependency for reading Word documents: {e.name}")
+    print("Install the paper toolchain first, then retry:")
+    print("    npm run paper:setup      (runs: pip install -r requirements.txt)")
+    sys.exit(1)
 from paper_utils.paths import get_latest_word_doc
 
 

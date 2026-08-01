@@ -30,7 +30,11 @@
       "Skill(draft)",
       "Skill(research)",
       "Skill(gold-standard)",
-      "Skill(setup)"
+      "Skill(setup)",
+      "Skill(cover-letter)",
+      "Skill(revision-response)",
+      "Skill(peer-review)",
+      "Skill(literature-scan)"
     ],
     "deny": []
   },

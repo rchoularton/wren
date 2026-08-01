@@ -36,13 +36,30 @@ PATTERNS = [
         ),
     ),
     ("absolute user home path", re.compile(r"/(Users|home)/[A-Za-z0-9._-]+/")),
-    ("institution OneDrive path", re.compile(r"OneDrive\s*-\s*[A-Za-z]")),
+    # Real business OneDrive folders are "OneDrive - <Org>" (spaces around the
+    # hyphen). Require the spaces so prose like "OneDrive-specific" isn't flagged.
+    ("institution OneDrive path", re.compile(r"OneDrive\s+-\s+[A-Za-z]")),
 ]
 
 # Lines matching these are ignored (commented-out env examples, doc placeholders).
 SAFE_LINE = re.compile(r'^\s*#')
 # Skip binary-ish / irrelevant extensions.
 SKIP_SUFFIXES = {".png", ".pdf", ".jpg", ".jpeg", ".gif", ".docx", ".xlsx", ".ico", ".zip"}
+
+# Rendered / user-specific files that are gitignored and legitimately contain the
+# user's own home path, email, or keys. They are never part of the publishable
+# payload, so the fallback walk (used when there's no git repo) must exclude them
+# too — otherwise a scaffolded project's own research-config.yml trips the gate.
+RENDERED = {
+    "research-config.yml",
+    ".env",
+    "CLAUDE.md",
+    "CLAUDE_REFERENCE.md",
+    ".mcp.json",
+    "data/docker-compose.directus.yml",
+    ".claude/settings.local.json",
+    ".claude/hooks/protected_paths.txt",
+}
 
 
 def publishable_files() -> list[Path]:
@@ -51,18 +68,23 @@ def publishable_files() -> list[Path]:
             ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
             cwd=PROJECT_ROOT,
             text=True,
+            stderr=subprocess.DEVNULL,
         )
         files = [PROJECT_ROOT / line for line in out.splitlines() if line]
         if files:
             return files
     except Exception:
         pass
-    # Fallback: walk, skipping obvious ignores
+    # Fallback (no git repo): walk, skipping obvious ignores AND the rendered set.
     skip_dirs = {"node_modules", ".git", "__pycache__", ".venv", "venv"}
     files = []
     for p in PROJECT_ROOT.rglob("*"):
-        if p.is_file() and not (set(p.parts) & skip_dirs):
-            files.append(p)
+        if not p.is_file() or (set(p.parts) & skip_dirs):
+            continue
+        rel = p.relative_to(PROJECT_ROOT).as_posix()
+        if rel in RENDERED:
+            continue
+        files.append(p)
     return files
 
 
