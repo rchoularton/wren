@@ -1,0 +1,42 @@
+{
+  "name": "create-research-assistant",
+  "version": "0.1.0",
+  "description": "Scaffold a generic, agentic research assistant for Claude Code — memory architecture, paper workflow, pluggable data & reference backends.",
+  "type": "module",
+  "bin": {
+    "create-research-assistant": "bin/create-research-assistant.mjs"
+  },
+  "scripts": {
+    "setup": "python3 scripts/setup/render_templates.py && python3 scripts/setup/install_hooks.py",
+    "setup:verify": "python3 scripts/setup/verify_install.py",
+    "setup:scrub-check": "python3 scripts/setup/scrub_check.py",
+    "paper:setup": "pip install -r requirements.txt",
+    "paper:build": "python3 scripts/paper_utils/build.py",
+    "paper:extract": "python3 scripts/paper_utils/extract_cli.py",
+    "paper:status": "python3 scripts/paper_utils/status.py",
+    "paper:list": "python3 scripts/paper_utils/status.py",
+    "memory:bootstrap": "node scripts/research_memory/bootstrap.mjs",
+    "memory:audit": "node scripts/research_memory/audit.mjs"
+  },
+  "keywords": [
+    "claude-code",
+    "research",
+    "agentic",
+    "academic-writing",
+    "memory",
+    "scaffold"
+  ],
+  "author": "Richard Choularton (https://orcid.org/0000-0003-3275-2883)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rchoularton/create-research-assistant.git"
+  },
+  "homepage": "https://github.com/rchoularton/create-research-assistant#readme",
+  "bugs": {
+    "url": "https://github.com/rchoularton/create-research-assistant/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

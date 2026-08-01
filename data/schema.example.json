@@ -1,0 +1,37 @@
+{
+  "$comment": "A small, generic starter schema for a research database. Three collections cover most projects: the literature you cite, the findings you extract, and the entities your study is about. Adapt names and fields to your field, or delete and design your own. Used as the seed for the sqlite/duckdb and directus-local tiers.",
+  "collections": {
+    "sources": {
+      "description": "Literature and documents you draw on (mirrors your reference manager).",
+      "fields": {
+        "id": "string (citekey or DOI)",
+        "title": "string",
+        "authors": "string",
+        "year": "integer",
+        "venue": "string",
+        "url": "string",
+        "notes": "text"
+      }
+    },
+    "findings": {
+      "description": "Atomic findings/claims extracted from sources or your own analysis.",
+      "fields": {
+        "id": "string",
+        "source_id": "string (-> sources.id)",
+        "statement": "text",
+        "evidence": "text",
+        "confidence": "string (high|medium|low)",
+        "themes": "string[] (tags)"
+      }
+    },
+    "entities": {
+      "description": "The things your study is about (people, places, cases, treatments, ...).",
+      "fields": {
+        "id": "string",
+        "name": "string",
+        "type": "string",
+        "attributes": "json"
+      }
+    }
+  }
+}

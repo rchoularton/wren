@@ -1,0 +1,47 @@
+# Keep the published tarball curated even though `files` lists whole directories.
+# Mirrors .gitignore's user/rendered-content exclusions so a maintainer's local
+# working files (a real .env, a rendered CLAUDE.md, a populated reference library,
+# generated logs) never ship inside the scaffold.
+
+# Rendered, user-specific files
+research-config.yml
+.env
+CLAUDE.md
+CLAUDE_REFERENCE.md
+.mcp.json
+.claude/settings.local.json
+.claude/hooks/protected_paths.txt
+
+# Runtime / ambient
+.current_paper
+RUNNING.md
+outputs/_logs/*
+!outputs/_logs/.gitkeep
+
+# Corpus-memory content (structure ships, content does not)
+research_memory/episodic/_external/_by-citekey/*
+!research_memory/episodic/_external/_by-citekey/.gitkeep
+research_memory/_logs/*
+!research_memory/_logs/.gitkeep
+
+# Reference library exports
+references/*.bib
+references/*.json
+references/*.ris
+!references/library.bib.example
+
+# Local database
+data/*.sqlite
+data/*.duckdb
+data/*.db
+data/directus/
+data/docker-compose.directus.yml
+
+# Node / Python / OS
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+*.tgz

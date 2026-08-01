@@ -1,0 +1,29 @@
+# Local Directus (Tier 2). Brings up a free, self-hosted headless CMS with an
+# admin UI, REST/GraphQL API, and a native MCP server, backed by SQLite (no
+# separate database container needed).
+#
+#   docker compose --env-file .env -f data/docker-compose.directus.yml up -d
+#   open http://localhost:8055
+#
+# Values come from your .env (see .env.example) with local-dev fallbacks. Set
+# real DIRECTUS_* values in .env before exposing this anywhere. Then create a
+# static token in the UI and put it in .env as DIRECTUS_TOKEN, with
+# DIRECTUS_URL=http://localhost:8055.
+
+services:
+  directus:
+    image: directus/directus:latest
+    ports:
+      - "8055:8055"
+    volumes:
+      - ./directus/database:/directus/database
+      - ./directus/uploads:/directus/uploads
+      - ./directus/extensions:/directus/extensions
+    environment:
+      SECRET: "${DIRECTUS_SECRET:-please-change-in-dotenv}"
+      KEY: "${DIRECTUS_KEY:-please-change-in-dotenv}"
+      DB_CLIENT: "sqlite3"
+      DB_FILENAME: "/directus/database/data.db"
+      ADMIN_EMAIL: "${DIRECTUS_ADMIN_EMAIL:-admin@example.com}"
+      ADMIN_PASSWORD: "${DIRECTUS_ADMIN_PASSWORD:-directus}"
+      WEBSOCKETS_ENABLED: "true"

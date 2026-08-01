@@ -1,0 +1,42 @@
+// .mcp.json.template — reference for optional MCP connectors.
+//
+// You do NOT edit this by hand. `./setup.sh` generates a real `.mcp.json`
+// (git-ignored) containing ONLY the servers your research-config.yml turns on,
+// with secrets referenced as ${ENV_VARS} that resolve from your `.env`.
+//
+// This file documents every block the renderer knows how to emit, plus how to
+// add your own. See docs/integrations.md for the full guide.
+//
+// -----------------------------------------------------------------------------
+// zotero  — enabled when references.provider: zotero
+//   Community server: https://github.com/54yyyu/zotero-mcp  (pip/uvx: zotero-mcp)
+//   Needs ZOTERO_API_KEY (+ optionally ZOTERO_LIBRARY_ID) in .env.
+// {
+//   "zotero": {
+//     "command": "uvx",
+//     "args": ["--from", "zotero-mcp", "zotero-mcp"],
+//     "env": {
+//       "ZOTERO_LOCAL": "false",
+//       "ZOTERO_API_KEY": "${ZOTERO_API_KEY}",
+//       "ZOTERO_LIBRARY_ID": "${ZOTERO_LIBRARY_ID}"
+//     }
+//   }
+// }
+//
+// directus  — enabled when database.backend: directus-local | managed
+//   Directus ships a native MCP server. Point at your instance (localhost:8055
+//   for directus-local) and provide a static token in .env.
+// {
+//   "directus": {
+//     "type": "http",
+//     "url": "${DIRECTUS_URL}",
+//     "headers": { "Authorization": "Bearer ${DIRECTUS_TOKEN}" }
+//   }
+// }
+//
+// Add your own: any MCP server works. Copy a block above, give it a name,
+// point it at your command/URL, and add any secrets to .env as ${VARS}.
+// Keep literal keys OUT of this file — only ${ENV} references.
+{
+  "mcpServers": {}
+}

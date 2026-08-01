@@ -1,0 +1,92 @@
+# =============================================================================
+# Research Assistant Starter Kit — configuration
+# =============================================================================
+# This is the ONE file that makes the kit yours. The scaffolder generates a
+# `research-config.yml` from your answers; edit that file (not this example)
+# and re-run `./setup.sh` any time to apply changes.
+#
+# `research-config.yml` is git-ignored — your identity, paths, and toggles
+# never get committed. Secrets never live here at all; they go in `.env`.
+# =============================================================================
+
+identity:
+  author_name: "Jane Researcher"      # used in generated docs and agent context
+  orcid: ""                           # optional, e.g. 0000-0000-0000-0000
+  email: ""                           # used only for self-addressed digest drafts
+  coauthors: []                       # e.g. ["A. Colleague", "B. Advisor"]
+
+project:
+  name: "My Research Assistant"       # human-facing project title
+  namespace: "myresearch"             # lowercase, no spaces. Derives launchd
+                                      # labels (com.myresearch.*), the notify
+                                      # group, and cron job names.
+  discipline: "one-line plain description of your field"
+  # `root` is auto-detected by the scaffolder (git repo root). It is used to
+  # derive the Claude Code per-project memory slug. Leave blank.
+  root: ""
+
+domain:
+  # Vocabulary the assistant should treat as first-class terms in your field.
+  key_terms: []                       # e.g. ["term A", "term B"]
+
+journals:
+  default: "Target Journal"           # seeds the journal-agnostic agent templates
+  targets: []                         # e.g. ["Journal One", "Journal Two"]
+
+paths:
+  # 'Never overwrite' locations the pre-write safety guard should protect.
+  # Use absolute paths or ~ home-relative. Leave empty for none.
+  protected_write_paths: []           # e.g. ["~/OneDrive/Manuscripts"]
+
+# --- Research database -------------------------------------------------------
+# backend options:
+#   files          Tier 0 (default) — Markdown/CSV/JSON in `data/`, no server
+#   sqlite         Tier 1 — single-file local DB + query helper
+#   duckdb         Tier 1 — analytical single-file DB, pandas-friendly
+#   directus-local Tier 2 — self-hosted Directus via Docker (localhost:8055),
+#                            free, ships its own MCP server + admin UI
+#   managed        Tier 3 — bring-your-own hosted backend (Railway/Supabase/...)
+database:
+  backend: files
+  url: ""                             # required only for `managed`
+
+# --- Reference manager -------------------------------------------------------
+# provider options:
+#   bibtex   (default) point at a .bib / CSL-JSON / RIS file exported from ANY
+#            manager (Zotero, Mendeley, EndNote, Paperpile). Zero external service.
+#   zotero   opt-in richer adapter via the community zotero-mcp server (live
+#            library, full text, PDFs). Needs `zotero.user_id` + ZOTERO_API_KEY.
+#   mendeley Mendeley has a REST API but no turnkey MCP. Use `bibtex` (export a
+#            .bib) for now; see docs/integrations.md for the future module.
+references:
+  provider: bibtex
+  bibtex_path: "references/library.bib"
+  zotero:
+    user_id: ""
+    api_key_env: "ZOTERO_API_KEY"     # name of the env var in .env, never the key itself
+
+integrations:
+  gmail:
+    enabled: false                    # weekly digest drafts (needs Gmail MCP connected)
+
+# --- Scheduled jobs (optional add-on module) ---------------------------------
+scheduler:
+  platform: launchd                   # launchd (macOS) | cron (Linux) | none
+  jobs:
+    nightly_memory:
+      enabled: false
+      at: "02:30"
+    weekly_digest:
+      enabled: false
+      day: "Mon"
+      at: "08:47"
+
+notifications:
+  enabled: true                       # macOS terminal-notifier; auto-off elsewhere
+
+# --- Optional tiers to install -----------------------------------------------
+tiers:
+  research_memory: true               # two-layer corpus memory engine (off by default in use)
+  qc_suite: false                     # adversarial QC review agents
+  figure_suite: false                 # figure design/critic agents
+  librarian: false                    # weekly Zotero library audit

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "$comment": "Corpus-memory configuration. The paths and schema are the reusable scaffold; the tiers and internal_artifacts lists are yours to fill as you add papers. The zotero_tags/batch blocks are only used by the (optional, future) automated Zotero-ingestion module — ignore them if you populate memory manually or via the /research-memory skill.",
+  "paths": {
+    "episodic_external": "research_memory/episodic/_external/_by-citekey",
+    "episodic_internal_papers": "research_memory/episodic/_internal/papers",
+    "episodic_internal_country": "research_memory/episodic/_internal/country",
+    "episodic_internal_special": "research_memory/episodic/_internal/special",
+    "semantic_themes_index": "research_memory/semantic/themes/INDEX.md",
+    "semantic_questions_open": "research_memory/semantic/questions/OPEN.md",
+    "semantic_questions_answered": "research_memory/semantic/questions/ANSWERED.md",
+    "semantic_gaps": "research_memory/semantic/gaps/GAPS.md",
+    "semantic_contradictions": "research_memory/semantic/contradictions/CONTRADICTIONS.md",
+    "reflections": "research_memory/reflections/REFLECTIONS.md",
+    "logs": "research_memory/_logs"
+  },
+  "internal_artifacts": {
+    "papers": ["example-paper"],
+    "country": [],
+    "special_dir": "special"
+  },
+  "tiers": {
+    "1": [],
+    "2": ["example-paper"],
+    "3": []
+  },
+  "manual_notes_marker": "## Manual notes",
+  "automated_ingestion": {
+    "enabled": false,
+    "$comment": "The nightly Zotero-ingestion module is a future add-on (needs the zotero reference provider). See research_memory/README.md.",
+    "zotero_tags": {
+      "pending": "memory-pending",
+      "processed": "memory-processed"
+    },
+    "batch": { "size": 4, "confidence_threshold": 60 }
+  }
+}

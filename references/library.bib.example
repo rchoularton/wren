@@ -1,0 +1,23 @@
+% Example BibTeX library — the universal reference adapter reads a .bib like this.
+%
+% Export your library from any manager (Zotero, Mendeley, EndNote, Paperpile) as
+% BibTeX, save it as references/library.bib (git-ignored), and set
+% references.provider: bibtex in research-config.yml. The ref-check and drafting
+% skills will read entries from it.
+
+@article{example2025finding,
+  title   = {An example finding this paper builds on},
+  author  = {Researcher, Jane and Colleague, A.},
+  journal = {Journal of Examples},
+  year    = {2025},
+  volume  = {12},
+  pages   = {1--20},
+  doi     = {10.0000/example.2025.001}
+}
+
+@book{example2020methods,
+  title     = {Methods for the Example Field},
+  author    = {Author, B.},
+  publisher = {Academic Press},
+  year      = {2020}
+}

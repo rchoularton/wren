@@ -1,0 +1,8 @@
+{
+  "//": "Copy to settings.local.json for per-user overrides (git-ignored). Use for enabling project MCP servers and any personal allowlist additions. Never put secrets here.",
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [],
+  "permissions": {
+    "allow": []
+  }
+}
