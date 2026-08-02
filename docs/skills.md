@@ -1,6 +1,6 @@
 # Skills
 
-Type these as slash commands in Claude Code once your project is open. All 15 ship in the box, grouped by what they do.
+Type these as slash commands in Claude Code once your project is open. All 16 ship in the box, grouped by what they do.
 
 ## Orient & manage
 
@@ -34,16 +34,14 @@ Type these as slash commands in Claude Code once your project is open. All 15 sh
 | `/gold-standard` `[paper-id]` | Freeze an analysis as canonical — verify outputs, git-tag, and archive as the paper's gold standard (Phase 7 gate). See [Concepts](concepts.md#the-14-phase-paper-pipeline). |
 | `/rigor-check` | Mid-task self-audit against the research rigor rules — catches context drift, shortcuts, and unjustified assumptions during long sessions. |
 | `/methods-audit` `[paper-id] [--fix]` | Audit a paper's analysis scripts for exploration artifacts, stale values, and reproducibility gaps before you freeze. |
+| `/qc-team` `[paper-id] [--skeptic-only]` | Three-agent adversarial QC (Skeptic → Responder → Team Leader) — verifies stats against source data, produces a Must-Fix / Should-Fix verdict. |
 | `/research-memory` `[status\|recall <topic>\|log <artifact> "<note>"\|inspect <artifact>]` | Query and update the corpus memory — recall findings, log notes, check status across your literature and projects. See [Corpus memory](guides/corpus-memory.md). |
 | `/retro` `[quick\|full]` | Quick session retrospective — capture process improvements, research insights, and system feedback into cross-session memory. |
 
 ## Planned (not shipped)
 
-These need an agent-team tier not yet in the kit. They are **not** available in v0.2.0 — see [`ROADMAP.md`](roadmap.md).
+The sub-agent tier now ships (introduced in 0.7 with `/qc-team`). Still on the [roadmap](roadmap.md):
 
 | Skill | What it would do |
 |---|---|
-| `/qc-team` | Adversarial QC review of a draft — a Skeptic / Responder / Team Leader agent trio, covering pipeline phase 6 (QC review) and phase 11 (QC of draft). |
 | `/figure` | Figure design and critique loop for publication-quality graphics, covering pipeline phase 9 (Figures). |
-
-Good first contributions to the kit include porting these two skills — see [Contributing](contributing.md).
