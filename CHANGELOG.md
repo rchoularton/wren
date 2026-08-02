@@ -3,6 +3,26 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [0.5.0] - 2026-08-02
+
+Brings the Wren logo to every surface it can reach.
+
+### Added
+- **Colored wren at scaffold time.** `npm create wren` now prints the pixel-wren in its
+  banner — rendered in the logo's real colors via half-block characters, with a
+  monochrome fallback under `NO_COLOR` and nothing when output is piped/CI. Generated
+  into `bin/wren-art.mjs` from the same 16×16 grid as the logo, so it never drifts.
+- **Docs site branding** — header logo and browser-tab favicon (mkdocs-material
+  `theme.logo`/`theme.favicon`), plus a logo hero on the docs home page.
+- **Logo on the README / npm page.**
+- **GitHub social-preview card** (`assets/logo/wren-social.png`, 1280×640) generated from
+  the logo grid; upload once in repo Settings.
+
+### Changed
+- `assets/logo/generate_logo.py` is now the single source for the SVG, the PNG rasters,
+  the terminal art, and the social card — all from one `GRID`/`PALETTE`.
+- Fresh-project nudge emoji `👋` → `🐦`.
+
 ## [0.4.0] - 2026-08-02
 
 Adds a guided first-run experience so a new project starts with orientation and
