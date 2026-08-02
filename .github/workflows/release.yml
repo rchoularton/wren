@@ -1,0 +1,41 @@
+# Release automation.
+#
+# Fires when you push a version tag, e.g. `git push origin v0.6.0` (see RELEASING.md).
+#   - Always: drafts a GitHub Release for that tag — you review the notes and click
+#     "Publish release" by hand.
+#   - Only if an `NPM_TOKEN` repo secret exists: also publishes to npm automatically.
+#     Create an npm *automation* token (bypasses the passkey 2FA) and add it under
+#     Settings → Secrets and variables → Actions → `NPM_TOKEN`. Until you do, publishing
+#     stays a manual `npm publish --auth-type=web` step — the default, and perfectly fine.
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --draft --generate-notes
+
+      - name: Set up Node (only when NPM_TOKEN is configured)
+        if: ${{ env.NPM_TOKEN != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish to npm (only when NPM_TOKEN is configured)
+        if: ${{ env.NPM_TOKEN != '' }}
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
