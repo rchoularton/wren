@@ -3,6 +3,33 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [0.7.0] - 2026-08-02
+
+Introduces the sub-agent tier, the two flagship agent-team review skills, and cost-aware
+model routing (roadmap milestone 0.7).
+
+### Added
+- **Sub-agent tier** (`.claude/agents/`) — focused personas Claude Code runs in isolated
+  contexts via the Agent tool, with a README documenting the convention. Set `model:` per
+  agent to pick a tier.
+- **`/qc-team`** `[paper-id] [--skeptic-only]` — three-agent adversarial QC: a Skeptic
+  attacks the draft against its source data, a Responder defends, a Team Leader adjudicates
+  into a Must-Fix / Should-Fix verdict. Agents `qc-skeptic`, `qc-responder`, `qc-team-leader`
+  (all `opus`), run in isolation so the review stays honest.
+- **`/figure`** `[paper-id] [--figure N] [--all] [--score-only]` — a Designer → Critic loop
+  that iterates a figure to publication quality. `figure-designer` (`sonnet`) edits and
+  regenerates; `scientific-graphics-reviewer` (`opus`) scores on an 8-dimension rubric with
+  hard gates and a ≥95% pass threshold.
+- **Token management** — `.claude/lib/model-policy.mjs` (critique/produce/triage →
+  opus/sonnet/haiku), an always-on `.claude/rules/token-budget.md` rule, and
+  `scripts/utils/token_report.py` (`npm run tokens`) reporting usage by model/agent from
+  local session logs. No API, nothing leaves your machine.
+
+### Changed
+- The "Model Selection" note in `CLAUDE_REFERENCE` now points at the real model-policy +
+  token-budget rule. Wren ships 17 skills; the sub-agent tier retires the "planned" caveat on
+  `/qc-team` and `/figure`.
+
 ## [0.6.0] - 2026-08-02
 
 Three new skills, genericized from the private research system — quick rigor and reference

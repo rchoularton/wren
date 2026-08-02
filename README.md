@@ -72,11 +72,11 @@ Type these in Claude Code once the project is open. All 12 ship in the box:
 | | |
 |---|---|
 | **Orient & manage** | `/research` (workspace entry point) · `/paper` (portfolio: status, resume, start a paper) · `/setup wren` (guided onboarding) · `/setup` (reconfigure) |
-| **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/ref-check` (validate citations) · `/peer-review` |
+| **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/ref-check` (validate citations) · `/peer-review` · `/figure` (figure design → critique loop) |
 | **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/zotero-audit` (library hygiene) |
-| **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
+| **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/qc-team` (3-agent adversarial QC) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
 
-*Planned* (see [`ROADMAP.md`](ROADMAP.md)): `/qc-team` (adversarial QC) and `/figure` (figure design/critique) — these need an agent-team tier not yet in the kit.
+As of 0.7 the sub-agent tier ships, and with it `/qc-team` and `/figure`. What's next is on the [roadmap](https://rchoularton.github.io/wren/roadmap/).
 
 ---
 
@@ -93,7 +93,8 @@ See [`research-config.example.yml`](research-config.example.yml) for every field
 - **Core** (installs by default, zero external services): memory architecture, paper template + build engine, rules, hooks, notifications, the BibTeX reference adapter, the file-based data tier, and the writing/discovery skills above.
 - **Corpus memory** (shipped, opt-in): a two-layer episodic + semantic memory over your literature and projects.
 - **Config-selectable backends**: local/managed databases (`docs/database.md`) and reference managers including Zotero (`docs/integrations.md`).
-- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): the QC and figure-design agent suites, weekly library tooling, and scheduled background jobs.
+- **Token-aware** (as of 0.7): model-routing tiers + a `npm run tokens` usage report, so cheap work runs on cheap models.
+- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): weekly library tooling, scheduled background jobs, a second-brain memory lens, and multi-author collaboration.
 
 Full guides on the [documentation site](https://rchoularton.github.io/wren/).
 

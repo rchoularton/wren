@@ -118,6 +118,11 @@ For jobs the assistant spawns that run >30s, prefer `run_in_background: true` + 
 
 ---
 
-## Model Selection (sub-agents)
+## Model Selection & token budget
 
-Set `model:` per sub-agent in `.claude/agents/*.md`. Rough tiers: routine/mechanical → haiku; standard drafting/analysis → sonnet; adversarial review, synthesis, hard reasoning → opus. Omit to inherit the session model.
+Run each task on the cheapest model that meets its bar; reserve the strong model for QC gates.
+Three tiers (defined in `.claude/lib/model-policy.mjs`): **triage** (routine/mechanical) → `haiku`;
+**produce** (drafting/analysis) → `sonnet`; **critique** (adversarial review, synthesis, hard
+reasoning) → `opus`. Set `model:` per sub-agent in `.claude/agents/*.md`; omit to inherit the
+session model. The always-on rule is `.claude/rules/token-budget.md`. Measure what actually ran
+with `npm run tokens` (or `python scripts/utils/token_report.py --by-agent`).
