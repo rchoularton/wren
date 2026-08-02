@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/wren.png" width="128" alt="Wren logo"></p>
+
 # Wren
 
 An agentic research assistant for [Claude Code](https://claude.com/claude-code) — the reusable scaffolding of a working PhD research system, generalised so you can point it at *your* field on day one.

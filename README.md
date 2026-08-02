@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo/wren-128.png" width="128" alt="Wren logo"></p>
+
 # Wren
 
 [![npm version](https://img.shields.io/npm/v/create-wren)](https://www.npmjs.com/package/create-wren)

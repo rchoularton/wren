@@ -42,7 +42,7 @@ def main() -> None:
         return
 
     block = (
-        "👋 New Wren project — run `/setup wren` for a guided tour and to set up your "
+        "🐦 New Wren project — run `/setup wren` for a guided tour and to set up your "
         "first paper. (Or `/paper` to jump straight in.)"
     )
     print(json.dumps({"additionalContext": block}))

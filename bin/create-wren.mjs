@@ -19,6 +19,7 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync, existsSync, mkdirSync, readdirSync, cpSync, renameSync } from 'node:fs';
 import { resolve, relative, basename, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { wrenAnsi, wrenPlain } from './wren-art.mjs';
 
 const rl = createInterface({ input: stdin, output: stdout });
 
@@ -125,6 +126,11 @@ async function resolveTargetDir() {
 }
 
 async function main() {
+  // The wren, at the one startup moment. Colored on a real terminal, plain
+  // blocks under NO_COLOR, nothing when piped/CI (keeps scripted output clean).
+  if (stdout.isTTY) {
+    console.log('\n' + (process.env.NO_COLOR ? wrenPlain : wrenAnsi));
+  }
   console.log('\n  Wren — setup\n  ' + '─'.repeat(40) + '\n');
   console.log('  Scaffolds a new project directory, then asks a few questions.');
   console.log('  Everything is editable later in research-config.yml — re-run');
