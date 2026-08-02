@@ -1,6 +1,6 @@
 # Contributing
 
-Issues and PRs are welcome. Full contributor setup and workflow details live in [`CONTRIBUTING.md`](https://github.com/rchoularton/create-research-assistant/blob/main/CONTRIBUTING.md) at the repo root — that file is the canonical reference; this page just points you there.
+Issues and PRs are welcome. Full contributor setup and workflow details live in [`CONTRIBUTING.md`](https://github.com/rchoularton/wren/blob/main/CONTRIBUTING.md) at the repo root — that file is the canonical reference; this page just points you there.
 
 ## Good first contributions
 

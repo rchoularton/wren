@@ -1,8 +1,8 @@
-# Research Assistant Starter Kit
+# Wren
 
-[![npm version](https://img.shields.io/npm/v/create-research-assistant)](https://www.npmjs.com/package/create-research-assistant)
-[![node](https://img.shields.io/node/v/create-research-assistant)](https://nodejs.org)
-[![license: MIT](https://img.shields.io/npm/l/create-research-assistant)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/create-wren)](https://www.npmjs.com/package/create-wren)
+[![node](https://img.shields.io/node/v/create-wren)](https://nodejs.org)
+[![license: MIT](https://img.shields.io/npm/l/create-wren)](LICENSE)
 
 An agentic research assistant for [Claude Code](https://claude.com/claude-code) — the reusable scaffolding of a working PhD research system, generalised so you can point it at *your* field on day one.
 
@@ -12,7 +12,7 @@ It gives you a **memory that persists across sessions**, a **paper workflow** wi
 
 <!-- A demo GIF is embedded here once the setup/usage video is rendered (see assets/demo.gif). -->
 
-📖 **Full documentation:** <https://rchoularton.github.io/create-research-assistant/>
+📖 **Full documentation:** <https://rchoularton.github.io/wren/>
 
 ---
 
@@ -20,7 +20,7 @@ It gives you a **memory that persists across sessions**, a **paper workflow** wi
 
 ```mermaid
 flowchart LR
-    S["npm create<br/>research-assistant"] --> P["your project<br/>research-config.yml"]
+    S["npm create<br/>wren"] --> P["your project<br/>research-config.yml"]
     P --> CC["Claude Code<br/>drives everything from the terminal"]
     CC --> M["4-layer memory<br/>rules · session · corpus · per-paper"]
     CC --> W["paper workflow<br/>Markdown ⇄ Word · freeze gate"]
@@ -47,7 +47,7 @@ flowchart LR
 ## Quick start (≈15 minutes)
 
 ```bash
-npm create research-assistant@latest my-research
+npm create wren@latest my-research
 cd my-research
 # answer ~11 prompts → writes research-config.yml, renders templates, installs hooks, inits git
 ```
@@ -59,7 +59,7 @@ cp research-config.example.yml research-config.yml   # edit a handful of fields
 ./setup.sh
 ```
 
-Then open the folder in Claude Code and run `/paper`. See **[QUICKSTART.md](QUICKSTART.md)** for the full first-run walkthrough, or the [Getting Started guide](https://rchoularton.github.io/create-research-assistant/getting-started/).
+Then open the folder in Claude Code and run `/paper`. See **[QUICKSTART.md](QUICKSTART.md)** for the full first-run walkthrough, or the [Getting Started guide](https://rchoularton.github.io/wren/getting-started/).
 
 ---
 
@@ -93,13 +93,13 @@ See [`research-config.example.yml`](research-config.example.yml) for every field
 - **Config-selectable backends**: local/managed databases (`docs/database.md`) and reference managers including Zotero (`docs/integrations.md`).
 - **Planned** (see [`ROADMAP.md`](ROADMAP.md)): the QC and figure-design agent suites, weekly library tooling, and scheduled background jobs.
 
-Full guides on the [documentation site](https://rchoularton.github.io/create-research-assistant/).
+Full guides on the [documentation site](https://rchoularton.github.io/wren/).
 
 ---
 
 ## Requirements
 
-- [Claude Code](https://claude.com/claude-code) (new to it? see [Getting Started](https://rchoularton.github.io/create-research-assistant/getting-started/))
+- [Claude Code](https://claude.com/claude-code) (new to it? see [Getting Started](https://rchoularton.github.io/wren/getting-started/))
 - Node ≥ 18 and Python ≥ 3.9
 - macOS or Linux (scheduled jobs and desktop notifications are macOS-first; Linux uses cron and degrades notifications gracefully)
 - Optional: Docker (for the local Directus database tier), a reference manager

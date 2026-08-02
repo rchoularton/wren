@@ -11,10 +11,10 @@ assignees: ""
 - OS: <!-- macOS 14 / Ubuntu 22.04 / etc. -->
 - Node version: <!-- `node -v` -->
 - Python version: <!-- `python3 --version` -->
-- Package version: <!-- `npm ls create-research-assistant` or the version printed at scaffold time -->
+- Package version: <!-- `npm ls create-wren` or the version printed at scaffold time -->
 - Scaffold command used:
   ```
-  <!-- e.g. npm create research-assistant@latest my-research -->
+  <!-- e.g. npm create wren@latest my-research -->
   <!-- or: cp research-config.example.yml research-config.yml && ./setup.sh -->
   ```
 

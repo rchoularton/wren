@@ -1,10 +1,10 @@
 {
-  "name": "create-research-assistant",
+  "name": "create-wren",
   "version": "0.2.0",
   "description": "Scaffold a generic, agentic research assistant for Claude Code — memory architecture, paper workflow, pluggable data & reference backends.",
   "type": "module",
   "bin": {
-    "create-research-assistant": "bin/create-research-assistant.mjs"
+    "create-wren": "bin/create-wren.mjs"
   },
   "scripts": {
     "setup": "python3 scripts/setup/render_templates.py && python3 scripts/setup/install_hooks.py",
@@ -30,11 +30,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rchoularton/create-research-assistant.git"
+    "url": "git+https://github.com/rchoularton/wren.git"
   },
-  "homepage": "https://github.com/rchoularton/create-research-assistant#readme",
+  "homepage": "https://github.com/rchoularton/wren#readme",
   "bugs": {
-    "url": "https://github.com/rchoularton/create-research-assistant/issues"
+    "url": "https://github.com/rchoularton/wren/issues"
   },
   "engines": {
     "node": ">=18"

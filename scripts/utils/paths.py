@@ -1,5 +1,5 @@
 """
-Path utilities for the research assistant scripts.
+Path utilities for Wren scripts.
 
 This module provides portable path handling so scripts work for any user,
 on any machine, by deriving the project root from this file's location.

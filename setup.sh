@@ -22,7 +22,7 @@ done
 if [ ! -f research-config.yml ]; then
   echo "No research-config.yml found."
   echo "  cp research-config.example.yml research-config.yml   # then edit it"
-  echo "  or run:  npm create research-assistant"
+  echo "  or run:  npm create wren"
   exit 1
 fi
 

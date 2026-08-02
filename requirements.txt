@@ -1,4 +1,4 @@
-# Python dependencies for the Research Assistant Starter Kit.
+# Python dependencies for Wren.
 # Core needs very little. Install with:  python3 -m pip install -r requirements.txt
 
 pyyaml>=6.0          # read research-config.yml in the setup renderer

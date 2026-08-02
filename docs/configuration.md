@@ -134,4 +134,4 @@ Toggles the [corpus memory](guides/corpus-memory.md) add-on.
 
 ---
 
-See [`research-config.example.yml`](https://github.com/rchoularton/create-research-assistant/blob/main/research-config.example.yml) in the repo for the fully-commented reference file this page is generated from.
+See [`research-config.example.yml`](https://github.com/rchoularton/wren/blob/main/research-config.example.yml) in the repo for the fully-commented reference file this page is generated from.

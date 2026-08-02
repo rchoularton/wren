@@ -5,7 +5,7 @@ This walks you from nothing to a working research assistant with persistent memo
 ## 1. Scaffold
 
 ```bash
-npm create research-assistant@latest my-research
+npm create wren@latest my-research
 cd my-research
 ```
 

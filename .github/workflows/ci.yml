@@ -26,7 +26,7 @@ jobs:
 
       - name: Syntax-check .mjs entrypoints
         run: |
-          node --check bin/create-research-assistant.mjs
+          node --check bin/create-wren.mjs
           node --check scripts/research_memory/audit.mjs
           node --check scripts/research_memory/bootstrap.mjs
           node --check scripts/research_memory/config.mjs
@@ -43,7 +43,7 @@ jobs:
       #
       # Scaffolds non-interactively into a directory whose path CONTAINS A
       # SPACE, then asserts the project verifies clean and was git-initialised.
-      # Non-interactive mechanism: bin/create-research-assistant.mjs accepts
+      # Non-interactive mechanism: bin/create-wren.mjs accepts
       # `--yes` (also auto-detects a non-TTY stdin, which a CI runner always
       # is) to fall through every prompt to its documented default instead of
       # waiting on input — see NONINTERACTIVE in the bin. That's the real,
@@ -54,7 +54,7 @@ jobs:
           set -euo pipefail
           TARGET="${{ runner.temp }}/ci scratch/my project"
           mkdir -p "${{ runner.temp }}/ci scratch"
-          node bin/create-research-assistant.mjs --yes "$TARGET"
+          node bin/create-wren.mjs --yes "$TARGET"
 
           echo "→ Asserting git repo was initialised…"
           test -d "$TARGET/.git"

@@ -1,7 +1,12 @@
 # Changelog
 
-All notable changes to `create-research-assistant` are documented here.
+All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
+
+## [0.3.0] - 2026-08-02
+
+### Changed
+- Renamed the project to **Wren**. The npm package is now `create-wren`; install with `npm create wren@latest my-research`. The previous package name `create-research-assistant` is superseded. Documentation moved to https://rchoularton.github.io/wren/.
 
 ## [0.2.0] — 2026-08-01
 

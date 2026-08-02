@@ -13,14 +13,14 @@
 # Events: START, DONE, WARN, ERROR. Appends to RUNNING.md in the project root.
 # Desktop notifications use terminal-notifier if present (macOS); otherwise the
 # RUNNING.md log still records everything. Group name from NOTIFY_GROUP env
-# (default "research-assistant").
+# (default "wren").
 
 set -uo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUNNING_MD="$PROJECT_ROOT/RUNNING.md"
 TERMINAL_NOTIFIER="$(command -v terminal-notifier || echo /opt/homebrew/bin/terminal-notifier)"
-NOTIFY_GROUP="${NOTIFY_GROUP:-research-assistant}"
+NOTIFY_GROUP="${NOTIFY_GROUP:-wren}"
 
 _fmt_duration() {
   local s=$1

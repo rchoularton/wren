@@ -1,4 +1,4 @@
-# Research Assistant Starter Kit
+# Wren
 
 An agentic research assistant for [Claude Code](https://claude.com/claude-code) — the reusable scaffolding of a working PhD research system, generalised so you can point it at *your* field on day one.
 
@@ -11,7 +11,7 @@ It gives you a **memory that persists across sessions**, a **paper workflow** wi
 
 ```mermaid
 flowchart LR
-    S["npm create<br/>research-assistant"] --> P["your project<br/>research-config.yml"]
+    S["npm create<br/>wren"] --> P["your project<br/>research-config.yml"]
     P --> CC["Claude Code<br/>drives everything from the terminal"]
     CC --> M["4-layer memory<br/>rules · session · corpus · per-paper"]
     CC --> W["paper workflow<br/>Markdown ⇄ Word · freeze gate"]
@@ -34,7 +34,7 @@ flowchart LR
 ## Quick start (≈15 minutes)
 
 ```bash
-npm create research-assistant@latest my-research
+npm create wren@latest my-research
 cd my-research
 # answer ~11 prompts → writes research-config.yml, renders templates, installs hooks, inits git
 ```
@@ -54,4 +54,4 @@ All 12 shipped skills are documented on the [Skills](skills.md) page, grouped by
 
 ## License
 
-MIT — see [LICENSE](https://github.com/rchoularton/create-research-assistant/blob/main/LICENSE).
+MIT — see [LICENSE](https://github.com/rchoularton/wren/blob/main/LICENSE).

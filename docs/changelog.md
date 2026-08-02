@@ -2,4 +2,4 @@
 
 ---
 
-*This page reuses the root [`CHANGELOG.md`](https://github.com/rchoularton/create-research-assistant/blob/main/CHANGELOG.md), which remains the canonical, editable copy.*
+*This page reuses the root [`CHANGELOG.md`](https://github.com/rchoularton/wren/blob/main/CHANGELOG.md), which remains the canonical, editable copy.*

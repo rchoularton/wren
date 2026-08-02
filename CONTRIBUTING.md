@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for considering a contribution to the Research Assistant Starter Kit. This is a
+Thanks for considering a contribution to Wren. This is a
 scaffolder for [Claude Code](https://claude.com/claude-code) — most of the "code" is
 Markdown (skills, rules), a small Python renderer/setup pipeline, and a zero-dependency
 Node scaffolder. You don't need deep Node or Python expertise to contribute; you do
@@ -11,11 +11,11 @@ need to actually scaffold a project and run it to check your change.
 Requirements: **Node ≥ 18**, **Python ≥ 3.9**.
 
 ```bash
-git clone https://github.com/rchoularton/create-research-assistant.git
-cd create-research-assistant
+git clone https://github.com/rchoularton/wren.git
+cd wren
 ```
 
-There's nothing to `npm install` — the scaffolder (`bin/create-research-assistant.mjs`) is
+There's nothing to `npm install` — the scaffolder (`bin/create-wren.mjs`) is
 zero-dependency (Node built-ins only). The Python renderer needs one dependency:
 
 ```bash
@@ -26,11 +26,11 @@ python3 -m pip install -r requirements.txt
 
 Two ways to exercise a change, depending on what you're testing:
 
-**1. Scaffold a fresh project from your checkout** (tests `bin/create-research-assistant.mjs`
+**1. Scaffold a fresh project from your checkout** (tests `bin/create-wren.mjs`
 end to end — the real path a user takes):
 
 ```bash
-node bin/create-research-assistant.mjs /tmp/test-project
+node bin/create-wren.mjs /tmp/test-project
 cd /tmp/test-project
 ```
 
@@ -108,7 +108,7 @@ its conditional block into `.mcp.json.template`, and add any renderer logic it n
 
 There's no unit-test suite (yet) — the acceptance gate is:
 
-1. `node --check bin/create-research-assistant.mjs` (and any other `.mjs` file you
+1. `node --check bin/create-wren.mjs` (and any other `.mjs` file you
    touched) — syntax sanity.
 2. `python3 -m py_compile` over any Python file you touched.
 3. Scaffold clean into a **new temp directory** and confirm `npm run setup:verify`

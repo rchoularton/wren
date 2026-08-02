@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a skill, adapter, or improvement for the starter kit
+about: Suggest a skill, adapter, or improvement for Wren
 title: "[Feature] "
 labels: enhancement
 assignees: ""

@@ -21,7 +21,7 @@ Usage (manual events):
     ...
     notify("DONE", "My Script", duration_s=123.4)
 
-Notification grouping uses the NOTIFY_GROUP env var (default "research-assistant").
+Notification grouping uses the NOTIFY_GROUP env var (default "wren").
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ RUNNING_MD = PROJECT_ROOT / "RUNNING.md"
 
 # Locate terminal-notifier portably; fall back to the common Homebrew path.
 _TERMINAL_NOTIFIER = shutil.which("terminal-notifier") or "/opt/homebrew/bin/terminal-notifier"
-_NOTIFY_GROUP = os.environ.get("NOTIFY_GROUP", "research-assistant")
+_NOTIFY_GROUP = os.environ.get("NOTIFY_GROUP", "wren")
 
 # Sound names per event type (macOS built-in sounds)
 _SOUNDS = {

@@ -15,7 +15,7 @@ Everything below — the scaffolder, the paper workflow, every `/skill` — runs
 ## 1. Scaffold
 
 ```bash
-npm create research-assistant@latest my-research
+npm create wren@latest my-research
 cd my-research
 ```
 
