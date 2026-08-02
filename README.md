@@ -1,10 +1,31 @@
 # Research Assistant Starter Kit
 
+[![npm version](https://img.shields.io/npm/v/create-research-assistant)](https://www.npmjs.com/package/create-research-assistant)
+[![node](https://img.shields.io/node/v/create-research-assistant)](https://nodejs.org)
+[![license: MIT](https://img.shields.io/npm/l/create-research-assistant)](LICENSE)
+
 An agentic research assistant for [Claude Code](https://claude.com/claude-code) — the reusable scaffolding of a working PhD research system, generalised so you can point it at *your* field on day one.
 
 It gives you a **memory that persists across sessions**, a **paper workflow** with a Markdown↔Word build engine and a gold-standard freeze gate, **behaviour rules** that keep the assistant rigorous, and a **pluggable data + reference layer** — with **no external service required** to start.
 
 > Extracted and genericised from a disaster-risk-finance research system. All domain content, identity, hosting choices, and secrets have been stripped; you supply your own via one config file.
+
+<!-- A demo GIF is embedded here once the setup/usage video is rendered (see assets/demo.gif). -->
+
+📖 **Full documentation:** <https://rchoularton.github.io/create-research-assistant/>
+
+---
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    S["npm create<br/>research-assistant"] --> P["your project<br/>research-config.yml"]
+    P --> CC["Claude Code<br/>drives everything from the terminal"]
+    CC --> M["4-layer memory<br/>rules · session · corpus · per-paper"]
+    CC --> W["paper workflow<br/>Markdown ⇄ Word · freeze gate"]
+    CC --> D["pluggable data + references<br/>files → SQLite/DuckDB/Directus · BibTeX/Zotero"]
+```
 
 ---
 
@@ -28,17 +49,32 @@ It gives you a **memory that persists across sessions**, a **paper workflow** wi
 ```bash
 npm create research-assistant@latest my-research
 cd my-research
-# answer ~8 prompts → writes research-config.yml, renders templates, installs hooks
+# answer ~11 prompts → writes research-config.yml, renders templates, installs hooks, inits git
 ```
 
 Already cloned this repo instead?
 
 ```bash
-cp research-config.example.yml research-config.yml   # edit ~8 fields
+cp research-config.example.yml research-config.yml   # edit a handful of fields
 ./setup.sh
 ```
 
-Then open the folder in Claude Code and run `/paper`. See **[QUICKSTART.md](QUICKSTART.md)** for the full first-run walkthrough.
+Then open the folder in Claude Code and run `/paper`. See **[QUICKSTART.md](QUICKSTART.md)** for the full first-run walkthrough, or the [Getting Started guide](https://rchoularton.github.io/create-research-assistant/getting-started/).
+
+---
+
+## Skills
+
+Type these in Claude Code once the project is open. All 12 ship in the box:
+
+| | |
+|---|---|
+| **Orient & manage** | `/research` (workspace entry point) · `/paper` (portfolio: status, resume, start a paper) · `/setup` (reconfigure) |
+| **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/peer-review` |
+| **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) |
+| **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/rigor-check` (mid-task self-audit) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
+
+*Planned* (see [`ROADMAP.md`](ROADMAP.md)): `/qc-team` (adversarial QC) and `/figure` (figure design/critique) — these need an agent-team tier not yet in the kit.
 
 ---
 
@@ -52,21 +88,25 @@ See [`research-config.example.yml`](research-config.example.yml) for every field
 
 ## Tiers
 
-- **Core** (installs by default, zero external services): memory architecture, paper template + build engine, rules, hooks, notifications, the BibTeX reference adapter, the file-based data tier, and the writing skills (`/draft`, `/cover-letter`, `/revision-response`, `/peer-review`, `/literature-scan`, `/gold-standard`).
+- **Core** (installs by default, zero external services): memory architecture, paper template + build engine, rules, hooks, notifications, the BibTeX reference adapter, the file-based data tier, and the writing/discovery skills above.
 - **Corpus memory** (shipped, opt-in): a two-layer episodic + semantic memory over your literature and projects.
 - **Config-selectable backends**: local/managed databases (`docs/database.md`) and reference managers including Zotero (`docs/integrations.md`).
-- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): the QC (`/qc-team`) and figure-design (`/figure`) agent suites, weekly library tooling, and scheduled background jobs.
+- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): the QC and figure-design agent suites, weekly library tooling, and scheduled background jobs.
 
-See [`docs/`](docs/) for the database and integrations guides.
+Full guides on the [documentation site](https://rchoularton.github.io/create-research-assistant/).
 
 ---
 
 ## Requirements
 
-- [Claude Code](https://claude.com/claude-code)
+- [Claude Code](https://claude.com/claude-code) (new to it? see [Getting Started](https://rchoularton.github.io/create-research-assistant/getting-started/))
 - Node ≥ 18 and Python ≥ 3.9
 - macOS or Linux (scheduled jobs and desktop notifications are macOS-first; Linux uses cron and degrades notifications gracefully)
 - Optional: Docker (for the local Directus database tier), a reference manager
+
+## Contributing
+
+Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first contributions include porting the planned skills and adding database/reference adapters.
 
 ## License
 

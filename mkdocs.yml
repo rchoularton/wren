@@ -1,0 +1,77 @@
+site_name: Research Assistant Starter Kit
+site_description: An agentic research assistant for Claude Code — persistent memory, a paper workflow with a gold-standard freeze gate, and pluggable data + reference backends.
+site_url: https://rchoularton.github.io/create-research-assistant/
+repo_url: https://github.com/rchoularton/create-research-assistant
+repo_name: rchoularton/create-research-assistant
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path:
+        - "."
+        - "docs"
+
+# database.md and integrations.md are the canonical deep-reference pages,
+# surfaced via links from the Databases / References guides rather than nav.
+not_in_nav: |
+  /database.md
+  /integrations.md
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Concepts: concepts.md
+  - Skills: skills.md
+  - Guides:
+      - Papers & the build engine: guides/papers.md
+      - Corpus memory: guides/corpus-memory.md
+      - Databases: guides/databases.md
+      - References & integrations: guides/references.md
+  - Configuration: configuration.md
+  - Contributing: contributing.md
+  - Roadmap: roadmap.md
+  - Changelog: changelog.md

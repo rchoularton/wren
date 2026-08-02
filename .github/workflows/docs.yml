@@ -1,0 +1,37 @@
+name: Deploy docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+# NOTE (one-time repo setting, not covered by this workflow file): this job runs
+# `mkdocs gh-deploy`, which publishes the built site to a `gh-pages` branch. The
+# repo owner must set Settings → Pages → Source: "Deploy from a branch" →
+# Branch: `gh-pages` / `(root)` for the published site to be served. (The branch
+# is created automatically by the first successful run of this workflow.)
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install MkDocs Material
+        # Mermaid renders via pymdownx.superfences (bundled with mkdocs-material),
+        # so no separate mermaid plugin is needed.
+        run: pip install mkdocs-material
+
+      - name: Build and deploy to gh-pages
+        run: mkdocs gh-deploy --force
