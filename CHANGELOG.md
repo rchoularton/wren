@@ -3,6 +3,34 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [0.4.0] - 2026-08-02
+
+Adds a guided first-run experience so a new project starts with orientation and
+momentum instead of an empty paper portfolio.
+
+### Added
+- **Guided onboarding — `/setup wren`.** A conversational first-run flow: a short
+  tour of the system (four-layer memory, the 14-phase pipeline and gold-standard
+  gate, the skill map, and the audit/QC/peer-review functions), an interview about
+  the researcher's interests, data requirements, and paper ideas, tool + plugin
+  setup (database backend, reference manager, integrations) matched to those needs,
+  and their first paper — or a planned paper series. Honors the one-at-a-time,
+  no-unapproved-tasks, and rigor rules; flags `/qc-team` and `/figure` as
+  planned-not-shipped.
+- **`docs/welcome.md`** — a single-source quick guide the tour narrates from, added
+  to the docs nav.
+- **One-time fresh-project nudge** (`session-start-welcome.py` SessionStart hook):
+  points a new project at `/setup wren`, then self-disables via a `.wren/onboarded`
+  marker once onboarding completes. Silent outside a Wren project.
+
+### Changed
+- **`/setup` now has two modes.** `/setup wren` runs the guided onboarding above;
+  bare `/setup` keeps the plain reconfigure-the-renderer behavior.
+- **Post-scaffold handoff leads with `/setup wren`.** The `npm create wren` CLI
+  message and the `verify_install` success line now point at the guided tour (with
+  `/paper` as the jump-straight-in alternative); QUICKSTART, Getting Started, and the
+  README first step updated to match.
+
 ## [0.3.0] - 2026-08-02
 
 ### Changed
