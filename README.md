@@ -10,7 +10,7 @@ It gives you a **memory that persists across sessions**, a **paper workflow** wi
 
 > Extracted and genericised from a disaster-risk-finance research system. All domain content, identity, hosting choices, and secrets have been stripped; you supply your own via one config file.
 
-<!-- A demo GIF is embedded here once the setup/usage video is rendered (see assets/demo.gif). -->
+![Wren in the terminal — scaffold a project, then drive it from Claude Code](assets/demo.gif)
 
 📖 **Full documentation:** <https://rchoularton.github.io/wren/>
 
