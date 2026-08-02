@@ -3,6 +3,27 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [0.8.0] - 2026-08-02
+
+Adds headless scheduling + email and the weekly literature digest (roadmap milestone 0.8).
+`/librarian-team` (the heavier library-automation skill) is deferred to its own release, 0.8.1.
+
+### Added
+- **Scheduled-jobs + email tier** — `scripts/setup/install_scheduled.py` renders per-job runner
+  scripts and a launchd agent (macOS) or cron line (Linux) from `research-config.yml`, and
+  prints the exact activation command rather than registering the job itself. `./setup.sh
+  --with-schedule` now runs it. Cross-platform, opt-in, nothing scheduled until you enable and
+  activate a job. Docs: [Scheduled jobs](https://rchoularton.github.io/wren/guides/scheduled-jobs/).
+- **`/lit-digest`** `[--since N] [--paper <id>]` — a fast cross-paper sweep for new
+  publications: one web search per paper, aggregated into a markdown + JSON digest under
+  `outputs/lit_digests/`, with an optional Gmail draft (never sent). Headless-safe, so the
+  `weekly_digest` scheduled job runs it unattended.
+
+### Changed
+- Gmail is wired as a Claude-account-connected integration; the digest job includes
+  `mcp__claude_ai_Gmail__create_draft` in its `--allowedTools` only when
+  `integrations.gmail.enabled`. Wren ships 18 skills.
+
 ## [0.7.0] - 2026-08-02
 
 Introduces the sub-agent tier, the two flagship agent-team review skills, and cost-aware
