@@ -16,7 +16,8 @@
     "paper:status": "python3 scripts/paper_utils/status.py",
     "paper:list": "python3 scripts/paper_utils/status.py",
     "memory:bootstrap": "node scripts/research_memory/bootstrap.mjs",
-    "memory:audit": "node scripts/research_memory/audit.mjs"
+    "memory:audit": "node scripts/research_memory/audit.mjs",
+    "tokens": "python3 scripts/utils/token_report.py"
   },
   "keywords": [
     "claude-code",
