@@ -1,6 +1,6 @@
 {
   "name": "create-wren",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Scaffold a generic, agentic research assistant for Claude Code — memory architecture, paper workflow, pluggable data & reference backends.",
   "type": "module",
   "bin": {
