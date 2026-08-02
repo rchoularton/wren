@@ -1,6 +1,6 @@
 # Skills
 
-Type these as slash commands in Claude Code once your project is open. All 17 ship in the box, grouped by what they do.
+Type these as slash commands in Claude Code once your project is open. All 18 ship in the box, grouped by what they do.
 
 ## Orient & manage
 
@@ -27,6 +27,7 @@ Type these as slash commands in Claude Code once your project is open. All 17 sh
 |---|---|
 | `/literature-scan` `[topic-or-paper-id]` | Search recent publications on a topic — flag scooping risks, find citation gaps. |
 | `/zotero-audit` `[--collection <name>] [--since <date>] [--fix]` | Scan your Zotero library for items missing metadata, tags, PDFs, or collections; auto-complete from Crossref. Needs the `zotero` provider. |
+| `/lit-digest` `[--since N] [--paper <id>]` | Fast cross-paper sweep for new publications → one digest + an optional Gmail draft. Runs headless on a schedule. See [Scheduled jobs](guides/scheduled-jobs.md). |
 
 ## Rigor & memory
 

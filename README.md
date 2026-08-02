@@ -73,7 +73,7 @@ Type these in Claude Code once the project is open. All 12 ship in the box:
 |---|---|
 | **Orient & manage** | `/research` (workspace entry point) · `/paper` (portfolio: status, resume, start a paper) · `/setup wren` (guided onboarding) · `/setup` (reconfigure) |
 | **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/ref-check` (validate citations) · `/peer-review` · `/figure` (figure design → critique loop) |
-| **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/zotero-audit` (library hygiene) |
+| **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/lit-digest` (weekly cross-paper sweep → digest) · `/zotero-audit` (library hygiene) |
 | **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/qc-team` (3-agent adversarial QC) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
 
 As of 0.7 the sub-agent tier ships, and with it `/qc-team` and `/figure`. What's next is on the [roadmap](https://rchoularton.github.io/wren/roadmap/).
@@ -94,7 +94,8 @@ See [`research-config.example.yml`](research-config.example.yml) for every field
 - **Corpus memory** (shipped, opt-in): a two-layer episodic + semantic memory over your literature and projects.
 - **Config-selectable backends**: local/managed databases (`docs/database.md`) and reference managers including Zotero (`docs/integrations.md`).
 - **Token-aware** (as of 0.7): model-routing tiers + a `npm run tokens` usage report, so cheap work runs on cheap models.
-- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): weekly library tooling, scheduled background jobs, a second-brain memory lens, and multi-author collaboration.
+- **Scheduled jobs** (as of 0.8, opt-in): headless recurring tasks like a weekly `/lit-digest` drafted to your inbox — launchd (macOS) or cron (Linux).
+- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): weekly library tooling (`/librarian-team`), a second-brain memory lens, and multi-author collaboration.
 
 Full guides on the [documentation site](https://rchoularton.github.io/wren/).
 
