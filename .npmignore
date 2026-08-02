@@ -37,6 +37,9 @@ data/*.db
 data/directus/
 data/docker-compose.directus.yml
 
+# Demo assets (README/docs only; not needed in a scaffolded project)
+assets/
+
 # Node / Python / OS
 node_modules/
 __pycache__/
