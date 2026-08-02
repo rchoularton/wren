@@ -35,7 +35,10 @@
       "Skill(cover-letter)",
       "Skill(revision-response)",
       "Skill(peer-review)",
-      "Skill(literature-scan)"
+      "Skill(literature-scan)",
+      "Skill(methods-audit)",
+      "Skill(ref-check)",
+      "Skill(zotero-audit)"
     ],
     "deny": []
   },

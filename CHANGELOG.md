@@ -3,6 +3,23 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [0.6.0] - 2026-08-02
+
+Three new skills, genericized from the private research system — quick rigor and reference
+wins (roadmap milestone 0.6).
+
+### Added
+- **`/methods-audit`** `[paper-id] [--fix]` — audits a paper's analysis scripts for
+  exploration artifacts, stale intermediates, reproducibility gaps (missing seeds, absolute
+  paths), inconsistent parameters, and statistical gaps, cross-checked against `METHODS_LOG.md`.
+  A QC pass to run before the gold-standard freeze.
+- **`/ref-check`** `[paper-id] [--format] [--gaps] [--zotero]` — validates a draft's citations
+  against your reference library (Zotero MCP or the `.bib` file), finds uncited claims,
+  verifies sources support their claims, and checks formatting against the target journal.
+- **`/zotero-audit`** `[--collection <name>] [--since <date>] [--fix]` — scans a Zotero library
+  for items missing metadata, tags, PDFs, or collections; classifies severity; and can
+  auto-complete metadata from Crossref (per-item approval). Needs `references.provider: zotero`.
+
 ## [0.5.0] - 2026-08-02
 
 Brings the Wren logo to every surface it can reach.
