@@ -76,5 +76,6 @@ nav:
       - References & integrations: guides/references.md
   - Configuration: configuration.md
   - Contributing: contributing.md
+  - Maintaining: maintaining.md
   - Roadmap: roadmap.md
   - Changelog: changelog.md
