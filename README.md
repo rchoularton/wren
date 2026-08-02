@@ -72,9 +72,9 @@ Type these in Claude Code once the project is open. All 12 ship in the box:
 | | |
 |---|---|
 | **Orient & manage** | `/research` (workspace entry point) · `/paper` (portfolio: status, resume, start a paper) · `/setup wren` (guided onboarding) · `/setup` (reconfigure) |
-| **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/peer-review` |
-| **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) |
-| **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/rigor-check` (mid-task self-audit) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
+| **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/ref-check` (validate citations) · `/peer-review` |
+| **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/zotero-audit` (library hygiene) |
+| **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
 
 *Planned* (see [`ROADMAP.md`](ROADMAP.md)): `/qc-team` (adversarial QC) and `/figure` (figure design/critique) — these need an agent-team tier not yet in the kit.
 
