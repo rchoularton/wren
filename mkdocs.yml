@@ -74,6 +74,7 @@ nav:
       - Corpus memory: guides/corpus-memory.md
       - Databases: guides/databases.md
       - References & integrations: guides/references.md
+      - Scheduled jobs: guides/scheduled-jobs.md
   - Configuration: configuration.md
   - Contributing: contributing.md
   - Maintaining: maintaining.md

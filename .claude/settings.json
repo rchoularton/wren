@@ -40,7 +40,8 @@
       "Skill(ref-check)",
       "Skill(zotero-audit)",
       "Skill(qc-team)",
-      "Skill(figure)"
+      "Skill(figure)",
+      "Skill(lit-digest)"
     ],
     "deny": []
   },

@@ -15,7 +15,8 @@ see its issues and live progress. Versions follow [semantic versioning](maintain
 |---|---|---|
 | **0.6** | Quick rigor & reference wins | `/methods-audit`, `/ref-check`, `/zotero-audit` |
 | **0.7** | Review agent-team + token management | `/qc-team`, `/figure` (introduces the sub-agent tier); model-routing tiers + a token-usage report |
-| **0.8** | Scheduled automation + library | `/lit-digest`, `/librarian-team` — adds scheduled jobs + email |
+| **0.8** | Scheduled jobs + weekly digest | `/lit-digest` + the scheduled-jobs/email tier (launchd/cron) |
+| **0.8.1** | Library automation | `/librarian-team` — weekly Zotero audit + discovery (deferred from 0.8; heavier) |
 | **0.9** | Submission-grade audit | `/claim-audit` — enumerated, adversarial manuscript audit |
 | **1.0** | Stable release | a light test suite, polish, docs, announcement |
 | **1.1** | Second brain | opt-in Obsidian/wikilink lens on your memory — a map-of-content + graph and an optional vault; your files and the terminal stay primary |
