@@ -63,6 +63,7 @@ not_in_nav: |
 
 nav:
   - Home: index.md
+  - Welcome: welcome.md
   - Getting Started: getting-started.md
   - Concepts: concepts.md
   - Skills: skills.md

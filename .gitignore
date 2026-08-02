@@ -9,6 +9,7 @@ CLAUDE_REFERENCE.md
 
 # Runtime / ambient
 .current_paper
+.wren/
 RUNNING.md
 outputs/_logs/*
 !outputs/_logs/.gitkeep

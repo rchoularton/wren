@@ -21,6 +21,7 @@
       "Bash(npm run:*)",
       "Bash(pip install:*)",
       "Bash(mkdir:*)",
+      "Bash(cp:*)",
       "Bash(./setup.sh:*)",
       "WebSearch",
       "WebFetch",
@@ -45,6 +46,10 @@
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start-learnings.py\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start-welcome.py\""
           }
         ]
       }

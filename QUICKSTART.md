@@ -27,17 +27,19 @@ The Core needs none of these.
 
 ## 3. Open in Claude Code
 
-Open the folder in Claude Code. On start, the **SessionStart hook** surfaces any recent `/retro` learnings (none yet — that's expected).
+Open the folder in Claude Code. On start, the **SessionStart hook** surfaces any recent `/retro` learnings (none yet — that's expected) and, on a fresh project, nudges you to run the guided onboarding.
 
-## 4. Start a paper
+## 4. Run the guided onboarding
 
 Run:
 
 ```
-/paper
+/setup wren
 ```
 
-Duplicate the example to begin a real one:
+This is the recommended first step. It gives you a short tour of the system, asks a few questions about your research, sets up the right tools (database backend, references) to match, and starts your first paper — or plans a paper series — so you finish with real momentum. See [Welcome](https://rchoularton.github.io/wren/welcome/) for the same tour in writing.
+
+Prefer to jump straight in? Run `/paper`, or duplicate the example by hand:
 
 ```bash
 cp -r papers/example-paper papers/my-first-paper

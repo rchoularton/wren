@@ -59,7 +59,7 @@ cp research-config.example.yml research-config.yml   # edit a handful of fields
 ./setup.sh
 ```
 
-Then open the folder in Claude Code and run `/paper`. See **[QUICKSTART.md](QUICKSTART.md)** for the full first-run walkthrough, or the [Getting Started guide](https://rchoularton.github.io/wren/getting-started/).
+Then open the folder in Claude Code and run `/setup wren` — a guided tour that interviews you, sets up the right tools, and starts your first paper. (Prefer to jump in? Run `/paper`.) See **[QUICKSTART.md](QUICKSTART.md)** for the full first-run walkthrough, or the [Getting Started guide](https://rchoularton.github.io/wren/getting-started/).
 
 ---
 
@@ -69,7 +69,7 @@ Type these in Claude Code once the project is open. All 12 ship in the box:
 
 | | |
 |---|---|
-| **Orient & manage** | `/research` (workspace entry point) · `/paper` (portfolio: status, resume, start a paper) · `/setup` (reconfigure) |
+| **Orient & manage** | `/research` (workspace entry point) · `/paper` (portfolio: status, resume, start a paper) · `/setup wren` (guided onboarding) · `/setup` (reconfigure) |
 | **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/peer-review` |
 | **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) |
 | **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/rigor-check` (mid-task self-audit) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |

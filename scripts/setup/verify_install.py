@@ -105,7 +105,7 @@ def main() -> None:
     if hard_failures:
         print(f"{RED}Install verification failed: {hard_failures} hard check(s).{RESET}")
         sys.exit(1)
-    print(f"{GREEN}Install verified.{RESET} Open in Claude Code and run /paper to begin.")
+    print(f"{GREEN}Install verified.{RESET} Open in Claude Code and run /setup wren for a guided tour, or /paper to jump in.")
 
 
 if __name__ == "__main__":

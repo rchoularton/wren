@@ -262,7 +262,11 @@ tiers:
   }
 
   const cdHint = relative(process.cwd(), root) || '.';
-  console.log(`\n  Done. Open the project in Claude Code:\n    cd ${cdHint}\n  then try:  /paper\n`);
+  console.log(
+    `\n  Done. Open the project in Claude Code:\n    cd ${cdHint}\n` +
+    `  then run:  /setup wren   (a guided tour + your first paper)\n` +
+    `  or:        /paper         (jump straight in)\n`
+  );
 }
 
 main().catch((e) => {
