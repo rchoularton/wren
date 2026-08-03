@@ -29,6 +29,9 @@ review / synthesis → `opus`; standard drafting/analysis → `sonnet`; routine/
   orchestrated by the `/qc-team` skill.
 - `figure-designer`, `scientific-graphics-reviewer` — the figure-iteration loop, orchestrated
   by the `/figure` skill.
+- `peer-reviewer-methods`, `peer-reviewer-significance`, `peer-reviewer-presentation`,
+  `peer-review-editor` — three independent referees plus a handling editor, orchestrated by the
+  `/peer-review` skill. The presentation referee runs on `sonnet`; the rest on `opus`.
 
 Agents are invoked **by skills**, not typed as slash commands. Add your own by dropping a new
 `name.md` here and referencing it from a skill.

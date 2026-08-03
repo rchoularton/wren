@@ -3,6 +3,35 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [0.9.0] - 2026-08-03
+
+Rebuilds `/peer-review` as a multi-agent suite, completing the roadmap's "QC / figure /
+peer-review agent suites" trio (`/qc-team` and `/figure` shipped the pattern in 0.7).
+
+### Changed
+- **`/peer-review` is now an orchestrated agent suite, not a single forked context.** The skill
+  drops `context: fork` and runs on the main loop, so its guidelines and comparative-analysis
+  checkpoints are real pauses instead of self-checks. It runs the two web-research stages
+  (journal guidelines, comparable papers), fans out to three independent referee sub-agents, then
+  hands a handling editor the finished reports. Existing output filenames (`peer_review_v{N}.md`,
+  `recommendations_v{N}.md`) are unchanged; two new per-referee reports are added alongside them.
+
+### Added
+- **Four peer-review sub-agents** (`.claude/agents/`), mirroring the `/qc-team` structure —
+  isolated so no referee is primed by another's reasoning:
+  - `peer-reviewer-methods` (`opus`) — methods, data, statistics, reproducibility; scores
+    Methodology.
+  - `peer-reviewer-significance` (`opus`) — originality, contribution, literature, journal fit;
+    scores Originality, Significance, Journal Fit.
+  - `peer-reviewer-presentation` (`sonnet`) — writing, structure, figures, format limits; scores
+    Presentation. On the produce tier because presentation critique is lighter than the methods
+    and significance passes (see the token-budget rule).
+  - `peer-review-editor` (`opus`) — reconciles the three reports, spot-checks the highest-stakes
+    disputes against the source data, computes the weighted overall, and issues the decision plus
+    a deduplicated, prioritized action list.
+
+Wren still ships 18 skills; the sub-agent tier grows from 5 to 9 agents.
+
 ## [0.8.0] - 2026-08-02
 
 Adds headless scheduling + email and the weekly literature digest (roadmap milestone 0.8).

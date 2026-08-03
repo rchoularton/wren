@@ -11,7 +11,7 @@ Your project's development priorities. This file is for **Development Mode** wor
 
 - [ ] Corpus memory automation — build the Zotero-ingestion engine (see `research_memory/README.md`)
 - [ ] Scheduled jobs — nightly/weekly headless tasks (notifications, digests)
-- [ ] QC / figure / peer-review agent suites — adversarial review and figure polishing
+- [x] QC / figure / peer-review agent suites — adversarial review and figure polishing (`/qc-team` + `/figure` in 0.7; `/peer-review` suite in 0.9)
 - [ ] A local database tier — SQLite/DuckDB (`docs/database.md`) or self-hosted Directus
 
 ## Your priorities
