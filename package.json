@@ -1,7 +1,7 @@
 {
   "name": "create-wren",
   "version": "0.8.0",
-  "description": "Scaffold a generic, agentic research assistant for Claude Code — memory architecture, paper workflow, pluggable data & reference backends.",
+  "description": "An open-source AI research partner for Claude Code — from your first dataset to your final draft, on your machine, in your terminal.",
   "type": "module",
   "bin": {
     "create-wren": "bin/create-wren.mjs"

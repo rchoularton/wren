@@ -6,9 +6,11 @@
 [![node](https://img.shields.io/node/v/create-wren)](https://nodejs.org)
 [![license: MIT](https://img.shields.io/npm/l/create-wren)](LICENSE)
 
-An agentic research assistant for [Claude Code](https://claude.com/claude-code) — the reusable scaffolding of a working PhD research system, generalised so you can point it at *your* field on day one.
+**A research partner that remembers — from first dataset to final draft.**
 
-It gives you a **memory that persists across sessions**, a **paper workflow** with a Markdown↔Word build engine and a gold-standard freeze gate, **behaviour rules** that keep the assistant rigorous, and a **pluggable data + reference layer** — with **no external service required** to start.
+Most AI tools forget your project the moment you close them. Wren doesn't. It turns [Claude Code](https://claude.com/claude-code) into a partner that knows your research, checks its own work, and helps you draft, cite, illustrate, and revise your way to a finished paper.
+
+It runs entirely on your own machine, adds no accounts or services beyond Claude Code itself, and keeps everything it learns about your work private to you. Point it at *your* field on day one.
 
 > Extracted and genericised from a disaster-risk-finance research system. All domain content, identity, hosting choices, and secrets have been stripped; you supply your own via one config file.
 
@@ -18,15 +20,54 @@ It gives you a **memory that persists across sessions**, a **paper workflow** wi
 
 ---
 
-## How it fits together
+## From first dataset to final draft
+
+Every paper runs through a **14-phase pipeline** with one hard gate: **no prose until the analysis is frozen.** Phase 7 verifies your results, git-tags them, and archives them as the paper's gold standard — so a draft can never drift away from the numbers beneath it.
 
 ```mermaid
 flowchart LR
-    S["npm create<br/>wren"] --> P["your project<br/>research-config.yml"]
-    P --> CC["Claude Code<br/>drives everything from the terminal"]
-    CC --> M["4-layer memory<br/>rules · session · corpus · per-paper"]
-    CC --> W["paper workflow<br/>Markdown ⇄ Word · freeze gate"]
-    CC --> D["pluggable data + references<br/>files → SQLite/DuckDB/Directus · BibTeX/Zotero"]
+    subgraph A["🔬 Analysis"]
+        direction LR
+        P1["1 · Scope"] --> P2["2 · Data"] --> P3["3 · Explore"] --> P4["4 · Methods"] --> P5["5 · Build"] --> P6["6 · QC · /qc-team"]
+    end
+    P6 --> GATE{{"🔒 Phase 7 · Freeze · /gold-standard"}}
+    subgraph B["✍️ Writing"]
+        direction LR
+        P8["8 · Draft · /draft"] --> P9["9 · Figures · /figure"] --> P10["10 · Review"] --> P11["11 · QC draft"] --> P12["12 · Submit · /cover-letter"] --> P13["13 · Revise · /revision-response"] --> P14["14 · Publish"]
+    end
+    GATE --> P8
+    style GATE fill:#fde68a,stroke:#b45309,stroke-width:2px,color:#000
+```
+
+## Your research toolkit
+
+Eighteen skills — each a slash-command you type in Claude Code — grouped by the job they do. Full one-line descriptions are in [Skills](#skills) below.
+
+```mermaid
+mindmap
+  root(("Wren — 18 skills"))
+    Orient
+      /research
+      /paper
+      /setup
+    Discover
+      /literature-scan
+      /lit-digest
+      /zotero-audit
+    Write and submit
+      /draft
+      /figure
+      /ref-check
+      /cover-letter
+      /revision-response
+      /peer-review
+    Rigor and memory
+      /gold-standard
+      /qc-team
+      /methods-audit
+      /rigor-check
+      /research-memory
+      /retro
 ```
 
 ---
@@ -42,7 +83,7 @@ flowchart LR
 | **Pluggable references** | Universal BibTeX/CSL-JSON adapter works with *any* manager. Opt into live Zotero via MCP. Mendeley supported via `.bib` export. |
 | **Ambient signals** | Long jobs post macOS notifications and log to `RUNNING.md`; degrade gracefully off macOS. |
 
-**Nothing in the core needs Zotero, a database, a scheduler, or any account.** Those are opt-in modules you enable in one config file.
+**Beyond Claude Code itself, nothing in the core needs Zotero, a database, a scheduler, or any other account.** Those are opt-in modules you enable in one config file.
 
 ---
 
@@ -67,7 +108,7 @@ Then open the folder in Claude Code and run `/setup wren` — a guided tour that
 
 ## Skills
 
-Type these in Claude Code once the project is open. All 12 ship in the box:
+Type these in Claude Code once the project is open. All 18 ship in the box:
 
 | | |
 |---|---|
@@ -76,7 +117,7 @@ Type these in Claude Code once the project is open. All 12 ship in the box:
 | **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/lit-digest` (weekly cross-paper sweep → digest) · `/zotero-audit` (library hygiene) |
 | **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/qc-team` (3-agent adversarial QC) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
 
-As of 0.7 the sub-agent tier ships, and with it `/qc-team` and `/figure`. What's next is on the [roadmap](https://rchoularton.github.io/wren/roadmap/).
+Some skills — like `/qc-team` and `/figure` — spin up background sub-agents to run adversarial review and figure critique loops. What's next is on the [roadmap](https://rchoularton.github.io/wren/roadmap/).
 
 ---
 
@@ -103,7 +144,7 @@ Full guides on the [documentation site](https://rchoularton.github.io/wren/).
 
 ## Requirements
 
-- [Claude Code](https://claude.com/claude-code) (new to it? see [Getting Started](https://rchoularton.github.io/wren/getting-started/))
+- [Claude Code](https://claude.com/claude-code) and a Claude account to run it — a Pro or Max subscription, or Anthropic API access (new to it? see [Getting Started](https://rchoularton.github.io/wren/getting-started/))
 - Node ≥ 18 and Python ≥ 3.9
 - macOS or Linux (scheduled jobs and desktop notifications are macOS-first; Linux uses cron and degrades notifications gracefully)
 - Optional: Docker (for the local Directus database tier), a reference manager
