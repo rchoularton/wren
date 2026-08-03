@@ -44,7 +44,7 @@ full pipeline diagram in [Concepts → the 14-phase pipeline](concepts.md#the-14
 
 ## 3. The skills
 
-Type these as slash commands once your project is open. All 12 ship in the box —
+Type these as slash commands once your project is open. All 18 ship in the box —
 [full reference](skills.md).
 
 - **Orient & manage** — `/research`, `/paper`, `/setup`
@@ -68,7 +68,7 @@ phases manually — see the [Roadmap](roadmap.md).
 
 ## 5. Pluggable tools
 
-Nothing in the core needs a database, a reference manager, or any account. You choose the
+Beyond Claude Code itself, nothing in the core needs a database, a reference manager, or any other account. You choose the
 backends per project in `research-config.yml`, and `/setup wren` sets them up to match
 your data:
 

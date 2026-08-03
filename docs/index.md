@@ -31,7 +31,7 @@ flowchart LR
 | **Pluggable references** | Universal BibTeX/CSL-JSON adapter works with *any* manager. Opt into live Zotero via MCP. Mendeley supported via `.bib` export. See [References & integrations](guides/references.md). |
 | **Ambient signals** | Long jobs post macOS notifications and log to `RUNNING.md`; degrade gracefully off macOS. |
 
-**Nothing in the core needs Zotero, a database, a scheduler, or any account.** Those are opt-in modules you enable in one config file.
+**Beyond Claude Code itself, nothing in the core needs Zotero, a database, a scheduler, or any other account.** Those are opt-in modules you enable in one config file.
 
 ## Quick start (≈15 minutes)
 
@@ -45,7 +45,7 @@ Then open the folder in Claude Code and run `/paper`. See [Getting Started](gett
 
 ## Skills
 
-All 12 shipped skills are documented on the [Skills](skills.md) page, grouped by what they do: orient & manage, write & submit, discover, and rigor & memory.
+All 18 shipped skills are documented on the [Skills](skills.md) page, grouped by what they do: orient & manage, write & submit, discover, and rigor & memory.
 
 ## Requirements
 
