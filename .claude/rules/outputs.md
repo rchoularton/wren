@@ -32,7 +32,7 @@ Not alongside data files.
 
 ## 5. Archive stale directories promptly
 
-When a directory goes stale, move it to `outputs/ARCHIVED_<reason>/` and note it in MANIFEST.md.
+When a file or directory goes stale, rename it in place with the suffix `_archived_<YYYY-MM-DD>` and note it in MANIFEST.md. `outputs/ARCHIVED_<reason>/` is reserved for periodic sweeps of whole directories. Check for active readers before archiving (grep `scripts/`, `papers/*/code/`, `.claude/`, `package.json`). Never delete.
 
 ## 6. Paper-specific outputs live in the paper folder
 
