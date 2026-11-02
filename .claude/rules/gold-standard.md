@@ -16,7 +16,7 @@ Analysis is **frozen**, then **tested**, then **reviewed**.
 
 The mechanics of executing a freeze are owned by `/gold-standard` (`.claude/skills/gold-standard/SKILL.md`). That skill is authoritative. This rule governs the days *between* freezes, which the skill does not reach.
 
-Tags follow the convention `{paper_id}-gold-v{n}`, for example `{paper_id}-gold-v1`. The tag is the immutable reference for that freeze.
+Tags follow the convention `{id}-gold-v{n}`, for example `{id}-gold-v1`. The tag is the immutable reference for that freeze.
 
 ### Frozen means immutable
 
@@ -24,13 +24,12 @@ A frozen artifact is never edited, corrected, or patched. Not for a typo, not fo
 
 ### A change means a new version
 
-When the user decides to change something, cut version n+1 as a deliberate, complete rebuild. Versions are integers only.
+When the user decides to change something, cut version n+1 as a deliberate, complete rebuild. Do not tinker around the edges, and do not offer carry-forward, subset, or "faster" partial-rebuild options. Versions are integers only.
 
-**Decimal versions are the warning sign.** A `v3.1` or `v3.2` is by construction a patch to v3 rather than a new version, and it is exactly the pattern this rule exists to stop. If one appears, stop and raise it with the user.
-
+**Decimal versions are the warning sign.** A `v3.1` or `v3.2` is by construction a patch to v3 rather than a new version, and it is exactly the pattern this rule exists to stop.
 ### Versions are documented
 
-Every new version records what changed and why, in its own manifest or changelog and in `papers/{id}/METHODS_LOG.md`. A version whose rationale is not written down is not finished.
+Every new version records what changed and why, in its `FREEZE_NOTES.md` and in `papers/{id}/METHODS_LOG.md`. A version whose rationale is not written down is not finished.
 
 ### Superseded freezes are archived, never deleted
 

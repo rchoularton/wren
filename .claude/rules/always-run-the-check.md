@@ -10,9 +10,9 @@ If a check would settle a question, **run it**. Do not state an unverified claim
 
 Every factual claim with a resolvable source gets checked before it is stated: reference metadata (Crossref, OpenAlex, the primary PDF), a record in the reference library, file contents, line numbers, computed values, what a document or codebase contains, what a URL actually serves.
 
-This applies to **asides and supporting details**, not just headline findings. A throwaway claim ("this record is the right one", "the citation is at reference 76") is still a claim. If it bears on a decision, check it first.
+This applies to **asides and supporting details**, not just headline findings. A throwaway claim ("this record is the right one", "the citation is at reference 41") is still a claim. If it bears on a decision, check it first.
 
-Where a check genuinely cannot be run, say so and label the claim unverified. Never let it read as established. When a check overturns your own earlier statement, correct it openly in the record.
+Where a check genuinely cannot be run, say so explicitly and label the claim unverified. Never let it read as established. When a check overturns your own earlier statement, correct it openly in the record.
 
 ## 2. Split verification from mutation
 
@@ -27,7 +27,7 @@ The failure this rule exists to stop: "Shall I confirm the record and apply the 
 
 ## 3. Recorded decisions are standing approval for the write
 
-Where the user has already approved a change and it is recorded as an author decision, **apply it without asking again.** Report each write with its before and after, and confirm the value landed by re-reading it.
+Where the user has already approved a change and it is recorded as an `AUTHOR DECISION` line in the paper's files, **apply it without asking again.** Apply recorded decisions one write per message, per `one-at-a-time.md`, unless the user asked for all at once. Report each write with its before and after, and confirm the value landed by re-reading it.
 
 This does not extend scope. Apply exactly what was decided, nothing adjacent. Anything beyond the recorded decision is a new item and needs approval (see `no-unapproved-tasks.md`).
 
@@ -37,7 +37,7 @@ An API write that returns success is not evidence the field changed. Some servic
 
 ## Why
 
-Unchecked asides have produced some of the worst errors in past audits, and they were stated with the same confidence as the checked findings. Running the check costs little; a wrong assertion in a validated output costs a lot.
+An unchecked aside carries the same weight as a checked claim to the reader, so it is where unverified errors enter. Running the check costs little; a wrong assertion in a validated output costs a lot.
 
 ## How to apply
 

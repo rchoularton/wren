@@ -12,7 +12,7 @@ description: Output & file-management conventions. Loads when working in outputs
 
 Do not create a new directory alongside an original (e.g. `figures_v2/`, `analysis_v2/`). Instead:
 
-- Archive the old directory: rename with an `_archived` suffix (e.g. `figures_archived/`)
+- Archive the old directory: rename in place with an `_archived_<YYYY-MM-DD>` suffix (e.g. `figures_archived_2026-11-02/`)
 - Reuse the original name for the new version
 - If temporary parallel comparison is genuinely needed, use a **dated suffix**: `figures_20260318/`
 
