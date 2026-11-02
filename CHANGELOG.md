@@ -3,6 +3,11 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [Unreleased]
+
+### Added
+- `.claude/lib/doc_to_md.py` + `normalize-to-md.mjs` (`npm run doc:md -- <file>`): converts PDF, docx, xlsx and pptx to Markdown once, cached under `.cache/md/` keyed on path + mtime + size; wired into six skills that read documents (#23).
+
 ## [0.9.0] - 2026-11-02
 
 The review suite plus harness-enforced rigor: `/peer-review` becomes a multi-agent suite,

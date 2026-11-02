@@ -42,3 +42,6 @@ venv/
 
 # OS
 .DS_Store
+
+# Document-to-Markdown cache (.claude/lib/doc_to_md.py)
+.cache/

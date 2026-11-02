@@ -7,6 +7,12 @@ pyyaml>=6.0          # read research-config.yml in the setup renderer
 python-docx>=1.1.0
 markdown>=3.5
 
+# Optional, for reading documents cheaply (.claude/lib/doc_to_md.py). Each is detected at
+# runtime; docx works with python-docx above, pandoc (a binary) is used first if on PATH.
+# pdfplumber>=0.10     # PDF fallback when poppler's pdftotext is not installed
+# openpyxl>=3.1        # .xlsx
+# python-pptx>=0.6     # .pptx
+
 # Optional, for sqlite/duckdb database tiers:
 # duckdb>=0.10
 # pandas>=2.0

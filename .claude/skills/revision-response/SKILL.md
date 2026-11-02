@@ -26,6 +26,8 @@ Structure a point-by-point response to journal reviewer comments. Organizes the 
 4. Read the submitted manuscript in `papers/{id}/drafts/`.
 5. Read the frozen outputs in `papers/{id}/gold_standard/` for any data verification the response will need.
 
+**Reading documents.** Before reading the submitted manuscript or a reviewer-comments file that is a PDF or Word file, run `python3 .claude/lib/doc_to_md.py <file>` and read the Markdown path it prints. The result is cached in `.cache/md/`, so repeat reads cost almost nothing.
+
 ### Step 2: Parse reviewer comments
 
 Extract and categorize each comment:

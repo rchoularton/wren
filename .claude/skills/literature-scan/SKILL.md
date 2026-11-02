@@ -66,6 +66,8 @@ Look for:
 - Recent datasets, or updates to the data the paper uses.
 - Reports or reviews that cite similar findings.
 
+**Reading documents.** When a search turns up a PDF or Word file to read, run `python3 .claude/lib/doc_to_md.py <file>` first and read the Markdown path it prints instead of the original. Conversion happens once and is cached in `.cache/md/`, so repeat reads cost almost nothing.
+
 ### Step 4: Check the reference library
 
 Cross-reference each finding against the user's own references, using whichever provider `research-config.yml` → `references.provider` names:

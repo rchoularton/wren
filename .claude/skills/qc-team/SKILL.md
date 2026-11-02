@@ -29,6 +29,8 @@ outputs the paper cites (CSV/JSON in `outputs/` or `papers/{id}/outputs/`); and 
 reviews under `papers/{id}/reviews/` (to catch regressions). Compute the next version number
 `N` (highest existing `*_v{N}.md` + 1).
 
+**Reading documents.** If the draft is a PDF or Word file, run `python3 .claude/lib/doc_to_md.py <file>` and read the Markdown path it prints, and pass that path to the sub-agents. The result is cached in `.cache/md/`, so repeat reads cost almost nothing.
+
 ### Step 1 — Skeptic
 Invoke the **`qc-skeptic`** sub-agent via the Agent tool with a self-contained brief: the
 paper id, the absolute draft path, the absolute paths of the data files the paper cites (list
