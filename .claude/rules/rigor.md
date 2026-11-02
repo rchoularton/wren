@@ -38,6 +38,8 @@ When a skill or workflow defines a multi-stage process, run **every** stage. Do 
 
 If a stage genuinely cannot run as designed, **say so up front and run it another way** — do not quietly drop it. When reporting results, state which stages ran and which did not. Never present a headline verdict (a score, an "accept", a "verified") as if the full process backed it when part was skipped.
 
+For `/peer-review` and `/qc-team` this is enforced structurally: the `post-agent-review-gate` hook blocks a `peer-review-editor` or `qc-team-leader` verdict when a required prior-stage file for that paper and version is missing. A missing comparative analysis only warns, so a skipped Stage 2 is surfaced rather than silent.
+
 **Why:** A competent-looking shortcut is worse than no answer, because it hides the gap. The system's entire value is gold-standard rigor.
 
 ## Mid-task check-in

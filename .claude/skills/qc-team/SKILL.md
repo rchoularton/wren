@@ -64,6 +64,8 @@ papers/{id}/reviews/
   team_leader_synthesis_v{N}.md   ← qc-team-leader
 ```
 
+The team-leader verdict is gated on the prior stage files: the `post-agent-review-gate` hook blocks it if `skeptic_review_v{N}.md` or `responder_review_v{N}.md` is missing.
+
 ## Why three sub-agents, not one loop
 - **Context isolation** — the Responder seeing only the Skeptic's written review (not its
   reasoning trace) gives a cleaner adversarial signal.
