@@ -54,20 +54,41 @@ VERDICT_STAGES = {
 SLUG = r"[A-Za-z0-9][A-Za-z0-9_-]*"
 
 
-def pin_paper_and_version(prompt: str):
+# Filename stems that are INPUTS to each verdict agent. Other review files a brief
+# may cite (the verdict's own outputs, prior-round files) never pin the run.
+INPUT_STEMS = {
+    "peer-review-editor": {
+        "reviewer_methods", "reviewer_significance", "reviewer_presentation",
+        "comparative_analysis",
+    },
+    "qc-team-leader": {"skeptic_review", "responder_review"},
+}
+
+
+def pin_paper_and_version(prompt: str, subagent: str):
     """Return (paper_id, version) from the brief, or (None, None) if not unique.
 
-    Prefers explicit `papers/<id>/reviews/<name>_v<N>.md` references; falls back
-    to a lone `papers/<id>/` path plus a stated `version N` or `v<N>`.
+    Prefers explicit `papers/<id>/reviews/<stem>_v<N>.md` references to this
+    agent's input files; falls back to a lone `papers/<id>/` path plus a stated
+    `version N` / `version number N` (a dotted version like 2.1 never pins).
     """
-    explicit = re.findall(rf"\bpapers/({SLUG})/reviews/[\w.-]*?_v(\d+)\.md", prompt)
+    stems = INPUT_STEMS[subagent]
+    explicit = [
+        (p, int(v))
+        for p, stem, v in re.findall(
+            rf"\bpapers/({SLUG})/reviews/([\w.-]*?)_v(\d+)\.md", prompt
+        )
+        if stem in stems
+    ]
     if explicit:
         papers = {p for p, _ in explicit}
-        versions = {int(v) for _, v in explicit}
+        versions = {v for _, v in explicit}
     else:
         papers = set(re.findall(rf"\bpapers/({SLUG})/", prompt))
-        versions = {int(v) for v in re.findall(r"\bversion\s+v?(\d+)\b", prompt, re.I)}
-        versions |= {int(v) for v in re.findall(r"\bv(\d+)\b", prompt)}
+        versions = {
+            int(v)
+            for v in re.findall(r"\bversion\s+(?:number\s+)?(\d+)(?!\.\d)", prompt, re.I)
+        }
     if len(papers) != 1 or len(versions) != 1:
         return None, None
     return papers.pop(), versions.pop()
@@ -95,7 +116,7 @@ def main() -> int:
     if spec is None:
         return 0
 
-    paper, version = pin_paper_and_version(prompt)
+    paper, version = pin_paper_and_version(prompt, subagent)
     if paper is None or version is None:
         return 0
 
@@ -121,6 +142,11 @@ def main() -> int:
             f"{listing}. Do not accept or present this verdict (rigor rule 5): run the "
             "missing stage(s), then re-run the verdict stage."
         )
+        if warn:
+            reason += (
+                " Also absent: " + ", ".join(n for n, _ in warn)
+                + " (skippable; confirm --skip-examples was intended)."
+            )
         print(json.dumps({"decision": "block", "reason": reason}))
     elif warn:
         names = ", ".join(name for name, _ in warn)

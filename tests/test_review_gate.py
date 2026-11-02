@@ -43,6 +43,7 @@ def _run(run_hook, root, event):
 def _assert_silent(res):
     assert res.returncode == 0
     assert res.stdout == ""
+    assert res.stderr == ""
 
 
 @pytest.mark.parametrize("tool", ["Agent", "Task"])
@@ -59,6 +60,7 @@ def test_editor_missing_required_blocks(run_hook, scaffold_project):
     res = _run(run_hook, scaffold_project, ev)
     assert res.returncode == 0
     assert set(res.json) == {"decision", "reason"}
+    assert set(res.json) == {"decision", "reason"}
     assert res.json["decision"] == "block"
     assert "reviewer_presentation_v2.md" in res.json["reason"]
     assert "example-paper" in res.json["reason"]
@@ -72,6 +74,7 @@ def test_editor_missing_comparative_warns(run_hook, scaffold_project):
     assert res.returncode == 0
     assert set(res.json) == {"hookSpecificOutput"}
     out = res.json["hookSpecificOutput"]
+    assert set(out) == {"hookEventName", "additionalContext"}
     assert out["hookEventName"] == "PostToolUse"
     assert "comparative" in out["additionalContext"]
 
@@ -81,6 +84,7 @@ def test_team_leader_missing_responder_blocks(run_hook, scaffold_project):
     ev = _event("qc-team-leader", _brief(1, QC_FILES))
     res = _run(run_hook, scaffold_project, ev)
     assert res.returncode == 0
+    assert set(res.json) == {"decision", "reason"}
     assert res.json["decision"] == "block"
     assert "responder_review_v1.md" in res.json["reason"]
     assert "skeptic_review_v1.md" not in res.json["reason"]
@@ -128,5 +132,40 @@ def test_version_from_prose_fallback(run_hook, scaffold_project):
     (scaffold_project / "papers/example-paper/reviews/responder_review_v3.md").unlink()
     res = _run(run_hook, scaffold_project, _event("qc-team-leader", prompt))
     assert res.returncode == 0
+    assert set(res.json) == {"decision", "reason"}
     assert res.json["decision"] == "block"
     assert "responder_review_v3.md" in res.json["reason"]
+
+
+def test_draft_version_does_not_pin(run_hook, scaffold_project):
+    _populate(scaffold_project, QC_FILES, 1)
+    prompt = _brief(1, QC_FILES) + " Draft: papers/example-paper/drafts/v3.md (draft v3)."
+    _assert_silent(_run(run_hook, scaffold_project, _event("qc-team-leader", prompt)))
+
+
+def test_dotted_version_fails_open(run_hook, scaffold_project):
+    prompt = "Synthesise version 2.1 of papers/example-paper/drafts/x.md"
+    _assert_silent(_run(run_hook, scaffold_project, _event("qc-team-leader", prompt)))
+
+
+def test_prior_round_citation_is_ignored(run_hook, scaffold_project):
+    _populate(scaffold_project, ["skeptic_review_v2.md"], 2)
+    prompt = (
+        "Inputs: papers/example-paper/reviews/skeptic_review_v2.md "
+        "papers/example-paper/reviews/responder_review_v2.md "
+        "(prior: papers/example-paper/reviews/team_leader_synthesis_v1.md)"
+    )
+    res = _run(run_hook, scaffold_project, _event("qc-team-leader", prompt))
+    assert res.returncode == 0
+    assert set(res.json) == {"decision", "reason"}
+    assert res.json["decision"] == "block"
+    assert "responder_review_v2.md" in res.json["reason"]
+
+
+def test_block_mentions_missing_comparative(run_hook, scaffold_project):
+    _populate(scaffold_project, [f for f in EDITOR_FILES if "presentation" not in f], 2)
+    ev = _event("peer-review-editor", _brief(2, EDITOR_FILES[1:]))
+    res = _run(run_hook, scaffold_project, ev)
+    assert set(res.json) == {"decision", "reason"}
+    assert res.json["decision"] == "block"
+    assert "comparative_analysis" in res.json["reason"]
