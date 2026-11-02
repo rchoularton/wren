@@ -5,8 +5,8 @@ import json
 import os
 import subprocess
 import sys
-import time
 
+import pytest
 from conftest import REPO_ROOT
 
 
@@ -85,6 +85,19 @@ def test_advisory_fails_open_on_malformed_stdin():
     assert proc.stdout.strip() == ""
 
 
+def test_advisory_fails_open_on_wrong_field_types():
+    for event in (
+        {"tool_name": ["Agent"]},
+        {"tool_name": "Agent", "tool_input": {"subagent_type": ["x"]}},
+    ):
+        proc = subprocess.run(
+            [sys.executable, str(ADVISORY)], input=json.dumps(event), capture_output=True, text=True, timeout=30
+        )
+        assert proc.returncode == 0
+        assert proc.stdout.strip() == ""
+        assert proc.stderr.strip() == ""
+
+
 def test_prompt_hook_does_not_block_on_open_stdin(tmp_path):
     proc = subprocess.Popen(
         [sys.executable, str(PROMPT_HOOK)],
@@ -94,12 +107,20 @@ def test_prompt_hook_does_not_block_on_open_stdin(tmp_path):
         text=True,
         env={**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path)},
     )
-    try:  # stdin pipe is deliberately never written to or closed
-        start = time.monotonic()
-        out, _ = proc.communicate(timeout=2)
-        assert time.monotonic() - start < 2
+    try:
+        # stdin stays open (no communicate(), no close) so the hook never sees EOF.
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            pytest.fail("prompt hook blocked on an open stdin pipe with no EOF")
         assert proc.returncode == 0
-        assert json.loads(out) == {}
+        proc.stdin.close()
+        assert json.loads(proc.stdout.read()) == {}
     finally:
-        proc.kill()
-        proc.wait()
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
+        for f in (proc.stdin, proc.stdout, proc.stderr):
+            f.close()

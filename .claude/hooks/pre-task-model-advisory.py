@@ -28,16 +28,19 @@ def main() -> int:
     except Exception:
         return 0  # never disrupt on bad/empty input
 
-    if not isinstance(data, dict) or data.get("tool_name") not in SUBAGENT_TOOLS:
+    if not isinstance(data, dict):
+        return 0
+    tool = data.get("tool_name")
+    if not isinstance(tool, str) or tool not in SUBAGENT_TOOLS:
         return 0
 
     ti = data.get("tool_input")
     if not isinstance(ti, dict):
         return 0
-    subagent = ti.get("subagent_type") or ""
+    subagent = ti.get("subagent_type")
     model = ti.get("model")
 
-    if subagent in INHERITING_BUILTINS and not model:
+    if isinstance(subagent, str) and subagent in INHERITING_BUILTINS and not model:
         msg = (
             f"[token-budget] '{subagent}' launched without an explicit model, so it "
             "inherits the caller's model (the strong one on the main loop). For "
@@ -55,4 +58,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception:
+        sys.exit(0)  # fail open on anything unexpected
