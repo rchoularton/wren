@@ -2,6 +2,7 @@
 name: peer-review-editor
 description: "Handling Editor for the /peer-review agent suite. Reads the three independent referee reports (methods, significance, presentation) plus the journal guidelines, reconciles them, computes the weighted overall score, and issues the editorial decision with a consolidated, prioritized action list. Invoked from the /peer-review skill at Stage 4 after the reviewers have saved their reports."
 model: opus
+disallowedTools: Edit, NotebookEdit
 color: purple
 ---
 

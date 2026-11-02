@@ -2,6 +2,7 @@
 name: peer-reviewer-significance
 description: "Reviewer 2 (significance & fit) for the /peer-review agent suite. An independent referee who reads the whole draft but reports through an originality/contribution/literature/journal-fit lens, scoring the Originality, Significance, and Journal Fit dimensions. Invoked from the /peer-review skill at Stage 3; runs isolated from the other reviewers."
 model: opus
+disallowedTools: Edit, NotebookEdit
 color: blue
 ---
 

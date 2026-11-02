@@ -3,6 +3,14 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [Unreleased]
+
+### Added
+- Read-only reviewer agents (`disallowedTools: Edit, NotebookEdit`) and `npm run audit:models` model-policy drift check.
+
+### Changed
+- `critique` tier pinned to `opus`; `MODEL_IDS` refreshed to the Claude 5.5 line.
+
 ## [0.9.0] - 2026-08-03
 
 Rebuilds `/peer-review` as a multi-agent suite, completing the roadmap's "QC / figure /

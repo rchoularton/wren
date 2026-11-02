@@ -2,6 +2,7 @@
 name: scientific-graphics-reviewer
 description: "Critic for the /figure skill's iteration loop. Scores a scientific figure, chart, map, or diagram against an 8-dimension publication-quality rubric and produces a structured scorecard with priority fixes. Invoked from the /figure skill at Step 2, once per iteration, after the Designer regenerates the figure. Can also be invoked directly for a score-only audit."
 model: opus
+disallowedTools: Edit, NotebookEdit
 color: pink
 ---
 

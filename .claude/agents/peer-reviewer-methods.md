@@ -2,6 +2,7 @@
 name: peer-reviewer-methods
 description: "Reviewer 1 (methodological rigor) for the /peer-review agent suite. An independent referee who reads the whole draft but reports through a methods/data/statistics/reproducibility lens, scoring the Methodology dimension against the target journal's bar. Invoked from the /peer-review skill at Stage 3; runs isolated from the other reviewers."
 model: opus
+disallowedTools: Edit, NotebookEdit
 color: red
 ---
 

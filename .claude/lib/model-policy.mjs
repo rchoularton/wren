@@ -25,22 +25,22 @@ export const ALIASES = { critique: 'opus', produce: 'sonnet', triage: 'haiku' };
 // Real API model IDs — for raw @anthropic-ai/sdk callers, which reject the aliases above.
 // This object is the ONE place to edit when the model generation changes.
 export const MODEL_IDS = {
-  opus:   'claude-opus-5',
-  sonnet: 'claude-sonnet-5',
-  haiku:  'claude-haiku-4-5-20251001',
+  opus:   'claude-opus-5-5',
+  sonnet: 'claude-sonnet-5-5',
+  haiku:  'claude-haiku-5-5',
 };
 
-// The tier table. `model` is omitted on `critique` so harness-managed callers INHERIT the
-// strong main model rather than pinning a literal — the safe default for a QC gate.
+// The tier table. `critique` is pinned to the strong alias so a QC gate never silently runs
+// on whatever cheaper model the interactive session happens to be using.
 export const TIERS = {
-  critique: {                    effort: 'high',   desc: 'high-consequence reasoning / QC gates' },
+  critique: { model: 'opus',     effort: 'high',   desc: 'high-consequence reasoning / QC gates' },
   produce:  { model: 'sonnet',   effort: 'medium', desc: 'drafting / extraction / bulk w/ judgement' },
   triage:   { model: 'haiku',    effort: 'low',    desc: 'mechanical / low-ambiguity' },
 };
 
 /**
  * Route a tier to {model, effort} for a Claude Code sub-agent dispatch.
- * `model` is undefined for `critique` — the harness then inherits the strong main model.
+ * Every tier carries an explicit model alias; `critique` is pinned to the strong one.
  */
 export function routeFor(tier) {
   const t = TIERS[tier];
@@ -50,7 +50,7 @@ export function routeFor(tier) {
 
 /**
  * Resolve a tier to a real API model ID for raw-SDK callers.
- * `critique` (no explicit model) resolves to the strong default (opus).
+ * `critique` resolves to opus; `strongDefault` is only a fallback for an unmodelled tier.
  */
 export function modelIdFor(tier, { strongDefault = 'opus' } = {}) {
   const alias = (TIERS[tier] && TIERS[tier].model) || strongDefault;

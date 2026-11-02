@@ -13,6 +13,9 @@ high-consequence reasoning and quality-control gates. The tier definitions live 
 | **produce** | a mid model (`sonnet`) | drafting, journal formatting, submission prep, document extraction, discovery, figure-design iteration |
 | **triage** | the cheap model (`haiku`) | metadata fill, file/draft audits, dedup, first-pass classification, scaffolding |
 
+The critique tier is pinned to the `opus` alias in `model-policy.mjs`, so QC gates never silently
+inherit a cheaper interactive model.
+
 `effort` (`low`/`medium`/`high`) is a real lever on the strong/mid models — set it to the
 task; don't leave everything on `high`. The cheap tier's saving is the cheap model itself.
 
