@@ -1,6 +1,6 @@
 {
   "name": "create-wren",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "An open-source AI research partner for Claude Code — from your first dataset to your final draft, on your machine, in your terminal.",
   "type": "module",
   "bin": {

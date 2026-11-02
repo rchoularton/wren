@@ -3,32 +3,20 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
-## [Unreleased]
+## [0.9.0] - 2026-11-02
+
+The review suite plus harness-enforced rigor: `/peer-review` becomes a multi-agent suite,
+and five hooks make rigor rule 5 something the harness checks instead of something it asks for.
+Tests now run in CI (`npm run test`).
+
+Rebuilds `/peer-review` as a multi-agent suite, completing the roadmap's "QC / figure /
+peer-review agent suites" trio (`/qc-team` and `/figure` shipped the pattern in 0.7).
 
 ### Added
 - `post-agent-review-gate` PostToolUse hook (`Agent|Task`): blocks a `peer-review-editor` or `qc-team-leader` verdict when a required prior-stage file in `papers/{id}/reviews/` is missing, and warns on a skipped comparative analysis. Fails open when the paper or version cannot be pinned.
 - `session-start-learnings` hook re-pins a "Pinned Anchors" block (active paper, latest `{id}-gold-v{n}` tag, recorded `AUTHOR DECISION` lines) on SessionStart with source `compact`.
 - `pre-task-model-advisory` PreToolUse hook (`Agent|Task`): non-blocking reminder to pin a model when `Explore` or `general-purpose` is launched without one (token-budget rule 6).
 - Read-only reviewer agents (`disallowedTools: Edit, NotebookEdit`) and `npm run audit:models` model-policy drift check.
-
-### Changed
-- `user-prompt-paper-context` hook reads stdin with a bounded `select`, so an open pipe without EOF no longer stalls the prompt.
-- `critique` tier pinned to `opus`; `MODEL_IDS` refreshed to the Claude 5.5 line.
-
-## [0.9.0] - 2026-08-03
-
-Rebuilds `/peer-review` as a multi-agent suite, completing the roadmap's "QC / figure /
-peer-review agent suites" trio (`/qc-team` and `/figure` shipped the pattern in 0.7).
-
-### Changed
-- **`/peer-review` is now an orchestrated agent suite, not a single forked context.** The skill
-  drops `context: fork` and runs on the main loop, so its guidelines and comparative-analysis
-  checkpoints are real pauses instead of self-checks. It runs the two web-research stages
-  (journal guidelines, comparable papers), fans out to three independent referee sub-agents, then
-  hands a handling editor the finished reports. Existing output filenames (`peer_review_v{N}.md`,
-  `recommendations_v{N}.md`) are unchanged; two new per-referee reports are added alongside them.
-
-### Added
 - **Four peer-review sub-agents** (`.claude/agents/`), mirroring the `/qc-team` structure —
   isolated so no referee is primed by another's reasoning:
   - `peer-reviewer-methods` (`opus`) — methods, data, statistics, reproducibility; scores
@@ -41,8 +29,17 @@ peer-review agent suites" trio (`/qc-team` and `/figure` shipped the pattern in 
   - `peer-review-editor` (`opus`) — reconciles the three reports, spot-checks the highest-stakes
     disputes against the source data, computes the weighted overall, and issues the decision plus
     a deduplicated, prioritized action list.
-
 Wren still ships 18 skills; the sub-agent tier grows from 5 to 9 agents.
+
+### Changed
+- `user-prompt-paper-context` hook reads stdin with a bounded `select`, so an open pipe without EOF no longer stalls the prompt.
+- `critique` tier pinned to `opus`; `MODEL_IDS` refreshed to the Claude 5.5 line.
+- **`/peer-review` is now an orchestrated agent suite, not a single forked context.** The skill
+  drops `context: fork` and runs on the main loop, so its guidelines and comparative-analysis
+  checkpoints are real pauses instead of self-checks. It runs the two web-research stages
+  (journal guidelines, comparable papers), fans out to three independent referee sub-agents, then
+  hands a handling editor the finished reports. Existing output filenames (`peer_review_v{N}.md`,
+  `recommendations_v{N}.md`) are unchanged; two new per-referee reports are added alongside them.
 
 ## [0.8.0] - 2026-08-02
 
