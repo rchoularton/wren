@@ -6,9 +6,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 ## [Unreleased]
 
 ### Added
+- `pre-task-model-advisory` PreToolUse hook (`Agent|Task`): non-blocking reminder to pin a model when `Explore` or `general-purpose` is launched without one (token-budget rule 6).
 - Read-only reviewer agents (`disallowedTools: Edit, NotebookEdit`) and `npm run audit:models` model-policy drift check.
 
 ### Changed
+- `user-prompt-paper-context` hook reads stdin with a bounded `select`, so an open pipe without EOF no longer stalls the prompt.
 - `critique` tier pinned to `opus`; `MODEL_IDS` refreshed to the Claude 5.5 line.
 
 ## [0.9.0] - 2026-08-03

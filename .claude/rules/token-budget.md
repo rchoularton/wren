@@ -36,7 +36,7 @@ task; don't leave everything on `high`. The cheap tier's saving is the cheap mod
 6. **Pin a model when you launch an ad-hoc sub-agent.** Built-in search/general agents inherit
    the caller's model — which on the main loop is the strong one. Pass `sonnet` for
    search/reading, `haiku` for pure enumeration; let it inherit the strong model only for
-   genuine judgement fan-out. This is the biggest silent leak.
+   genuine judgement fan-out. This is the biggest silent leak. The `pre-task-model-advisory` hook backs this rule with a non-blocking reminder when `Explore` or `general-purpose` is launched without a `model`.
 
 ## Measure, don't guess
 

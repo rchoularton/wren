@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import select
 import sys
 from pathlib import Path
 
@@ -33,9 +34,30 @@ def parse_frontmatter(text: str) -> dict:
     return out
 
 
+def read_stdin(first_wait: float = 1.0, idle_wait: float = 0.1) -> str:
+    """Read stdin without ever blocking on an open pipe that never reaches EOF.
+
+    Waits up to `first_wait` seconds for the first byte, then drains until EOF
+    or `idle_wait` seconds of silence. Falls back to "" on any error.
+    """
+    buf = b""
+    try:
+        fd = sys.stdin.fileno()
+        wait = first_wait
+        while select.select([fd], [], [], wait)[0]:
+            chunk = os.read(fd, 65536)
+            if not chunk:
+                break  # EOF
+            buf += chunk
+            wait = idle_wait
+    except Exception:
+        pass
+    return buf.decode("utf-8", "replace")
+
+
 def main() -> None:
     try:
-        json.load(sys.stdin)
+        json.loads(read_stdin() or "{}")
     except Exception:
         pass
 

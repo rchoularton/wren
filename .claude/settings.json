@@ -79,6 +79,15 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-write-safety-guard.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-task-model-advisory.py\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
