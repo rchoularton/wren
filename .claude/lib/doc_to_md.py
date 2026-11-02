@@ -149,7 +149,7 @@ def docx_to_md(src: Path, via: str) -> str:
             if style == "Title":
                 text = f"# {text}"
             elif style.startswith("Heading ") and style[8:].isdigit():
-                text = f"{'#' * min(int(style[8:]) + 1, 6)} {text}"
+                text = f"{'#' * min(int(style[8:]), 6)} {text}"
             elif style.startswith("List"):
                 text = f"- {text}"
             blocks.append(text)
@@ -212,7 +212,11 @@ def convert(src: Path, max_rows: int = 500) -> str:
 def to_markdown(src: Path, force: bool = False, no_cache: bool = False,
                 max_rows: int = 500) -> Result:
     """Return the cached Markdown path for `src`, converting first on a miss."""
-    key = cache_key(src)
+    found = available(src.suffix.lower())
+    if not found:
+        convert(src, max_rows)  # raises ConverterMissing with the install hint
+    # The converter is part of the key: pandoc and the fallbacks render differently.
+    key = hashlib.sha256(f"{cache_key(src)}\n{found[0][0]}".encode()).hexdigest()
     root = cache_root()
     dst = root / f"{key}{'.nocache' if no_cache else ''}.md"
     if not no_cache and not force and dst.exists():

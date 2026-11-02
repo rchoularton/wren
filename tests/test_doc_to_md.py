@@ -40,7 +40,7 @@ def test_docx_converts_to_markdown(sample_docx):
     res = d2m.to_markdown(sample_docx)
     text = res.path.read_text(encoding="utf-8")
     assert "Rainfall explains the unusual harvest." in text
-    assert "## Findings" in text
+    assert "# Findings" in text and "## Findings" not in text
     assert res.path.parent == d2m.cache_root()
     assert (d2m.cache_root().parent.parent) == (sample_docx.parent.parent / "proj")
 
@@ -86,3 +86,12 @@ def test_pdf_without_converter_names_what_to_install(tmp_path, monkeypatch, caps
     assert rc == 3
     assert "pdftotext" in err and "pdfplumber" in err
     assert "Traceback" not in err
+
+
+def test_converter_is_part_of_cache_key(sample_docx, monkeypatch):
+    fallback = d2m.to_markdown(sample_docx)
+    real = d2m.have_exe
+    monkeypatch.setattr(d2m, "have_exe", lambda n: True if n == "pandoc" else real(n))
+    monkeypatch.setattr(d2m, "convert", lambda *a, **k: "stub")
+    res = d2m.to_markdown(sample_docx)
+    assert res.cached is False and res.path != fallback.path

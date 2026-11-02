@@ -4,7 +4,7 @@
  * (conversion needs the Python libraries and, for PDF, pdftotext). Resolves to the path to read.
  *
  * Callers: node scripts (`import { normalizeToMd }`), or the CLI:
- *   node .claude/lib/normalize-to-md.mjs <file> [--force] [--no-cache] [--print]
+ *   node .claude/lib/normalize-to-md.mjs <file> [--force] [--no-cache] [--print] [--max-rows <n>]
  */
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -39,8 +39,10 @@ export function normalizeToMd(src, opts = {}) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const args = process.argv.slice(2);
-  const src = args.find(a => !a.startsWith('--'));
-  const usage = 'usage: normalize-to-md.mjs <file> [--force] [--no-cache] [--print]';
+  const mi = args.indexOf('--max-rows');
+  const maxRows = mi >= 0 ? Number(args[mi + 1]) : undefined;
+  const src = args.find((a, i) => !a.startsWith('--') && i !== mi + 1);
+  const usage = 'usage: normalize-to-md.mjs <file> [--force] [--no-cache] [--print] [--max-rows <n>]';
   if (args.includes('--help') || args.includes('-h')) { console.log(usage); process.exit(0); }
   if (!src) { console.error(usage); process.exit(2); }
   if (args.includes('--print')) {
@@ -48,7 +50,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     const p = spawn('python3', [PY, ...args], { stdio: 'inherit' });
     p.on('close', code => process.exit(code ?? 1));
   } else {
-    normalizeToMd(src, { force: args.includes('--force'), noCache: args.includes('--no-cache') })
+    normalizeToMd(src, { force: args.includes('--force'), noCache: args.includes('--no-cache'), maxRows })
       .then(r => console.log(r.mdPath))
       .catch(e => { console.error(e.message); process.exit(1); });
   }
