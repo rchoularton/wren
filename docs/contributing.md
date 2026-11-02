@@ -10,3 +10,14 @@ Issues and PRs are welcome. Full contributor setup and workflow details live in 
 - **Scheduled jobs tooling** — headless nightly/weekly tasks (notifications, digests), per `research-config.yml`'s `scheduler` block.
 
 See [`ROADMAP.md`](roadmap.md) for the full list of add-on modules under consideration.
+
+## Running the tests
+
+Hook and script tests live in `tests/` and use [pytest](https://docs.pytest.org/). They are contributor-only: the scaffolder does not copy `tests/` or `requirements-dev.txt` into a new project.
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+npm run test
+```
+
+`tests/conftest.py` provides two fixtures: `run_hook(path, event, env)` runs a `.py` or `.sh` hook as a subprocess with the event JSON on stdin and returns the exit code, stdout, stderr and parsed JSON; `scaffold_project` builds a temp project root (path containing a space) to point `CLAUDE_PROJECT_DIR` at. CI runs the same `npm run test` after the byte-compile step.

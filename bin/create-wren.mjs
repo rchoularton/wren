@@ -101,6 +101,8 @@ function copyFilter(targetAbs) {
     const base = basename(src);
     if (base === '.DS_Store' || base.endsWith('.tgz')) return false;
     if (RENDERED.has(rel)) return false;
+    // Contributor-only test harness — never ships into a scaffolded project.
+    if (top === 'tests' || rel === 'requirements-dev.txt') return false;
     // Drop generated audit/run logs but keep the .gitkeep that holds the dir.
     if (rel.includes(`${sep}_logs${sep}`) && base !== '.gitkeep') return false;
     return true;
