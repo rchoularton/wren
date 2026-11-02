@@ -91,7 +91,7 @@ def pin_paper_and_version(prompt: str, subagent: str):
         papers = set(re.findall(rf"\bpapers/({SLUG})/", prompt))
         versions = {
             int(v)
-            for v in re.findall(r"\bversion\s+(?:number\s+)?(\d+)(?![\d.])", prompt, re.I)
+            for v in re.findall(r"\bversion\s+(?:number\s+)?(\d+)(?!\d|\.\d)", prompt, re.I)
         }
     if len(papers) != 1 or len(versions) != 1:
         return None, None

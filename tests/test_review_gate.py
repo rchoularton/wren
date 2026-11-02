@@ -204,3 +204,15 @@ def test_output_filename_with_draft_path_pins_v2(run_hook, scaffold_project):
     assert set(res.json) == {"decision", "reason"}
     assert res.json["decision"] == "block"
     assert "v2" in res.json["reason"]
+
+
+def test_sentence_final_period_still_pins(run_hook, scaffold_project):
+    ev = _event("qc-team-leader", "Synthesise papers/example-paper/ version 2.")
+    res = _run(run_hook, scaffold_project, ev)
+    assert res.returncode == 0
+    assert set(res.json) == {"decision", "reason"}
+    assert res.json["decision"] == "block"
+    assert "v2" in res.json["reason"]
+
+    dotted = _event("qc-team-leader", "Synthesise papers/example-paper/ version 2.1")
+    _assert_silent(_run(run_hook, scaffold_project, dotted))
