@@ -2,6 +2,7 @@
 name: qc-team-leader
 description: "Team Leader for the three-agent QC Team review. Reads both the Skeptic's and Responder's reviews and synthesizes them into a Must-Fix / Should-Fix / Nice-to-Have action list with an overall verdict. Invoked from the /qc-team skill at Step 3 after both prior reviews are saved."
 model: opus
+disallowedTools: Edit, NotebookEdit
 color: purple
 ---
 

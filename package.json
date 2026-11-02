@@ -10,6 +10,7 @@
     "setup": "python3 scripts/setup/render_templates.py && python3 scripts/setup/install_hooks.py",
     "setup:verify": "python3 scripts/setup/verify_install.py",
     "setup:scrub-check": "python3 scripts/setup/scrub_check.py",
+    "audit:models": "python3 scripts/audit/check_model_policy_drift.py",
     "paper:setup": "pip install -r requirements.txt",
     "paper:build": "python3 scripts/paper_utils/build.py",
     "paper:extract": "python3 scripts/paper_utils/extract_cli.py",

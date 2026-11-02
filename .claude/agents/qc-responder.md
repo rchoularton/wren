@@ -2,6 +2,7 @@
 name: qc-responder
 description: "Responder for the three-agent QC Team review. Reads the Skeptic's review and defends the paper — accepting valid concerns, rejecting unfair ones with evidence, and proposing minimum fixes. Invoked from the /qc-team skill at Step 2 after the Skeptic has saved its review."
 model: opus
+disallowedTools: Edit, NotebookEdit
 color: blue
 ---
 

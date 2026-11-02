@@ -33,5 +33,9 @@ review / synthesis → `opus`; standard drafting/analysis → `sonnet`; routine/
   `peer-review-editor` — three independent referees plus a handling editor, orchestrated by the
   `/peer-review` skill. The presentation referee runs on `sonnet`; the rest on `opus`.
 
+Reviewer and critic agents (`qc-*`, `peer-review*`, `scientific-graphics-reviewer`) set
+`disallowedTools: Edit, NotebookEdit`: they are read-only on what they review, so a referee can never
+modify the draft it is judging (Write stays allowed for their own reports).
+
 Agents are invoked **by skills**, not typed as slash commands. Add your own by dropping a new
 `name.md` here and referencing it from a skill.

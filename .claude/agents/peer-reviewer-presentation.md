@@ -2,6 +2,7 @@
 name: peer-reviewer-presentation
 description: "Reviewer 3 (presentation & clarity) for the /peer-review agent suite. An independent referee who reports through a writing/structure/figures/length lens, scoring the Presentation dimension and checking the draft against the journal's format limits. Invoked from the /peer-review skill at Stage 3; runs isolated. Runs on the sonnet tier — presentation critique is lighter than the methods and significance passes."
 model: sonnet
+disallowedTools: Edit, NotebookEdit
 color: green
 ---
 

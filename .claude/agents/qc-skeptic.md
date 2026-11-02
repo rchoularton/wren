@@ -2,6 +2,7 @@
 name: qc-skeptic
 description: "Adversarial Skeptic for the three-agent QC Team review. Attacks a paper draft against its source data — finds factual errors, methodological weaknesses, overstated causal language, and presentation gaps. Invoked from the /qc-team skill at Step 1. Direct invocation is allowed when only the Skeptic pass is needed (`/qc-team <id> --skeptic-only`)."
 model: opus
+disallowedTools: Edit, NotebookEdit
 color: red
 ---
 
