@@ -73,21 +73,25 @@ def pin_paper_and_version(prompt: str, subagent: str):
     `version N` / `version number N` (a dotted version like 2.1 never pins).
     """
     stems = INPUT_STEMS[subagent]
-    explicit = [
-        (p, int(v))
+    refs = [
+        (p, stem, int(v))
         for p, stem, v in re.findall(
             rf"\bpapers/({SLUG})/reviews/([\w.-]*?)_v(\d+)\.md", prompt
         )
-        if stem in stems
     ]
-    if explicit:
-        papers = {p for p, _ in explicit}
-        versions = {v for _, v in explicit}
+    # Priority: this agent's input files, then any other review file (its own
+    # output names), then prose. Ambiguity at the chosen step fails open.
+    chosen = [(p, v) for p, stem, v in refs if stem in stems] or [
+        (p, v) for p, _, v in refs
+    ]
+    if chosen:
+        papers = {p for p, _ in chosen}
+        versions = {v for _, v in chosen}
     else:
         papers = set(re.findall(rf"\bpapers/({SLUG})/", prompt))
         versions = {
             int(v)
-            for v in re.findall(r"\bversion\s+(?:number\s+)?(\d+)(?!\.\d)", prompt, re.I)
+            for v in re.findall(r"\bversion\s+(?:number\s+)?(\d+)(?![\d.])", prompt, re.I)
         }
     if len(papers) != 1 or len(versions) != 1:
         return None, None

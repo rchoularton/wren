@@ -169,3 +169,38 @@ def test_block_mentions_missing_comparative(run_hook, scaffold_project):
     assert set(res.json) == {"decision", "reason"}
     assert res.json["decision"] == "block"
     assert "comparative_analysis" in res.json["reason"]
+
+
+def test_multi_digit_dotted_version_fails_open(run_hook, scaffold_project):
+    _populate(scaffold_project, QC_FILES, 1)
+    prompt = "papers/example-paper/ version 12.1"
+    _assert_silent(_run(run_hook, scaffold_project, _event("qc-team-leader", prompt)))
+
+
+OUTPUT_BRIEF = (
+    "Draft is version 3 of the manuscript; write papers/example-paper/reviews/peer_review_v1.md"
+)
+
+
+def test_output_filename_outranks_prose_version(run_hook, scaffold_project):
+    _populate(scaffold_project, EDITOR_FILES + [COMPARATIVE], 1)
+    ev = _event("peer-review-editor", OUTPUT_BRIEF)
+    _assert_silent(_run(run_hook, scaffold_project, ev))
+
+    (scaffold_project / "papers/example-paper/reviews/reviewer_presentation_v1.md").unlink()
+    res = _run(run_hook, scaffold_project, ev)
+    assert res.returncode == 0
+    assert set(res.json) == {"decision", "reason"}
+    assert res.json["decision"] == "block"
+    assert "reviewer_presentation_v1.md" in res.json["reason"]
+
+
+def test_output_filename_with_draft_path_pins_v2(run_hook, scaffold_project):
+    prompt = (
+        "write papers/example-paper/reviews/peer_review_v2.md for "
+        "papers/example-paper/drafts/v3.md"
+    )
+    res = _run(run_hook, scaffold_project, _event("peer-review-editor", prompt))
+    assert set(res.json) == {"decision", "reason"}
+    assert res.json["decision"] == "block"
+    assert "v2" in res.json["reason"]
