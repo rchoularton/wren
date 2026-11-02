@@ -72,3 +72,18 @@ def test_author_decisions_listed_and_capped(project, run_hook, tmp_path):
     assert "choice number 1" in ctx
     assert "choice number 8" in ctx
     assert "choice number 9" not in ctx
+
+
+def test_symlinked_paper_outside_root_still_pins(project, run_hook, tmp_path):
+    outside = tmp_path / "cloud" / "linked-paper"
+    outside.mkdir(parents=True)
+    (outside / "STATUS.md").write_text(
+        "---\npaper_id: linked-paper\ntitle: 'Quoted'\nphase: 4\n---\n"
+        "AUTHOR DECISION: keep it\n"
+    )
+    (project / "papers" / "linked-paper").symlink_to(outside, target_is_directory=True)
+    (project / ".current_paper").write_text("linked-paper\n")
+    ctx = _context(_run(run_hook, project, {"source": "compact"}, tmp_path))
+    assert "linked-paper" in ctx
+    assert "**Phase:** 4" in ctx
+    assert "**Title:** Quoted" in ctx

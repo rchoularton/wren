@@ -45,7 +45,7 @@ def parse_frontmatter(content: str) -> dict:
             break
         if ":" in line:
             k, v = line.split(":", 1)
-            out[k.strip()] = v.strip().strip('"')
+            out[k.strip()] = v.strip().strip("\"'")
     return out
 
 
@@ -98,13 +98,16 @@ def author_decisions(root: Path, paper_dir: Path) -> List[str]:
     """`path:line — snippet` for AUTHOR DECISION lines in the paper's .md files."""
     hits: List[str] = []
     for f in sorted(paper_dir.rglob("*.md")):
-        rel = f.relative_to(root)
-        if any(part.startswith("_archived") for part in f.relative_to(paper_dir).parts):
-            continue
         try:
+            if any(part.startswith("_archived") for part in f.relative_to(paper_dir).parts):
+                continue
             text = f.read_text(errors="ignore")
         except Exception:
             continue
+        try:
+            rel = f.relative_to(root)
+        except ValueError:
+            rel = Path(f.name)
         for i, line in enumerate(text.splitlines(), 1):
             if "AUTHOR DECISION" in line:
                 snip = line.strip()
@@ -124,7 +127,7 @@ def get_pinned_anchors() -> str:
         if not cp.exists():
             return ""
         paper_id = cp.read_text().strip()
-        if not paper_id:
+        if not paper_id or "/" in paper_id or "\\" in paper_id or ".." in paper_id:
             return ""
         paper_dir = root / "papers" / paper_id
         lines = [f"**Current paper:** `{paper_id}`"]
