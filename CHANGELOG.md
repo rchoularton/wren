@@ -6,6 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 ## [Unreleased]
 
 ### Added
+- `post-agent-review-gate` PostToolUse hook (`Agent|Task`): blocks a `peer-review-editor` or `qc-team-leader` verdict when a required prior-stage file in `papers/{id}/reviews/` is missing, and warns on a skipped comparative analysis. Fails open when the paper or version cannot be pinned.
 - `session-start-learnings` hook re-pins a "Pinned Anchors" block (active paper, latest `{id}-gold-v{n}` tag, recorded `AUTHOR DECISION` lines) on SessionStart with source `compact`.
 - `pre-task-model-advisory` PreToolUse hook (`Agent|Task`): non-blocking reminder to pin a model when `Explore` or `general-purpose` is launched without one (token-budget rule 6).
 - Read-only reviewer agents (`disallowedTools: Edit, NotebookEdit`) and `npm run audit:models` model-policy drift check.

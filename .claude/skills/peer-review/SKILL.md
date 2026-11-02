@@ -112,6 +112,8 @@ papers/{id}/reviews/
   recommendations_v{N}.md            ← peer-review-editor (action list)
 ```
 
+The editor's verdict is gated on the prior stage files: the `post-agent-review-gate` hook blocks it if `journal_guidelines.md` or any `reviewer_*_v{N}.md` is missing (a missing comparative analysis only warns).
+
 ## Scoring framework
 
 The editor computes one weighted overall from the referees' dimension scores:
