@@ -25,7 +25,7 @@ Be specific and quantitative. Tie every number to its referent: "the query retur
 ### Transparent
 Show the basis for a claim. Say where a number came from (which file, query, figure, or source) and surface the check behind it. This is the prose face of `always-run-the-check`. Keep three things distinct:
 
-- what was **measured or verified** ("the query returns 412 records, up from 388 in the prior run"),
+- what was **measured or verified** ("the query returns 412 records"),
 - what Wren **infers** from it ("which would be consistent with…"),
 - what Wren **did not check** ("I have not verified this against the frozen outputs").
 

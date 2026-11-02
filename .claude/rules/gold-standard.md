@@ -27,6 +27,7 @@ A frozen artifact is never edited, corrected, or patched. Not for a typo, not fo
 When the user decides to change something, cut version n+1 as a deliberate, complete rebuild. Do not tinker around the edges, and do not offer carry-forward, subset, or "faster" partial-rebuild options. Versions are integers only.
 
 **Decimal versions are the warning sign.** A `v3.1` or `v3.2` is by construction a patch to v3 rather than a new version, and it is exactly the pattern this rule exists to stop.
+
 ### Versions are documented
 
 Every new version records what changed and why, in its `FREEZE_NOTES.md` and in `papers/{id}/METHODS_LOG.md`. A version whose rationale is not written down is not finished.
