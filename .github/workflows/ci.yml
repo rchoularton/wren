@@ -34,6 +34,11 @@ jobs:
       - name: Byte-compile the scripts/ tree (Python)
         run: python3 -m py_compile $(find scripts -name '*.py')
 
+      - name: Run tests
+        run: |
+          python3 -m pip install --quiet -r requirements-dev.txt
+          npm run test
+
       - name: Install PyYAML (renderer dependency)
         run: python3 -m pip install --quiet pyyaml
 
@@ -58,6 +63,10 @@ jobs:
 
           echo "→ Asserting git repo was initialised…"
           test -d "$TARGET/.git"
+
+          echo "→ Asserting contributor-only test files were not scaffolded…"
+          test ! -e "$TARGET/tests"
+          test ! -e "$TARGET/requirements-dev.txt"
 
           echo "→ Asserting setup:verify exits 0 inside the scaffolded project…"
           cd "$TARGET"
