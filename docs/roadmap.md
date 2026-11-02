@@ -6,6 +6,7 @@ while Wren is pre-1.0, every release that adds a tool is a MINOR bump.
 
 ## Shipped
 
+- **0.9.0** — `/peer-review` agent suite; read-only reviewers, critique-tier pin, model-ID drift check; review-stage gate, post-compaction re-pin, and model-advisory hooks; pytest harness in CI.
 - **0.8.0** — `/lit-digest` + the scheduled-jobs/email tier (launchd/cron).
 - **0.7.0** — `/qc-team`, `/figure` (the sub-agent tier); model-routing tiers + a token-usage report.
 - **0.6.0** — `/methods-audit`, `/ref-check`, `/zotero-audit`.
@@ -22,7 +23,6 @@ for it, then the bigger skills.
 
 | Release | Theme | What ships |
 |---|---|---|
-| **0.9** | Review suite + harness-enforced rigor | `/peer-review` (three referees + a handling editor; built, awaiting merge). Reviewer agents made read-only; the critique tier pinned to the strong model; a review-stage gate hook that blocks a verdict when a prior stage's report is missing; a post-compaction re-pin hook; a model-advisory hook for unpinned sub-agents; a non-blocking stdin fix in the prompt hook |
 | **0.10** | Context diet + rules refresh | Standing context trimmed (rule histories to docs, agent examples collapsed, memory index one line each); new rules: always-run-the-check, Wren's own voice, gold-standard versioning; updated archive convention; the Word-prompt approval wording; an AI-detection step before resubmission; a document-to-Markdown cache so PDFs and Word files are read as cheap text |
 | **0.11** | Front door + session memory | `/research` rebuilt around a deterministic status script: papers by tier from `STATUS.md` frontmatter with a `next:` line, scheduled-job verdicts, a generated papers table; opt-in session capture + `/recall` over dated session logs |
 | **0.12** | Library automation | `/librarian-team` — weekly Zotero audit + discovery with an approval queue; `/pdf-fill` with open-access sources and a configurable institution proxy; orphan-attachment repair |
