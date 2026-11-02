@@ -54,3 +54,16 @@ def test_planted_unknown_alias_fails(project):
     r = _run(project)
     assert r.returncode == 1
     assert "qc-skeptic.md" in r.stdout and "gpt-9" in r.stdout
+
+
+def test_unknown_family_id_fails(project):
+    (project / "README.md").write_text("Try claude-fable-5-1 for this.\n")
+    r = _run(project)
+    assert r.returncode == 1
+    assert "claude-fable-5-1" in r.stdout
+
+
+def test_bare_family_name_in_prose_passes(project):
+    (project / "README.md").write_text("We use the claude-opus family for critique.\n")
+    r = _run(project)
+    assert r.returncode == 0, r.stdout + r.stderr

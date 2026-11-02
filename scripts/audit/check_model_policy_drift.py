@@ -4,8 +4,9 @@ check_model_policy_drift.py — fail if model references drift from the policy f
 
 Reads MODEL_IDS and ALIASES from .claude/lib/model-policy.mjs, then checks:
   (a) every `model:` value in .claude/agents/*.md is one of the ALIASES values
-  (b) any literal `claude-...` model id under .claude/, scripts/, docs/, README.md
-      is one of the MODEL_IDS values
+  (b) any literal `claude-<family>-<version>` model id under .claude/, scripts/, docs/,
+      README.md is one of the MODEL_IDS values (unknown families are flagged; bare
+      family names like "claude-opus" are ignored)
   (c) each MODEL_IDS entry looks current: no date suffix (-YYYYMMDD) and major
       version >= MIN_MAJOR
 
@@ -24,7 +25,7 @@ MIN_MAJOR = 5
 SKIP_SUFFIXES = {".png", ".pdf", ".jpg", ".jpeg", ".gif", ".docx", ".xlsx", ".ico", ".zip", ".pyc"}
 SKIP_DIRS = {"node_modules", ".git", "__pycache__", ".venv", "venv"}
 
-MODEL_ID_RX = re.compile(r"\bclaude-(?:opus|sonnet|haiku)[-0-9a-z.]*", re.I)
+MODEL_ID_RX = re.compile(r"\bclaude-[a-z]+-\d[\w.-]*", re.I)
 # Trailing dashes/dots are prose punctuation, not part of an id.
 TRAIL = "-."
 
