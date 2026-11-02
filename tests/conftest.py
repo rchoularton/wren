@@ -25,7 +25,8 @@ def _run_hook(path, event: dict, env: dict | None = None) -> HookResult:
     """Run a hook as a subprocess with `event` as JSON on stdin.
 
     `.py` hooks run under the current interpreter, `.sh` hooks under bash.
-    `env` entries are layered over the current environment (e.g. pass
+    `env` entries are layered over a copy of the current environment with
+    `CLAUDE_PROJECT_DIR` removed (e.g. pass
     `{"CLAUDE_PROJECT_DIR": str(root)}` to point the hook at a project).
     """
     path = Path(path)
@@ -35,12 +36,14 @@ def _run_hook(path, event: dict, env: dict | None = None) -> HookResult:
         cmd = ["bash", str(path)]
     else:
         raise ValueError(f"unsupported hook type: {path.suffix!r}")
+    # Never inherit a live session's project dir; the caller opts in via `env`.
+    base_env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
     proc = subprocess.run(
         cmd,
         input=json.dumps(event),
         capture_output=True,
         text=True,
-        env={**os.environ, **(env or {})},
+        env={**base_env, **(env or {})},
         timeout=30,
     )
     parsed = None
