@@ -1,134 +1,148 @@
 ---
 name: peer-review
-description: Agentic peer reviewer that evaluates a paper against its target journal's guidelines in four stages
+description: Agentic peer review — three independent referee sub-agents (methods, significance, presentation) plus a handling editor evaluate a paper against its target journal's guidelines and issue a decision with a prioritized action list
 user-invocable: true
 argument-hint: [paper-id] [--journal "Journal Name"] [--skip-examples] [--section "name"]
-context: fork
 ---
 
 # Peer Review
 
-Multi-stage peer review agent that:
-1. Ingests the target journal's review guidelines
-2. Analyzes recent similar publications
-3. Conducts a section-by-section review
-4. Generates actionable recommendations
+Simulates a journal's referee process. Three **independent reviewer sub-agents** read the
+draft in isolation (`.claude/agents/peer-reviewer-methods.md`, `peer-reviewer-significance.md`,
+`peer-reviewer-presentation.md`), then a **handling editor** (`peer-review-editor.md`)
+reconciles their reports into one decision. The reviewers run isolated for the same reason a
+real journal uses independent referees — one reviewer must not be primed by another's reasoning.
 
-Run every stage. This skill runs in a forked context, so the interactive checkpoints below cannot pause for a live reply — treat each checkpoint as a written self-check: state the decision you would ask for, resolve it explicitly, and record it in the output. Never silently drop a stage (`.claude/rules/rigor.md`).
+The orchestrator (this skill) runs the two research stages that need the web (journal
+guidelines, comparable papers), fans out to the reviewers, then hands the editor the finished
+reports. It runs on the main loop, so the checkpoints below are real pauses — stop and wait.
+
+A natural fit for **Phase 10 (internal review)** of the pipeline; run it after the analysis is
+frozen (`/gold-standard`, Phase 7) and a full draft exists.
 
 ## Usage
 
-```bash
-/peer-review example-paper --journal "Journal of Example Studies"
-/peer-review example-paper --journal "Journal of Example Studies" --skip-examples
-/peer-review example-paper --journal "Journal of Example Studies" --section "discussion"
+```
+/peer-review my-paper --journal "Journal of Example Studies"
+/peer-review my-paper --journal "Journal of Example Studies" --skip-examples
+/peer-review my-paper --journal "Journal of Example Studies" --section "discussion"
 ```
 
 ## Parameters
 
-- `paper-id` (required): Paper identifier (e.g., "example-paper"). Maps to `papers/{id}/`.
-- `--journal "Name"`: Target journal name. If omitted, resolve it (see below).
+- `paper-id` (required): Paper identifier (e.g. `my-paper`). Maps to `papers/{id}/`.
+- `--journal "Name"`: Target journal. If omitted, resolve it (see below).
 - `--skip-examples`: Skip Stage 2 (comparative analysis) for a faster review.
-- `--section "name"`: Review only a specific section.
+- `--section "name"`: Focus the reviewers on a single section.
 
-## Argument Parsing
+## Argument parsing
 
-Parse the user's command for:
-- `paper-id`: First argument after the command.
-- `--journal "Name"`: Target journal.
-- `--skip-examples`: Skip comparative analysis.
-- `--section "name"`: Review a specific section only.
+- `paper-id`: first argument after the command. If absent, ask which paper to review.
+- `--journal "Name"`: target journal. Resolve in this order: the `--journal` flag →
+  `papers/{id}/config.json` → `journal` → `research-config.yml` → `journals.default`. If none
+  yields a journal, ask which to target.
+- `--skip-examples`, `--section "name"`: as above.
 
-If no `paper-id` is provided, ask which paper to review.
+## Workflow (orchestration)
 
-Resolve the target journal in this order:
-1. The `--journal` flag, if given.
-2. `papers/{id}/config.json` → `journal`.
-3. `research-config.yml` → `journals.default`.
+### Step 0 — Gather context
+Read, in order: `papers/{id}/STATUS.md`; the latest draft (most recent Markdown under
+`papers/{id}/drafts/`); the outputs the paper cites (CSV/JSON in `outputs/` or
+`papers/{id}/outputs/`); and any prior reviews under `papers/{id}/reviews/`. Compute the next
+version number `N` (highest existing `peer_review_v{N}.md` + 1). If there is no draft, stop and
+say so.
 
-If none of these yields a journal, ask which journal to target.
+### Stage 1 — Guidelines ingestion
+1. Check for cached guidelines at `papers/{id}/reviews/journal_guidelines.md`; reuse if present
+   and current.
+2. Otherwise `WebSearch` "[journal] submission guidelines author guidelines", `WebFetch` the
+   page, and extract: word limits (abstract, main text), display-item limits (figures, tables),
+   reference requirements, review dimensions, and scope/fit. Save as a structured checklist to
+   `papers/{id}/reviews/journal_guidelines.md`.
+3. **CHECKPOINT** — show the extracted criteria and confirm they look right before continuing.
+   If cached guidelines conflict with a fresh fetch, prefer the fetch and note the difference.
 
-## Workflow
+### Stage 2 — Comparative analysis (skip if `--skip-examples`)
+1. `WebSearch` for recent papers in this journal on related topics.
+2. Find 3-5 comparable papers; for each note structure, novelty framing, citation patterns, and
+   how implications are pitched. If fewer than 3 exist, say so and proceed.
+3. Save a "success pattern" summary to `papers/{id}/reviews/comparative_analysis_v{N}.md`.
+4. **CHECKPOINT** — confirm the example set is representative before the reviewers use it.
 
-The agent runs through 4 stages, each with a checkpoint.
+### Stage 3 — Three independent referee reports
+Invoke the three reviewer sub-agents via the Agent tool. They can run **in parallel** (send the
+three Agent calls in one message) — they are independent and must not see each other. Give each
+a self-contained brief: the paper id, the absolute draft path, the guidelines path, the version
+`N`, the prior-review paths, and (where relevant) the absolute paths of the cited data files and
+the comparative-analysis file. Pass `--section` through if set. Each saves its own report:
 
-### Stage 1: Guidelines Ingestion
+| Sub-agent | Lens | Scores | Saves to |
+|-----------|------|--------|----------|
+| `peer-reviewer-methods` | methods, data, stats, reproducibility | Methodology | `reviewer_methods_v{N}.md` |
+| `peer-reviewer-significance` | originality, contribution, literature, fit | Originality, Significance, Journal Fit | `reviewer_significance_v{N}.md` |
+| `peer-reviewer-presentation` | writing, structure, figures, format limits | Presentation | `reviewer_presentation_v{N}.md` |
 
-1. Search for "[journal name] submission guidelines author guidelines" using WebSearch.
-2. Fetch the guidelines page using WebFetch.
-3. Extract key criteria:
-   - Word limits (abstract, main text)
-   - Display item limits (figures, tables)
-   - Reference requirements
-   - Review dimensions (originality, methodology, significance)
-   - Scope/fit requirements
-4. Format as a structured checklist.
-5. Check for existing cached guidelines in `papers/{id}/reviews/journal_guidelines.md`; reuse if present and current, otherwise refetch.
-6. **CHECKPOINT**: Confirm the criteria look correct before continuing. If cached guidelines conflict with the fetched page, prefer the fresh fetch and note the difference.
+Wait for all three; confirm the three files exist before continuing.
 
-### Stage 2: Comparative Analysis (skip if --skip-examples)
+### Stage 4 — Editorial decision
+Invoke `peer-review-editor` with: the paper id, draft path, guidelines path, the three referee
+report paths, the cited data-file paths (it spot-checks the highest-stakes disputes itself), and
+version `N`. It computes the weighted overall, issues the decision, and writes two files:
+`peer_review_v{N}.md` (the decision) and `recommendations_v{N}.md` (the prioritized action list).
+Wait for completion; confirm both files exist.
 
-1. Search for recent papers in this journal on related topics using WebSearch.
-2. Find 3-5 comparable papers (similar methodology, topic area).
-3. For each paper, analyze: structure, novelty framing, citation patterns, implications style.
-4. Generate a "success pattern" summary.
-5. **CHECKPOINT**: Confirm the example set is representative before analyzing it. If fewer than 3 comparable papers are found, say so and proceed with what is available.
+### Step 5 — Present
+Read the editor's `peer_review_v{N}.md` and show the user: the score table, the overall score
+and decision, and the editorial summary. Then present the **Must-Fix** items from
+`recommendations_v{N}.md`. Present findings and any decisions **one at a time**
+(`.claude/rules/one-at-a-time.md`) — do not dump the whole action list in one message. Offer to
+update `papers/{id}/STATUS.md` with the score and decision, and to note the review in the paper's
+notes. Do not add scope beyond the review itself (`.claude/rules/no-unapproved-tasks.md`).
 
-### Stage 3: Section-by-Section Review
+## Output files
 
-1. Find the latest draft — the most recent Markdown file in `papers/{id}/drafts/`.
-2. Read the full draft.
-3. For each section (Abstract, Introduction, Results, Discussion, Methods):
-   - Count words
-   - Check against limits
-   - Score against journal criteria (0-100)
-   - Generate specific feedback
-   - Note questions a reviewer might ask
-4. Analyze figures/tables: count, check against limits, assess quality against the draft's own description of each.
-5. **CHECKPOINT**: Confirm section scores before moving to the final report.
+```
+papers/{id}/reviews/
+  journal_guidelines.md              ← Stage 1 (cached, not versioned)
+  comparative_analysis_v{N}.md       ← Stage 2 (unless --skip-examples)
+  reviewer_methods_v{N}.md           ← peer-reviewer-methods
+  reviewer_significance_v{N}.md      ← peer-reviewer-significance
+  reviewer_presentation_v{N}.md      ← peer-reviewer-presentation
+  peer_review_v{N}.md                ← peer-review-editor (decision)
+  recommendations_v{N}.md            ← peer-review-editor (action list)
+```
 
-Only state what the draft and its underlying outputs actually contain. Do not describe a figure, value, or claim you have not verified in the source (`.claude/rules/rigor.md`).
+## Scoring framework
 
-### Stage 4: Report Generation
+The editor computes one weighted overall from the referees' dimension scores:
 
-1. Calculate the overall score using a weighted framework:
-   - Originality (20%)
-   - Methodology (25%)
-   - Significance (20%)
-   - Presentation (15%)
-   - Journal Fit (20%)
+| Dimension | Weight | Referee |
+|-----------|--------|---------|
+| Originality | 20% | significance |
+| Methodology | 25% | methods |
+| Significance | 20% | significance |
+| Presentation | 15% | presentation |
+| Journal Fit | 20% | significance |
 
-2. Determine the recommendation:
-   - 85-100: Accept with minor revisions
-   - 70-84: Major revisions
-   - 50-69: Reject and resubmit
-   - <50: Reject
+Decision bands: **85-100** accept with minor revisions · **70-84** major revisions ·
+**50-69** reject and resubmit · **< 50** reject.
 
-3. Generate `peer_review_v{n}.md` with scores, section feedback, priority recommendations, reviewer questions, and journal fit analysis.
-
-4. Generate `recommendations_v{n}.md` with prioritized action items (high/medium/low).
-
-5. Save both files to `papers/{id}/reviews/`.
-
-6. Offer to update `papers/{id}/STATUS.md` with the review score and record a summary in the paper's notes.
-
-## Review Framework Details
-
-**Originality (20%)** — Novel research question, advances beyond the literature, unique dataset or methodology.
-
-**Methodology (25%)** — Data quality, analytical rigor, reproducibility, appropriate statistics.
-
-**Significance (20%)** — Practical relevance, implications, field advancement, timeliness.
-
-**Presentation (15%)** — Clear writing, logical structure, figure/table quality, appropriate length.
-
-**Journal Fit (20%)** — Within scope, meets format requirements, appropriate audience, citation style.
+## Why four sub-agents, not one loop
+- **Independence** — three referees who cannot see each other's reasoning give a cleaner signal
+  than one context scoring five dimensions in sequence, exactly as a journal uses independent
+  reviewers.
+- **Tool budget per referee** — each reviewer gets its own budget to verify claims against the
+  data or search the literature; one shared context exhausts it.
+- **Honest adjudication** — the editor reads three finished reports as artifacts and reconciles
+  them, rather than a single voice grading its own work.
+- **Reusability** — another skill can invoke `peer-reviewer-methods` directly without the
+  orchestrator.
 
 ## Notes
-
-- Always read the draft BEFORE starting the review.
-- Be specific with feedback — include line references where possible.
-- Focus on actionable recommendations.
-- Save all outputs to `papers/{id}/reviews/`.
-- Present findings and any decisions one at a time (`.claude/rules/one-at-a-time.md`); do not add scope beyond the review itself (`.claude/rules/no-unapproved-tasks.md`).
-- This skill critiques an existing draft. To produce revisions, hand results to `/draft`; the analysis behind the paper should already be frozen via `/gold-standard` (Phase 7 of the pipeline).
+- This skill critiques an existing draft. To produce the revisions, hand `recommendations_v{N}.md`
+  to `/draft`; the analysis behind the paper should already be frozen via `/gold-standard`.
+- Reviewers verify against the source data and the journal guidelines — they do not trust the
+  draft's own numbers (`.claude/rules/rigor.md`, no fabrication or embellishment).
+- The `peer-reviewer-presentation` agent runs on the `sonnet` tier and the other three on `opus`
+  (see the token-budget rule). Bump presentation to `opus` in its agent file if you want the
+  full critique tier on every referee.

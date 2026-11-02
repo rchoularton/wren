@@ -18,7 +18,7 @@ Type these as slash commands in Claude Code once your project is open. All 18 sh
 | `/cover-letter` `[paper-id]` | Draft a journal-specific cover letter from a paper's frozen findings. |
 | `/revision-response` `[paper-id]` | Structure a point-by-point response to peer reviewer comments for a journal revision. |
 | `/ref-check` `[paper-id] [--format] [--gaps] [--zotero]` | Validate a draft's citations against your library, find uncited claims, check journal formatting. |
-| `/peer-review` `[paper-id] [--journal "Journal Name"] [--skip-examples] [--section "name"]` | Agentic peer reviewer that evaluates a paper against its target journal's guidelines in four stages. |
+| `/peer-review` `[paper-id] [--journal "Journal Name"] [--skip-examples] [--section "name"]` | Simulated journal review — three independent referee agents (methods, significance, presentation) + a handling editor evaluate a paper against its target journal and issue a decision with a prioritized action list. |
 | `/figure` `[paper-id] [--figure N] [--all] [--score-only]` | Designer → Critic loop that iterates a figure to publication quality (8-dimension scoring, journal compliance). |
 
 ## Discover
