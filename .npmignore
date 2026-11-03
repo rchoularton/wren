@@ -48,3 +48,17 @@ __pycache__/
 venv/
 .DS_Store
 *.tgz
+
+# Contributor-only: the scaffolder already filters tests/ and requirements-dev.txt
+# out of new projects; keep them, CI config, and the docs-site config out of the tarball too.
+tests/
+requirements-dev.txt
+.github/
+mkdocs.yml
+
+# pytest writes .pytest_cache/.gitignore, which triggers npm's gitignore-fallback warning
+.pytest_cache/
+
+# Local agent worktrees (each carries its own .gitignore, which triggers npm's
+# gitignore-fallback warning when walked)
+.claude/worktrees/
