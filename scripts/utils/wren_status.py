@@ -88,16 +88,23 @@ def read_current_paper(repo: Path) -> str:
 
 
 def collect_papers(papers_dir: Path, active: str = "") -> tuple[list[PaperRow], list[str]]:
-    """(parsed rows ordered by tier then id, ids of STATUS.md files without frontmatter)."""
+    """(parsed rows ordered by tier then id, "id (reason)" for papers that cannot be parsed)."""
     rows: list[PaperRow] = []
     unparsed: list[str] = []
     for d in sorted(papers_dir.iterdir()):
         status = d / "STATUS.md"
-        if not d.is_dir() or not status.is_file():
+        if not d.is_dir():
             continue
-        fm = parse_frontmatter(status.read_text(encoding="utf-8", errors="replace"))
+        if not status.is_file():
+            unparsed.append(f"{d.name} (no STATUS.md)")
+            continue
+        try:
+            fm = parse_frontmatter(status.read_text(encoding="utf-8", errors="replace"))
+        except OSError as e:
+            unparsed.append(f"{d.name} (unreadable: {e.strerror or type(e).__name__})")
+            continue
         if not fm:
-            unparsed.append(d.name)
+            unparsed.append(f"{d.name} (no frontmatter)")
             continue
         pid = fm.get("paper_id") or d.name
         rows.append(PaperRow(
@@ -110,11 +117,16 @@ def collect_papers(papers_dir: Path, active: str = "") -> tuple[list[PaperRow], 
     return rows, unparsed
 
 
+def active_missing(active: str, rows: list[PaperRow], papers_dir: Path) -> bool:
+    return bool(active) and not any(r.active for r in rows) and not (papers_dir / active).is_dir()
+
+
 # ---------------------------------------------------------- scheduled jobs ---
 
 _LOG_RE = re.compile(r"^(?P<key>.+)_(?P<date>\d{4}-\d{2}-\d{2})\.log$")
-_OK_RE = re.compile(r"\bOK\b|\bdone\b|\bsuccess", re.I)
-_FAIL_RE = re.compile(r"ERROR|FAIL|Traceback", re.I)
+_OK_RE = re.compile(r"\b(ok|done|success|completed)\b", re.I)
+_FAIL_RE = re.compile(r"\b(error|failed|failure|traceback)\b", re.I)
+_END_MARKER_RE = re.compile(r"^=== WREN_JOB_END exit=(-?\d+) ===\s*$")
 
 
 @dataclass
@@ -136,12 +148,17 @@ def _tail(path: Path, n: int = 20) -> list[str]:
 
 
 def verdict_from_tail(lines: list[str]) -> str:
-    """The last non-empty line that carries a verdict word decides."""
+    """The last `=== WREN_JOB_END exit=N ===` marker decides (0 is ok). Without
+    one, the last non-blank line is read for ok words first, then failure words."""
     for line in reversed(lines):
-        if _FAIL_RE.search(line):
-            return "failed"
-        if _OK_RE.search(line):
-            return "ok"
+        m = _END_MARKER_RE.match(line.strip())
+        if m:
+            return "ok" if int(m.group(1)) == 0 else "failed"
+    last = next((ln for ln in reversed(lines) if ln.strip()), "")
+    if _OK_RE.search(last):
+        return "ok"
+    if _FAIL_RE.search(last):
+        return "failed"
     return "unknown"
 
 
@@ -203,11 +220,15 @@ def collect_jobs(logs_dir: Path, cadences: dict[str, int], today: date) -> list[
 
 
 def build(repo: Path, today: date | None = None) -> dict:
+    given_today = today is not None
     today = today or date.today()
     papers, unparsed = collect_papers(repo / "papers", read_current_paper(repo))
     jobs = collect_jobs(repo / "outputs" / "_logs", job_cadences(repo / "research-config.yml"), today)
+    active = read_current_paper(repo)
     return {
-        "generated": datetime.now().isoformat(timespec="seconds"),
+        "generated": today.isoformat() if given_today else datetime.now().isoformat(timespec="seconds"),
+        "warnings": [f".current_paper names '{active}', which is not in papers/"]
+        if active_missing(active, papers, repo / "papers") else [],
         "papers": [asdict(p) for p in papers],
         "unparsed": unparsed,
         "jobs": [asdict(j) for j in jobs],
@@ -267,10 +288,24 @@ def _job_flags(j: dict) -> list[str]:
     return flags
 
 
+MAX_PAPERS, MAX_JOBS = 12, 6
+
+
 def render_summary(rep: dict) -> str:
-    L: list[str] = ["**Papers** (▶ = active)"]
+    L: list[str] = []
+    for w in rep["warnings"]:
+        L += [f"Warning: {w}", ""]
+    L.append("**Papers** (▶ = active)")
+    papers = rep["papers"]
+    shown = papers
+    if len(papers) > MAX_PAPERS:
+        # tier order already puts tier 1 first; pull the active paper in if it fell outside
+        shown = papers[:MAX_PAPERS]
+        act = next((p for p in papers if p["active"]), None)
+        if act and act not in shown:
+            shown = papers[:MAX_PAPERS - 1] + [act]
     cur = None
-    for p in rep["papers"]:
+    for p in shown:
         lab = _tier_label(p["tier"])
         if lab != cur:
             L += ["", f"**{lab}**"]
@@ -278,15 +313,18 @@ def render_summary(rep: dict) -> str:
         mark = "▶ " if p["active"] else ""
         L.append(f"- {mark}**{p['paper_id']}** · {short_title(p['title'])} — phase {p['phase'] or '?'}, "
                  f"{readable_status(p['status'])}. Next: {_md(clip_next(p['next']))}")
-    if not rep["papers"]:
+    if len(papers) > len(shown):
+        L.append(f"- … and {len(papers) - len(shown)} more (use --full)")
+    if not papers:
         L.append("- no papers with frontmatter yet")
     if rep["unparsed"]:
-        L += ["", "**Unparsed** (STATUS.md has no frontmatter): " + ", ".join(rep["unparsed"])]
+        L += ["", "**Unparsed:** " + ", ".join(rep["unparsed"])]
     L += ["", _jobs_summary(rep["jobs"])]
-    for j in rep["jobs"]:
-        flags = _job_flags(j)
-        if flags:
-            L.append(f"- {j['key']}: last run {j['last_run']} — {', '.join(flags)}")
+    flagged = [j for j in rep["jobs"] if _job_flags(j)]
+    for j in flagged[:MAX_JOBS]:
+        L.append(f"- {j['key']}: last run {j['last_run']} — {', '.join(_job_flags(j))}")
+    if len(flagged) > MAX_JOBS:
+        L.append(f"- … and {len(flagged) - MAX_JOBS} more (use --full)")
     return "\n".join(L).rstrip() + "\n"
 
 
@@ -298,7 +336,7 @@ def _jobs_summary(jobs: list[dict]) -> str:
 
 
 def render_full(rep: dict) -> str:
-    L: list[str] = ["## Papers"]
+    L: list[str] = [f"Warning: {w}" for w in rep["warnings"]] + ["## Papers"]
     cur = None
     for p in rep["papers"]:
         lab = _tier_label(p["tier"])
@@ -310,7 +348,7 @@ def render_full(rep: dict) -> str:
                  f"phase {p['phase'] or '?'} · {p['status'] or '?'}")
         L.append(f"      next: {p['next']}" if p["next"] else "      next: (none set)")
     if rep["unparsed"]:
-        L.append("Unparsed (no frontmatter): " + ", ".join(rep["unparsed"]))
+        L.append("Unparsed: " + ", ".join(rep["unparsed"]))
     L += ["", "## Scheduled jobs"]
     if not rep["jobs"]:
         L.append("no scheduled jobs have run.")

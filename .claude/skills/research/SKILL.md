@@ -16,7 +16,8 @@ Run `npm run status` and print its output **verbatim**. Never summarise it, reor
 
 - **Papers** — `/paper` (resume, switch, start a new paper)
 - **Library** — `/zotero-audit`, `/lit-digest`, `/literature-scan`
-- **Memory** — `/research-memory`
+- **System** — `npm run status` for jobs (add `-- --full` for every one), `/setup`, `/retro`
+- **Memory** — `/research-memory`. Check `tiers.research_memory` in `research-config.yml` first and offer this group only when it is enabled.
 
 Do not add next steps of your own; what is pending is what the report shows from each `STATUS.md`.
 

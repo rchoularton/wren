@@ -33,16 +33,19 @@ def main(argv: list[str] | None = None) -> int:
     if not readme.is_file():
         print(f"papers_table: {readme} not found", file=sys.stderr)
         return 1
-    text = readme.read_text(encoding="utf-8")
+    with readme.open(encoding="utf-8", newline="") as f:
+        text = f.read()
     head, sep1, rest = text.partition(BEGIN)
     _, sep2, tail = rest.partition(END)
     if not (sep1 and sep2):
         print(f"papers_table: {readme} needs {BEGIN} and {END} markers", file=sys.stderr)
         return 1
-    table = papers_table(build(repo)["papers"])
-    new = f"{head}{BEGIN}\n{table}\n{END}{tail}"
+    nl = "\r\n" if "\r\n" in text else "\n"
+    table = papers_table(build(repo)["papers"]).replace("\n", nl)
+    new = f"{head}{BEGIN}{nl}{table}{nl}{END}{tail}"
     if new != text:
-        readme.write_text(new, encoding="utf-8")
+        with readme.open("w", encoding="utf-8", newline="") as f:
+            f.write(new)
         print(f"updated {readme}")
     else:
         print("papers table already up to date")
