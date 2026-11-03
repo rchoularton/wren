@@ -3,7 +3,11 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
-## [Unreleased]
+## [0.10.0] - 2026-11-03
+
+Context diet plus rules refresh: three new always-on rules, the standing context trimmed
+with a size guard, a document-to-Markdown cache so PDFs and Word files are read as cheap
+text, and a tighter npm tarball.
 
 ### Added
 - Three always-on behaviour rules: `always-run-the-check.md` (verify before asserting; read without asking, ask before writing shared state; re-read after a write), `wren-voice.md` (clean, precise, transparent writing voice that never overrides the author's own rules), and `gold-standard.md` (frozen means immutable, changes take integer version n+1, superseded freezes archived).

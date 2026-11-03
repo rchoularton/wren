@@ -6,6 +6,7 @@ while Wren is pre-1.0, every release that adds a tool is a MINOR bump.
 
 ## Shipped
 
+- **0.10.0** — context diet with a size guard; always-run-the-check, Wren voice, and gold-standard versioning rules; document-to-Markdown cache (`npm run doc:md`); tighter npm tarball.
 - **0.9.0** — `/peer-review` agent suite; read-only reviewers, critique-tier pin, model-ID drift check; review-stage gate, post-compaction re-pin, and model-advisory hooks; pytest harness in CI.
 - **0.8.0** — `/lit-digest` + the scheduled-jobs/email tier (launchd/cron).
 - **0.7.0** — `/qc-team`, `/figure` (the sub-agent tier); model-routing tiers + a token-usage report.
@@ -23,7 +24,6 @@ for it, then the bigger skills.
 
 | Release | Theme | What ships |
 |---|---|---|
-| **0.10** | Context diet + rules refresh | Standing context trimmed (rule histories to docs, agent examples collapsed, memory index one line each); new rules: always-run-the-check, Wren's own voice, gold-standard versioning; updated archive convention; the Word-prompt approval wording; an AI-detection step before resubmission; a document-to-Markdown cache so PDFs and Word files are read as cheap text |
 | **0.11** | Front door + session memory | `/research` rebuilt around a deterministic status script: papers by tier from `STATUS.md` frontmatter with a `next:` line, scheduled-job verdicts, a generated papers table; opt-in session capture + `/recall` over dated session logs |
 | **0.12** | Library automation | `/librarian-team` — weekly Zotero audit + discovery with an approval queue; `/pdf-fill` with open-access sources and a configurable institution proxy; orphan-attachment repair |
 | **0.13** | Submission-grade audit | `/claim-audit` — enumerated, adversarial manuscript audit; `/code-capsule` — a reproducibility package from the gold standard; journal-submission-prep and reference-manager agents; `/consistency-check` as a multi-paper option |
