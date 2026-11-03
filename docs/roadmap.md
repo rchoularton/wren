@@ -15,6 +15,19 @@ while Wren is pre-1.0, every release that adds a tool is a MINOR bump.
 - **0.4.0** — guided onboarding (`/setup wren`): a tour, an interview, tool setup, first paper.
 - **0.3.0** — renamed to **Wren**; published to npm as `create-wren`.
 
+## In progress
+
+*Status as of 2026-11-03.*
+
+- **0.11 — Front door + session memory.** The deterministic status script (`npm run status`),
+  the `next:` line in `STATUS.md`, the generated papers table, and the rebuilt `/research` and
+  `/paper` skills are reviewed and ready to merge
+  ([#47](https://github.com/rchoularton/wren/pull/47), closing
+  [#24](https://github.com/rchoularton/wren/issues/24)). Scheduled jobs now write an explicit
+  end-of-run marker so the status report can tell a clean run from a failed one. Opt-in session
+  capture and `/recall` ([#25](https://github.com/rchoularton/wren/issues/25)) start once #47
+  lands, since they read the new `STATUS.md` shape.
+
 ## Planned
 
 Wren is extracted from a private research system that keeps evolving. Each release below
