@@ -6,8 +6,7 @@ description: Reviewer-response format & academic-prose standard. Loads when edit
 
 # Reviewer-Response Prose Rules
 
-When drafting or editing a point-by-point response to journal reviewers (any
-reviewer-response document under `papers/*/reviews/`), follow this standard.
+When drafting or editing a point-by-point response to journal reviewers (under `papers/*/reviews/`), follow this standard.
 
 1. **Verbatim reviewer quote** for every comment — never paraphrase or summarise it.
 2. **Five-part structure per comment:** quote → formal, deferential acknowledgement →

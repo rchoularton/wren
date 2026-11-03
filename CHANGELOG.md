@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 - `outputs.md` archive convention: stale files and directories are renamed in place as `_archived_<YYYY-MM-DD>`; `ARCHIVED_<reason>/` is reserved for periodic sweeps; check for active readers first.
 - `one-at-a-time.md`: the Word manuscript-edit prompt must state that the user approves the change before it is applied; "go ahead with all of them" is listed as not a batch request.
 - `reviewer-response-prose.md`: run the `ai-detection-evaluator` agent over the response before resubmission.
+- Context diet (#21): standing context cut about 20% with no change to what any rule requires. Rationale and examples moved from `.claude/rules/*.md` to `docs/rules-history.md`; `CLAUDE.template.md` and the memory seed de-duplicated; `session-start-learnings` injects at most 5 learnings (was 10). New `npm run context:size` reports the footprint, and `tests/test_context_size.py` guards the budget and the rule obligations.
 
 ## [0.9.0] - 2026-11-02
 

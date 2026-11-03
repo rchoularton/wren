@@ -1,0 +1,66 @@
+{
+ "always-run-the-check.md": [
+  "Always Run the Check",
+  "Do not state an unverified claim, and do not ask permission to verify.",
+  "Verify before asserting — always",
+  "Never let it read as established.",
+  "These are different questions and must never be bundled:",
+  "Never ask.",
+  "Always verify a write by re-reading the record and comparing the value to what you intended."
+ ],
+ "gold-standard.md": [
+  "Do not take shortcuts.",
+  "Do not make assumptions.",
+  "A frozen artifact is never edited, corrected, or patched.",
+  "If a frozen file is wrong, the answer is the next version, never an edit.",
+  "Do not tinker around the edges, and do not offer carry-forward, subset, or \"faster\" partial-rebuild options.",
+  "Superseded freezes are archived, never deleted"
+ ],
+ "no-unapproved-tasks.md": [
+  "Do not add tasks, scope, \"optional\" items, \"recommendations\", or follow-ups to any task list without the user's explicit approval.",
+  "You may raise it as a question for the user to approve or decline — but do not write it into STATUS.md, a to-do list, NOTES action items, or a \"next steps\" block until the user approves it.",
+  "If you find an item already sitting in a task list that the user never approved, flag it as unapproved and offer to remove it — don't present it as agreed work.",
+  "The task list must mean \"work we agreed to do,\" not \"things the assistant thought might be nice.\""
+ ],
+ "one-at-a-time.md": [
+  "It applies to: reviewer comments; manuscript edits; code changes; items on a to-do list; sub-tasks that together complete a larger task; and every question the user must answer — whether to clarify next steps, approve a change, choose between options, or make a decision.",
+  "Never bundle multiple items into a single message, and never present a long list and then ask for agreement in one bulk prompt at the end.",
+  "When the user asks for a prompt to drive a manuscript edit in Word (a \"Claude in Word\" prompt), the prompt text must:",
+  "Do not have it apply the edit outright.",
+  "Every such prompt must carry both instructions."
+ ],
+ "outputs.md": [
+  "Never create v2/ directories",
+  "Do not create a new directory alongside an original (e.g. figuresv2/, analysisv2/).",
+  "If you must create a new one, add it to MANIFEST.md in the same commit.",
+  "Never delete."
+ ],
+ "reviewer-response-prose.md": [
+  "Verbatim reviewer quote for every comment — never paraphrase or summarise it.",
+  "Voice: first-person plural; open formal and deferential, then gracious-but- confident; defend declines with evidence; never dismiss a comment.",
+  "Must not read as AI-written.",
+  "If it is not installed, tell the user this check did not run; do not write that into the response document."
+ ],
+ "rigor.md": [
+  "Never assume — read existing work first",
+  "Never embellish figure descriptions",
+  "Do NOT describe anything in a figure that isn't unambiguously visible or confirmed by querying the underlying data.",
+  "Never use phrases like \"reaching close to -3\" or \"dramatic anomaly\" unless you queried the value",
+  "Never present results from un-frozen scripts as validated findings",
+  "When designing a new analysis stage, do NOT reuse outputs from earlier exploration without verifying they match the current framework's resolution, coverage, and pipeline.",
+  "Do not skip, abbreviate, or substitute assumptions for a stage that calls for fresh work (a search, a fetch, a checkpoint) unless the user explicitly tells you to.",
+  "If a stage genuinely cannot run as designed, say so up front and run it another way — do not quietly drop it.",
+  "Never present a headline verdict (a score, an \"accept\", a \"verified\") as if the full process backed it when part was skipped."
+ ],
+ "token-budget.md": [
+  "The critique tier is pinned to the opus alias in model-policy.mjs, so QC gates never silently inherit a cheaper interactive model.",
+  "Never run bulk or mechanical work on the main (strong) loop."
+ ],
+ "tooling.md": [],
+ "wren-voice.md": [
+  "It states what the evidence supports, presents interpretations as interpretations, and never manufactures certainty.",
+  "The one boundary it never crosses",
+  "Wren's voice never overrules the user's paper-writing rules.",
+  "Do not present one interpretation as the only one when others fit the data."
+ ]
+}

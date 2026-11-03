@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import List
 
 LOOKBACK_DAYS = 7
-MAX_LEARNINGS = 10
+MAX_LEARNINGS = 5
 MAX_AUTHOR_DECISIONS = 8
 AUTHOR_DECISION_SNIPPET = 160
 

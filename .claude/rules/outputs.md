@@ -12,11 +12,10 @@ description: Output & file-management conventions. Loads when working in outputs
 
 Do not create a new directory alongside an original (e.g. `figures_v2/`, `analysis_v2/`). Instead:
 
-- Archive the old directory: rename in place with an `_archived_<YYYY-MM-DD>` suffix (e.g. `figures_archived_2026-11-02/`)
-- Reuse the original name for the new version
+- Archive the old directory (see §5) and reuse the original name for the new version
 - If temporary parallel comparison is genuinely needed, use a **dated suffix**: `figures_20260318/`
 
-**Why:** Organic version growth produces duplicated datasets and version-ambiguous directories that are painful to clean up later.
+**Why:** organic version growth produces duplicated datasets and version-ambiguous directories.
 
 ## 2. Register new output directories in MANIFEST.md
 
@@ -32,15 +31,13 @@ Not alongside data files.
 
 ## 5. Archive stale directories promptly
 
-When a file or directory goes stale, rename it in place with the suffix `_archived_<YYYY-MM-DD>` and note it in MANIFEST.md. `outputs/ARCHIVED_<reason>/` is reserved for periodic sweeps of whole directories. Check for active readers before archiving (grep `scripts/`, `papers/*/code/`, `.claude/`, `package.json`). Never delete.
+When a file or directory goes stale, rename it in place with the suffix `_archived_<YYYY-MM-DD>` (e.g. `figures_archived_2026-11-02/`) and note it in MANIFEST.md. `outputs/ARCHIVED_<reason>/` is reserved for periodic sweeps of whole directories. Check for active readers before archiving (grep `scripts/`, `papers/*/code/`, `.claude/`, `package.json`). Never delete.
 
 ## 6. Paper-specific outputs live in the paper folder
 
-For publication figures and key summary outputs tied to a specific paper:
-
-- **Figures** → `papers/{paper_id}/figures/` (PNG + PDF)
+- **Figures** (publication) → `papers/{paper_id}/figures/` (PNG + PDF)
 - **Key summary CSVs/JSONs** → `papers/{paper_id}/outputs/` if paper-specific
 - **Analysis scripts** → stay centralized in `scripts/`
-- **Central `outputs/`** → remains the source of truth for raw pipeline data
+- **Central `outputs/`** → source of truth for raw pipeline data; paper folders get the curated, paper-ready versions
 
-Central outputs is for raw data; paper folders get the curated, paper-ready versions.
+Background and examples: docs/rules-history.md.

@@ -1,12 +1,10 @@
 # Research Rigor Rules
 
-These rules exist because skipping them repeatedly undermined otherwise good work. Follow them without being asked.
+Follow these without being asked.
 
 ## 1. Never assume — read existing work first
 
 When a plan, script, or document already exists: **read it fully before proposing anything**. When the user says "let's run X", open X and review it with them first — don't start building a separate version. Ask clarifying questions rather than guessing. Don't recreate work the user already spent time on.
-
-**Why:** The system is built on gold-standard research rigor — skipping steps or assuming answers undermines the whole approach. Build **on** existing work, not instead of it.
 
 ## 2. Never embellish figure descriptions
 
@@ -15,8 +13,6 @@ Only state what you can verify from the data. Do NOT describe anything in a figu
 - "Bars in the bottom lane" ✓ — "bars indicating severe crisis" ✗ (unless confirmed)
 - Never use phrases like "reaching close to -3" or "dramatic anomaly" unless you queried the value
 - When uncertain about a value, query before stating it; err on the side of saying less
-
-**Why:** High-consequence academic QC. Fabricated observations lead to incorrect methodological conclusions.
 
 ## 3. Only frozen pipelines are canonical
 
@@ -28,9 +24,7 @@ A result is canonical **only** once its pipeline has been frozen via `/gold-stan
 
 ## 4. Don't build on stale exploration
 
-When designing a new analysis stage, do NOT reuse outputs from earlier exploration without verifying they match the current framework's resolution, coverage, and pipeline. Earlier exploration was often at a different resolution, on partial data, or from an outdated extraction.
-
-Before reusing any output, check: **same resolution? same variable set? same universe of cases?** If not, reimplement on the correct data — reference the technique, don't inherit the data path.
+When designing a new analysis stage, do NOT reuse outputs from earlier exploration without verifying they match the current framework's resolution, coverage, and pipeline. Before reusing any output, check: **same resolution? same variable set? same universe of cases?** If not, reimplement on the correct data — reference the technique, don't inherit the data path.
 
 ## 5. Run skills and commands to their FULL defined process — no silent shortcuts
 
@@ -38,10 +32,10 @@ When a skill or workflow defines a multi-stage process, run **every** stage. Do 
 
 If a stage genuinely cannot run as designed, **say so up front and run it another way** — do not quietly drop it. When reporting results, state which stages ran and which did not. Never present a headline verdict (a score, an "accept", a "verified") as if the full process backed it when part was skipped.
 
-For `/peer-review` and `/qc-team` this is enforced structurally: the `post-agent-review-gate` hook blocks a `peer-review-editor` or `qc-team-leader` verdict when a required prior-stage file for that paper and version is missing. A missing comparative analysis only warns, so a skipped Stage 2 is surfaced rather than silent.
+For `/peer-review` and `/qc-team` the `post-agent-review-gate` hook blocks a `peer-review-editor` or `qc-team-leader` verdict when a required prior-stage file for that paper and version is missing. A missing comparative analysis only warns.
 
-**Why:** A competent-looking shortcut is worse than no answer, because it hides the gap. The system's entire value is gold-standard rigor.
+For long analysis sessions, run `/rigor-check` partway through to self-audit.
 
-## Mid-task check-in
+**Why:** a competent-looking shortcut hides the gap, and high-consequence QC cannot tolerate fabricated observations.
 
-For long analysis sessions, run `/rigor-check` partway through to self-audit against these rules.
+Background and examples: docs/rules-history.md.
