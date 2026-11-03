@@ -6,7 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 ## [Unreleased]
 
 ### Added
+- Three always-on behaviour rules: `always-run-the-check.md` (verify before asserting; read without asking, ask before writing shared state; re-read after a write), `wren-voice.md` (clean, precise, transparent writing voice that never overrides the author's own rules), and `gold-standard.md` (frozen means immutable, changes take integer version n+1, superseded freezes archived).
 - `.claude/lib/doc_to_md.py` + `normalize-to-md.mjs` (`npm run doc:md -- <file>`): converts PDF, docx, xlsx and pptx to Markdown once, cached under `.cache/md/` keyed on path + mtime + size; wired into six skills that read documents (#23).
+
+### Changed
+- `outputs.md` archive convention: stale files and directories are renamed in place as `_archived_<YYYY-MM-DD>`; `ARCHIVED_<reason>/` is reserved for periodic sweeps; check for active readers first.
+- `one-at-a-time.md`: the Word manuscript-edit prompt must state that the user approves the change before it is applied; "go ahead with all of them" is listed as not a batch request.
+- `reviewer-response-prose.md`: run the `ai-detection-evaluator` agent over the response before resubmission.
 
 ## [0.9.0] - 2026-11-02
 
