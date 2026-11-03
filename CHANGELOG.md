@@ -10,6 +10,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 - `.claude/lib/doc_to_md.py` + `normalize-to-md.mjs` (`npm run doc:md -- <file>`): converts PDF, docx, xlsx and pptx to Markdown once, cached under `.cache/md/` keyed on path + mtime + size; wired into six skills that read documents (#23).
 
 ### Changed
+- `.npmignore` now excludes `tests/`, `requirements-dev.txt`, `.github/`, `mkdocs.yml` and `.claude/worktrees/` from the npm tarball; `tests/test_npm_pack.py` guards it (#41).
 - `outputs.md` archive convention: stale files and directories are renamed in place as `_archived_<YYYY-MM-DD>`; `ARCHIVED_<reason>/` is reserved for periodic sweeps; check for active readers first.
 - `one-at-a-time.md`: the Word manuscript-edit prompt must state that the user approves the change before it is applied; "go ahead with all of them" is listed as not a batch request.
 - `reviewer-response-prose.md`: run the `ai-detection-evaluator` agent over the response before resubmission.

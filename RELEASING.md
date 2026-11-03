@@ -80,3 +80,7 @@ drafts the GitHub Release and you publish by hand — the default, and perfectly
 
 Don't edit a published version — it's permanent. Fix forward: make the change, then cut the
 next PATCH (e.g. `X.Y.Z+1`) with this same checklist.
+
+## Tarball contents
+
+The tarball is curated with `.npmignore` (no `files` allowlist). Almost the whole repo is the scaffold payload, so an allowlist would list nearly every directory and silently drop anything newly added; a short exclusion list is easier to keep correct, and `tests/test_npm_pack.py` fails if a contributor-only path leaks in.
