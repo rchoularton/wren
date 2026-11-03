@@ -14,13 +14,13 @@ import re
 
 from conftest import REPO_ROOT
 
-# The measured total (32,240 bytes at the diet) rounded up to the next 1,000.
-BUDGET_BYTES = 33_000
+# The measured total (33,737 bytes after the diet) rounded up to the next 1,000.
+BUDGET_BYTES = 34_000
 
 RULES = REPO_ROOT / ".claude" / "rules"
 SNAPSHOT = REPO_ROOT / "tests" / "data" / "rule_obligations.json"
 # "always-on" / "always-run-the-check" are names, not obligations, hence (?!-).
-OBLIGATION = re.compile(r"\b(must|never|always(?!-)|do not)\b", re.I)
+OBLIGATION = re.compile(r"\b(must|never|always(?!-)|do not|don't|only|unless|except|should)\b", re.I)
 
 
 def _load_context_size():

@@ -6,7 +6,7 @@ This system is driven from the terminal by asking the assistant. Don't propose b
 
 Legitimate improvements work through skills (`/command`), hooks, scheduled background jobs, memory, and ambient signals (`RUNNING.md`, desktop notifications).
 
-**Why:** a researcher who can just ask the assistant shouldn't have to browse a separate app. (A dashboard the user personally wants is a preference — build it, but don't file it as a system improvement.)
+**Why:** a researcher who can just ask the assistant shouldn't have to browse a separate app. (If you personally want a dashboard, that's a preference — build it, but don't file it as a system improvement the assistant should push.)
 
 ## 2. Tool output may not be visible in the editor
 

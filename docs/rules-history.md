@@ -47,10 +47,10 @@ No rationale was removed from this rule; the full text stays in the rule file.
 
 ## token-budget
 
-- **Tier cost.** Strong-model output costs several times the mid model's per token, so the way to afford rigour is to not spend it where it isn't needed.
+- **Why.** Rigour is expensive per token, so the way to afford it is to not spend it where it isn't needed.
 - **Model routing.** Match the spend to the task, do the mechanical part with scripts, and read each source in its cheapest form once.
 - **Rule 6, background.** Built-in search and general agents inherit the caller's model, which on the main loop is the strong one. This is the biggest silent leak.
-- **Rule 3, example.** A sub-agent's file reads don't accrue in the main context, so fan out searches and document reads while keeping the synthesis in one place.
+- **Rule 3, instruction.** A sub-agent's file reads don't accrue in the main context, so fan out searches and document reads while keeping the synthesis in one place.
 
 ## tooling
 

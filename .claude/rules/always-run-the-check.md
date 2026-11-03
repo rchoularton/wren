@@ -1,10 +1,14 @@
+---
+description: Verify before asserting, including asides. Read and verify without asking; ask before writing shared state. Always on.
+---
+
 # Always Run the Check
 
 If a check would settle a question, **run it**. Do not state an unverified claim, and do not ask permission to verify.
 
 ## 1. Verify before asserting — always
 
-Every factual claim with a resolvable source gets checked before it is stated: reference metadata (Crossref, OpenAlex, the primary PDF), library records, file contents, line numbers, computed values, what a URL serves.
+Every factual claim with a resolvable source gets checked before it is stated: reference metadata (Crossref, OpenAlex, the primary PDF), library records, file contents, line numbers, computed values, what a document or codebase contains, what a URL serves.
 
 This applies to **asides and supporting details**, not just headline findings. If it bears on a decision, check it first.
 

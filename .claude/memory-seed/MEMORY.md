@@ -1,6 +1,6 @@
 # Auto-memory Index
 
-Auto-loaded at session start. One line per entry, ≤200 lines, each pointing to a fact file in this directory. Content lives in the fact files, not here. Paper / project state belongs in `papers/{id}/STATUS.md`; behavior rules live in `.claude/rules/` (auto-loaded).
+Auto-loaded at session start. One line per entry, ≤200 lines, each pointing to a fact file in this directory. Content lives in the fact files, not here. Paper / project state belongs in `papers/{id}/STATUS.md` (and `research_memory/` if the corpus add-on is on); behavior rules live in `.claude/rules/` (auto-loaded).
 
 ## User profile
 - **Name:** (set during setup)

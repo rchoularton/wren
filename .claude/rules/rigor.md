@@ -4,7 +4,7 @@ Follow these without being asked.
 
 ## 1. Never assume — read existing work first
 
-When a plan, script, or document already exists: **read it fully before proposing anything**. When the user says "let's run X", open X and review it with them first — don't start building a separate version. Ask clarifying questions rather than guessing. Don't recreate work the user already spent time on.
+When a plan, script, or document already exists: **read it fully before proposing anything**. When the user says "let's run X", open X and review it with them first — don't start building a separate version. Ask clarifying questions rather than guessing. Don't recreate work the user already spent time on. Build **on** existing work, not instead of it.
 
 ## 2. Never embellish figure descriptions
 
@@ -32,7 +32,7 @@ When a skill or workflow defines a multi-stage process, run **every** stage. Do 
 
 If a stage genuinely cannot run as designed, **say so up front and run it another way** — do not quietly drop it. When reporting results, state which stages ran and which did not. Never present a headline verdict (a score, an "accept", a "verified") as if the full process backed it when part was skipped.
 
-For `/peer-review` and `/qc-team` the `post-agent-review-gate` hook blocks a `peer-review-editor` or `qc-team-leader` verdict when a required prior-stage file for that paper and version is missing. A missing comparative analysis only warns.
+For `/peer-review` and `/qc-team` the `post-agent-review-gate` hook blocks a `peer-review-editor` or `qc-team-leader` verdict when a required prior-stage file for that paper and version is missing. A missing comparative analysis only warns, so a skipped Stage 2 is surfaced rather than silent.
 
 For long analysis sessions, run `/rigor-check` partway through to self-audit.
 

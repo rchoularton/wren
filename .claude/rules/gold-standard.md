@@ -1,3 +1,7 @@
+---
+description: Gold-standard protocol, always on. Defines what gold standard means and the freeze and versioning discipline that governs work between freezes.
+---
+
 # Gold Standard — Meaning and Protocol
 
 "Gold standard" means two things. Both are binding.
@@ -28,6 +32,6 @@ A superseded freeze is archived in place per `outputs.md` (the `_archived_<YYYY-
 
 **How to apply:** before touching anything under a frozen tag, check whether it is frozen. If it is, the change goes into version n+1, with the rationale written into the methods log in the same step.
 
-**Why:** edits to a frozen artifact make a citation point at something unchecked.
+**Why:** A result is only as reproducible as the version it cites. Edits to a frozen artifact make a citation point at something unchecked.
 
 Background and examples: docs/rules-history.md.

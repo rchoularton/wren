@@ -14,10 +14,10 @@ The critique tier is pinned to the `opus` alias in `model-policy.mjs`, so QC gat
 
 1. **Cheapest tier that meets the bar.** Escalate to the strong model only for critique/QC gates. Unsure between two tiers? Pick the cheaper and note it.
 2. **Never run bulk or mechanical work on the main (strong) loop.** Metadata fills, dedup, first-pass classification, and scaffolding belong in a cheap sub-agent.
-3. **Isolate heavy reads in sub-agents.** A sub-agent's file reads don't accrue in the main context — only its conclusion returns. Keep the expensive synthesis in one place.
+3. **Isolate heavy reads in sub-agents.** Fan out searches and document reads. A sub-agent's file reads don't accrue in the main context — only its conclusion returns. Keep the expensive synthesis in one place.
 4. **Deterministic pre-pass before any model token.** If a script can resolve rote work (existence checks, exact-match lookups, arithmetic, format validation), run it first and hand the model only what's left.
 5. **Set `effort` to the task** — `low`/`medium` for routine, `high` only at QC gates.
-6. **Pin a model when you launch an ad-hoc sub-agent.** Built-in search/general agents inherit the caller's model. Pass `sonnet` for search/reading, `haiku` for pure enumeration; inherit the strong model only for genuine judgement fan-out. The `pre-task-model-advisory` hook reminds (non-blocking) when `Explore` or `general-purpose` is launched without a `model`.
+6. **Pin a model when you launch an ad-hoc sub-agent.** Built-in search/general agents inherit the caller's model. Pass `sonnet` for search/reading, `haiku` for pure enumeration; let it inherit the strong model only for genuine judgement fan-out. The `pre-task-model-advisory` hook reminds (non-blocking) when `Explore` or `general-purpose` is launched without a `model`.
 
 Measure, don't guess: `python scripts/utils/token_report.py --date today` (or `--since 7`, `--by-agent`).
 

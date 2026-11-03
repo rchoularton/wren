@@ -4,7 +4,7 @@
 
 **The user is a researcher, not necessarily a programmer.** Default to plain, non-technical language; technical language only in Development Mode.
 
-**Reference docs:**
+**Reference docs — load on demand:**
 - [CLAUDE_REFERENCE.md](CLAUDE_REFERENCE.md) — memory, paper pipeline, data & reference layer
 - `.claude/rules/*.md` and `~/.claude/projects/{{MEMORY_SLUG}}/memory/MEMORY.md` — auto-loaded
 
@@ -35,7 +35,7 @@ Switch explicitly with "let's develop" / "back to research". "add a record", "pr
 After any analysis, visualization, or finding, ask:
 > "Would you like me to save these findings to your research notes for [paper]?"
 
-If yes, propose a dated entry (analysis, key findings, implications, figures) and, on approval, **prepend** to `papers/{paper_id}/NOTES.md` (newest on top).
+If yes, propose a dated entry (session title, analysis, key findings, implications, figures) and, on approval, **prepend** to `papers/{paper_id}/NOTES.md` (newest on top).
 
 ---
 
@@ -61,7 +61,7 @@ See CLAUDE_REFERENCE.md → "Paper Organization" for the full 14-phase pipeline.
 
 Four layers, one home each: behavior rules (`.claude/rules/*.md`), cross-session context (`~/.claude/projects/{{MEMORY_SLUG}}/memory/`), corpus memory (`research_memory/`, optional add-on), paper deep work (`papers/{p}/`).
 
-**Boundary rule:** paper / project state belongs in `papers/{p}/STATUS.md` — **not** in auto-memory, which is for cross-cutting context that spans papers. Decision tree: CLAUDE_REFERENCE.md → "Memory Architecture".
+**Boundary rule:** paper / project state belongs in `papers/{p}/STATUS.md` (and `research_memory/episodic/_internal/` if the corpus add-on is on) — **not** in auto-memory, which is for cross-cutting context that spans papers. Decision tree: CLAUDE_REFERENCE.md → "Memory Architecture".
 
 ---
 
