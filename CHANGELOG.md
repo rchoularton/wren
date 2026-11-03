@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 - `outputs.md` archive convention: stale files and directories are renamed in place as `_archived_<YYYY-MM-DD>`; `ARCHIVED_<reason>/` is reserved for periodic sweeps; check for active readers first.
 - `one-at-a-time.md`: the Word manuscript-edit prompt must state that the user approves the change before it is applied; "go ahead with all of them" is listed as not a batch request.
 - `reviewer-response-prose.md`: run the `ai-detection-evaluator` agent over the response before resubmission.
+- Context diet: standing context cut about 16% (40,413 to 33,904 bytes); obligations unchanged, rationale and examples moved to `docs/rules-history.md`; `npm run context:size` measures it and a test holds the budget.
 
 ## [0.9.0] - 2026-11-02
 

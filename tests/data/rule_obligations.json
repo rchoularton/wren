@@ -1,0 +1,101 @@
+{
+ "always-run-the-check.md": [
+  "Always Run the Check",
+  "Do not state an unverified claim, and do not ask permission to verify.",
+  "Verify before asserting — always",
+  "Never let it read as established.",
+  "These are different questions and must never be bundled:",
+  "Never ask.",
+  "Report the result. | | Write: a reference-library entry, a manuscript, a frozen artifact, a metadata update, any shared state | Ask, unless the change is already an approved decision (see §3). |",
+  "Ask about the write only.",
+  "Apply recorded decisions one write per message, per one-at-a-time.md, unless the user asked for all at once.",
+  "Always verify a write by re-reading the record and comparing the value to what you intended."
+ ],
+ "gold-standard.md": [
+  "Do not take shortcuts.",
+  "Do not make assumptions.",
+  "A frozen artifact is never edited, corrected, or patched.",
+  "If a frozen file is wrong, the answer is the next version, never an edit.",
+  "Do not tinker around the edges, and do not offer carry-forward, subset, or \"faster\" partial-rebuild options.",
+  "Versions are integers only.",
+  "Superseded freezes are archived, never deleted",
+  "A result is only as reproducible as the version it cites."
+ ],
+ "no-unapproved-tasks.md": [
+  "Do not add tasks, scope, \"optional\" items, \"recommendations\", or follow-ups to any task list without the user's explicit approval.",
+  "Only two kinds of item belong in a task or pending list:",
+  "You may raise it as a question for the user to approve or decline — but do not write it into STATUS.md, a to-do list, NOTES action items, or a \"next steps\" block until the user approves it.",
+  "If you find an item already sitting in a task list that the user never approved, flag it as unapproved and offer to remove it — don't present it as agreed work.",
+  "The task list must mean \"work we agreed to do,\" not \"things the assistant thought might be nice.\""
+ ],
+ "one-at-a-time.md": [
+  "It applies to: reviewer comments; manuscript edits; code changes; items on a to-do list; sub-tasks that together complete a larger task; and every question the user must answer — whether to clarify next steps, approve a change, choose between options, or make a decision.",
+  "Never bundle multiple items into a single message, and never present a long list and then ask for agreement in one bulk prompt at the end.",
+  "Only batch when the user explicitly says \"all in one message\" / \"give me the whole set at once\".",
+  "When the user asks for a prompt to drive a manuscript edit in Word (a \"Claude in Word\" prompt), the prompt text must:",
+  "Do not have it apply the edit outright.",
+  "Every such prompt must carry both instructions."
+ ],
+ "outputs.md": [
+  "Never create v2/ directories",
+  "Do not create a new directory alongside an original (e.g. figuresv2/, analysisv2/).",
+  "If you must create a new one, add it to MANIFEST.md in the same commit.",
+  "Never delete."
+ ],
+ "reviewer-response-prose.md": [
+  "Verbatim reviewer quote for every comment — never paraphrase or summarise it.",
+  "Five-part structure per comment: quote → formal, deferential acknowledgement → a one-or-two-sentence overall response → detailed response in academic prose → a concise bulleted \"Changes made\" change-log (the only place shorthand is allowed).",
+  "Voice: first-person plural; open formal and deferential, then gracious-but- confident; defend declines with evidence; never dismiss a comment.",
+  "Must not read as AI-written.",
+  "If it is not installed, tell the user this check did not run; do not write that into the response document."
+ ],
+ "rigor.md": [
+  "Never assume — read existing work first",
+  "When the user says \"let's run X\", open X and review it with them first — don't start building a separate version.",
+  "Don't recreate work the user already spent time on.",
+  "Never embellish figure descriptions",
+  "Only state what you can verify from the data.",
+  "Do NOT describe anything in a figure that isn't unambiguously visible or confirmed by querying the underlying data.",
+  "\"Bars in the bottom lane\" ✓ — \"bars indicating severe crisis\" ✗ (unless confirmed)",
+  "Never use phrases like \"reaching close to -3\" or \"dramatic anomaly\" unless you queried the value",
+  "Only frozen pipelines are canonical",
+  "A result is canonical only once its pipeline has been frozen via /gold-standard (verified, git-tagged, archived).",
+  "Everything else — exploratory scripts, draft analyses, work-in-progress — is exploration, and often produces results that don't hold up.",
+  "Never present results from un-frozen scripts as validated findings",
+  "A script becomes canonical only when the user runs /gold-standard on it",
+  "Don't build on stale exploration",
+  "When designing a new analysis stage, do NOT reuse outputs from earlier exploration without verifying they match the current framework's resolution, coverage, and pipeline.",
+  "If not, reimplement on the correct data — reference the technique, don't inherit the data path.",
+  "Do not skip, abbreviate, or substitute assumptions for a stage that calls for fresh work (a search, a fetch, a checkpoint) unless the user explicitly tells you to.",
+  "If a stage genuinely cannot run as designed, say so up front and run it another way — do not quietly drop it.",
+  "Never present a headline verdict (a score, an \"accept\", a \"verified\") as if the full process backed it when part was skipped.",
+  "A missing comparative analysis only warns, so a skipped Stage 2 is surfaced rather than silent."
+ ],
+ "token-budget.md": [
+  "The critique tier is pinned to the opus alias in model-policy.mjs, so QC gates never silently inherit a cheaper interactive model.",
+  "effort (low/medium/high) is a real lever on the strong/mid models — set it to the task; don't leave everything on high.",
+  "Escalate to the strong model only for critique/QC gates.",
+  "Never run bulk or mechanical work on the main (strong) loop.",
+  "A sub-agent's file reads don't accrue in the main context — only its conclusion returns.",
+  "If a script can resolve rote work (existence checks, exact-match lookups, arithmetic, format validation), run it first and hand the model only what's left.",
+  "Set effort to the task — low/medium for routine, high only at QC gates.",
+  "Pass sonnet for search/reading, haiku for pure enumeration; let it inherit the strong model only for genuine judgement fan-out.",
+  "Measure, don't guess"
+ ],
+ "tooling.md": [
+  "Don't propose browse-layer tools as system improvements:",
+  "(If you personally want a dashboard, that's a preference — build it, but don't file it as a system improvement the assistant should push.)",
+  "Don't assume the user can see what you just read.",
+  "When working on plans → summarize the plan content in chat text, don't rely on the plan file being visible"
+ ],
+ "wren-voice.md": [
+  "It states what the evidence supports, presents interpretations as interpretations, and never manufactures certainty.",
+  "The one boundary it never crosses",
+  "Wren's voice never overrules the user's paper-writing rules.",
+  "\"I can't rule out…\", \"the data don't distinguish between X and Y\".",
+  "Do not present one interpretation as the only one when others fit the data.",
+  "Keep association and causation separate unless a causal claim is genuinely warranted and stated as such.",
+  "Use \"proves\", \"confirms\", \"demonstrates\", \"establishes\" only when the evidence reaches that bar.",
+  "Describe only what is unambiguously visible or confirmed by querying the underlying data (rigor.md rule 2)."
+ ]
+}

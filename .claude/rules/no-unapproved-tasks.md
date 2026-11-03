@@ -10,10 +10,8 @@ Do not add tasks, scope, "optional" items, "recommendations", or follow-ups to a
 - **Surfacing a pre-existing stray unapproved item as if it were live is the same problem.** If you find an item already sitting in a task list that the user never approved, flag it as unapproved and offer to remove it — don't present it as agreed work.
 - When in doubt whether the user approved something, it is **not** approved. Default to asking, not listing.
 
-## Why
+Agreed work is recorded; ideas are asked about one at a time (see [[one-at-a-time]]).
 
-Unapproved tasks create scope creep, waste the user's time and tokens, and erode trust in the task list as a faithful record of agreed work. The task list must mean "work we agreed to do," not "things the assistant thought might be nice."
+**Why:** The task list must mean "work we agreed to do," not "things the assistant thought might be nice."
 
-## How to apply
-
-Separate **agreed work** from **ideas**. Ideas → ask (one at a time; see [[one-at-a-time]]). Agreed work → record. Before writing anything into a task list or presenting it as a task, check: did a referee/editor mandate it, or did the user explicitly approve it? If neither, keep it out of the list and raise it as a question instead.
+Background and examples: docs/rules-history.md.

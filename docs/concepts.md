@@ -18,7 +18,7 @@ flowchart TD
 
 | Layer | Path | Loaded by | What belongs |
 |---|---|---|---|
-| 1. Behaviour rules | `.claude/rules/*.md` | Claude Code, auto-loaded by `paths:` frontmatter (or always-on) | Promoted from feedback memory when a correction recurs 2+ times |
+| 1. Behaviour rules | `.claude/rules/*.md` | Claude Code, auto-loaded by `paths:` frontmatter (or always-on) | Promoted from feedback memory when a correction recurs 2+ times. Rationale: [Rules history](rules-history.md) |
 | 2. Cross-session context | `~/.claude/projects/{slug}/memory/` | Claude Code, auto-loads `MEMORY.md` (≤200 lines) at session start | User profile & preferences, durable cross-cutting feedback, dated learnings |
 | 3. Corpus memory (optional add-on) | `research_memory/` | `/research-memory` skill, grep | Per-source findings (`episodic/_external/`), rolling per-artifact state (`episodic/_internal/`), synthesis (`semantic/`) |
 | 4. Paper deep work | `papers/{p}/` | Read/written directly, injected each turn by a hook once `.current_paper` is set | Phase/status dashboard, long-form analytical history, methods decisions |

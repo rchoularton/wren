@@ -68,6 +68,7 @@ nav:
   - Welcome: welcome.md
   - Getting Started: getting-started.md
   - Concepts: concepts.md
+  - Rules history: rules-history.md
   - Skills: skills.md
   - Guides:
       - Papers & the build engine: guides/papers.md
