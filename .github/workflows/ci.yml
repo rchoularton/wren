@@ -36,7 +36,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python3 -m pip install --quiet -r requirements-dev.txt
+          python3 -m pip install --quiet -r requirements-dev.txt python-docx
           npm run test
 
       - name: Install PyYAML (renderer dependency)

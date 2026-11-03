@@ -62,6 +62,8 @@ say so.
 3. **CHECKPOINT** — show the extracted criteria and confirm they look right before continuing.
    If cached guidelines conflict with a fresh fetch, prefer the fetch and note the difference.
 
+**Reading documents.** If the journal guidelines come as a PDF or Word file, run `python3 .claude/lib/doc_to_md.py <file>` and read the Markdown path it prints instead of the original. The result is cached in `.cache/md/`, so repeat reads cost almost nothing.
+
 ### Stage 2 — Comparative analysis (skip if `--skip-examples`)
 1. `WebSearch` for recent papers in this journal on related topics.
 2. Find 3-5 comparable papers; for each note structure, novelty framing, citation patterns, and

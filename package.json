@@ -18,6 +18,7 @@
     "paper:list": "python3 scripts/paper_utils/status.py",
     "memory:bootstrap": "node scripts/research_memory/bootstrap.mjs",
     "memory:audit": "node scripts/research_memory/audit.mjs",
+    "doc:md": "python3 .claude/lib/doc_to_md.py",
     "tokens": "python3 scripts/utils/token_report.py",
     "test": "python3 -m pytest -q"
   },
