@@ -19,7 +19,8 @@ def test_pack_contents():
 
     bad = sorted(
         p for p in paths
-        if p.startswith(("tests/", ".github/")) or p == "requirements-dev.txt"
+        if p.startswith(("tests/", ".github/", ".pytest_cache/"))
+        or p in ("requirements-dev.txt", "mkdocs.yml")
     )
     assert not bad, f"excluded paths in tarball: {bad}"
 

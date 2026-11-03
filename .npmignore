@@ -56,6 +56,9 @@ requirements-dev.txt
 .github/
 mkdocs.yml
 
+# pytest writes .pytest_cache/.gitignore, which triggers npm's gitignore-fallback warning
+.pytest_cache/
+
 # Local agent worktrees (each carries its own .gitignore, which triggers npm's
 # gitignore-fallback warning when walked)
 .claude/worktrees/
