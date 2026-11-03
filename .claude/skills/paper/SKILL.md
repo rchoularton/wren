@@ -18,7 +18,12 @@ Run `npm run paper:status` and summarize: for each paper, its title, journal, ph
 1. `echo "{id}" > .current_paper` so hooks and skills track it.
 2. Read `papers/{id}/STATUS.md` — especially the "▶ RESUME HERE" pointer and the phase checklist.
 3. Skim the most recent entry in `papers/{id}/NOTES.md` and any open items in `PLAN.md`.
-4. Summarize where the paper stands and the obvious next step. Do **not** invent tasks — surface what's written; propose next steps as questions (see `.claude/rules/no-unapproved-tasks.md`).
+4. Read the `next:` line in the frontmatter and present it as the next step. If it is empty, say so; do not make one up.
+5. Summarize where the paper stands. Do **not** invent tasks — surface what's written; propose next steps as questions (see `.claude/rules/no-unapproved-tasks.md`).
+
+## When the user finishes a step
+
+Offer, as one question, to update `next:` and `status` in the frontmatter. Write only values the user states: never a `next:` they did not give you. Re-read the file after writing to confirm it landed.
 
 ## Starting a new paper
 

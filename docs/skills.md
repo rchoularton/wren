@@ -6,8 +6,8 @@ Type these as slash commands in Claude Code once your project is open. All 18 sh
 
 | Skill | What it does |
 |---|---|
-| `/research` | Access and navigate your research workspaces — papers, notes, and the corpus memory. The workspace entry point. |
-| `/paper` `[paper-id]` | Paper portfolio management — check status, resume work, navigate papers, start a new paper. |
+| `/research` | Prints `npm run status` (papers by tier with their `next:` step, scheduled-job verdicts) verbatim, then offers Papers, Library and Memory. |
+| `/paper` `[paper-id]` | Paper portfolio management — resume a paper at its `next:` step, keep `next:` and `status` honest, start a new paper. |
 | `/setup` | Configure or reconfigure the research assistant — explains and runs the setup renderer in plain language. |
 
 ## Write & submit

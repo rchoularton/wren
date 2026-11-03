@@ -5,6 +5,7 @@ journal: "Target Journal"
 phase: 1
 tier: 2
 status: scoping
+next: ""
 tags: [example]
 aliases: ["Example Paper"]
 ---
@@ -25,6 +26,10 @@ echo "my-paper" > .current_paper
 ```
 
 Then edit this file's frontmatter (`paper_id`, `title`, `journal`, `phase`) and delete this note.
+
+## The `next:` line
+
+`next:` in the frontmatter is the one-line answer to "what is the next concrete step". `/research` prints it for every paper, and `/paper` keeps it honest: it only writes what you state. Leave it empty until you know.
 
 ## Phase checklist (14-phase pipeline)
 

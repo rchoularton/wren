@@ -3,6 +3,14 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [Unreleased]
+
+### Added
+- Front door status (#24): `scripts/utils/wren_status.py` (`npm run status`, no model tokens) reports papers by tier with their `next:` line and each scheduled job's last run, verdict and overdue state; `npm run papers:table` regenerates the table in `papers/README.md` from frontmatter; a `next:` key in the STATUS.md template.
+
+### Changed
+- `/research` prints the status report verbatim and offers Papers, Library and Memory; `/paper` presents and keeps `next:` honest.
+
 ## [0.10.0] - 2026-11-03
 
 Context diet plus rules refresh: three new always-on rules, the standing context trimmed
