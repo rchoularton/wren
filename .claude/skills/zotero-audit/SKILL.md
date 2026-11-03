@@ -27,6 +27,8 @@ On `bibtex`, there's no live library to audit — clean your source manager and 
 1. **Fetch items** via the Zotero MCP's search/metadata tools (filter by `--collection` or
    `--since` if given). Batch in chunks of ~50 to avoid timeouts.
 
+   **Reading documents.** If you need to open an attached PDF or Word file, run `python3 .claude/lib/doc_to_md.py <file>` first and read the Markdown it prints the path of. The result is cached in `.cache/md/`, so repeat reads cost almost nothing.
+
 2. **Check each item** and record what's missing:
 
    | Field | Why it matters |

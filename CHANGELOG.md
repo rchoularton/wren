@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 
 ### Added
 - Three always-on behaviour rules: `always-run-the-check.md` (verify before asserting; read without asking, ask before writing shared state; re-read after a write), `wren-voice.md` (clean, precise, transparent writing voice that never overrides the author's own rules), and `gold-standard.md` (frozen means immutable, changes take integer version n+1, superseded freezes archived).
+- `.claude/lib/doc_to_md.py` + `normalize-to-md.mjs` (`npm run doc:md -- <file>`): converts PDF, docx, xlsx and pptx to Markdown once, cached under `.cache/md/` keyed on path + mtime + size; wired into six skills that read documents (#23).
 
 ### Changed
 - `outputs.md` archive convention: stale files and directories are renamed in place as `_archived_<YYYY-MM-DD>`; `ARCHIVED_<reason>/` is reserved for periodic sweeps; check for active readers first.

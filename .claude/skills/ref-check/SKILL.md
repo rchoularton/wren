@@ -29,6 +29,8 @@ Works with either reference provider: on `zotero`, use the live library via the 
    `config.json`) and the target `journal` from `config.json`. Extract the in-text citations
    and the reference list.
 
+   **Reading documents.** If the draft or a cited source is a PDF or Word file, run `python3 .claude/lib/doc_to_md.py <file>` first and read the Markdown it prints the path of. The result is cached in `.cache/md/`, so repeat reads cost almost nothing.
+
 2. **Inventory.** Build a table: in-text citation → is it in the reference list? → is it in
    your library? → is the format correct? Flag any row that fails a column.
 
