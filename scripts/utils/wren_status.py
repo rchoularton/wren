@@ -139,27 +139,28 @@ class JobRow:
     log: str
 
 
-def _tail(path: Path, n: int = 20) -> list[str]:
+def _read_lines(path: Path) -> list[str]:
     try:
-        data = path.read_bytes()[-20000:]
+        return path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         return []
-    return data.decode("utf-8", errors="replace").splitlines()[-n:]
 
 
 def verdict_from_tail(lines: list[str]) -> str:
-    """The last `=== WREN_JOB_END exit=N ===` marker decides (0 is ok). Without
-    one, the last non-blank line is read for ok words first, then failure words."""
+    """The last `=== WREN_JOB_END exit=N ===` marker anywhere in the log decides
+    (0 is ok). Without one, the last non-blank line is read: an ok word alone is
+    `ok`, a failure word alone is `failed`, both together is `unknown`. Failure
+    words are the singular whole words error/failed/failure/traceback, so
+    "0 errors, done" is `ok` and "no errors in the citations" is `unknown`."""
     for line in reversed(lines):
         m = _END_MARKER_RE.match(line.strip())
         if m:
             return "ok" if int(m.group(1)) == 0 else "failed"
     last = next((ln for ln in reversed(lines) if ln.strip()), "")
-    if _OK_RE.search(last):
-        return "ok"
-    if _FAIL_RE.search(last):
-        return "failed"
-    return "unknown"
+    ok, fail = bool(_OK_RE.search(last)), bool(_FAIL_RE.search(last))
+    if ok and fail:
+        return "unknown"
+    return "ok" if ok else "failed" if fail else "unknown"
 
 
 def job_cadences(config: Path) -> dict[str, int]:
@@ -212,7 +213,7 @@ def collect_jobs(logs_dir: Path, cadences: dict[str, int], today: date) -> list[
             overdue = (today - date.fromisoformat(last)).days > limit
         except ValueError:
             overdue = True
-        rows.append(JobRow(key, last, verdict_from_tail(_tail(path)), overdue, cadence, str(path)))
+        rows.append(JobRow(key, last, verdict_from_tail(_read_lines(path)), overdue, cadence, str(path)))
     return rows
 
 

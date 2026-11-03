@@ -82,11 +82,20 @@ def test_job_verdicts_from_end_markers(project):
     ("0 errors, done", "ok"),
     ("Failures: 0. Completed.", "ok"),
     ("Traceback (most recent call last)", "failed"),
+    ("Job failed: not completed", "unknown"),
+    ("no errors in the citations", "unknown"),
+    ("ERROR: upstream refused", "failed"),
     ("nothing to say", "unknown"),
 ])
 def test_keyword_fallback_without_marker(project, last, expected):
     _log(project, "job_2026-11-02.log", f"start\n{last}\n\n")
     assert _json(project)["jobs"][0]["verdict"] == expected
+
+
+def test_marker_found_beyond_twenty_lines(project):
+    body = "=== WREN_JOB_END exit=1 ===\n" + "".join(f"line {i}\n" for i in range(29)) + "done\n"
+    _log(project, "job_2026-11-02.log", body)
+    assert _json(project)["jobs"][0]["verdict"] == "failed"
 
 
 def test_marker_beats_keywords(project):
