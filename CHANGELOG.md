@@ -3,6 +3,16 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
+## [Unreleased]
+
+### Added
+- Three always-on behaviour rules: `always-run-the-check.md` (verify before asserting; read without asking, ask before writing shared state; re-read after a write), `wren-voice.md` (clean, precise, transparent writing voice that never overrides the author's own rules), and `gold-standard.md` (frozen means immutable, changes take integer version n+1, superseded freezes archived).
+
+### Changed
+- `outputs.md` archive convention: stale files and directories are renamed in place as `_archived_<YYYY-MM-DD>`; `ARCHIVED_<reason>/` is reserved for periodic sweeps; check for active readers first.
+- `one-at-a-time.md`: the Word manuscript-edit prompt must state that the user approves the change before it is applied; "go ahead with all of them" is listed as not a batch request.
+- `reviewer-response-prose.md`: run the `ai-detection-evaluator` agent over the response before resubmission.
+
 ## [0.9.0] - 2026-11-02
 
 The review suite plus harness-enforced rigor: `/peer-review` becomes a multi-agent suite,

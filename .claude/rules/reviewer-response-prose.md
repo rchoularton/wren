@@ -23,3 +23,4 @@ reviewer-response document under `papers/*/reviews/`), follow this standard.
    "Furthermore", "It is important to note"), uniform sentence rhythm, and hedging
    filler. Vary sentence length; write the way a careful human researcher would. This
    applies to every drafted manuscript edit too, not just the response document.
+7. **Run the `ai-detection-evaluator` agent before resubmission, if it is installed.** If it is not installed, tell the user this check did not run; do not write that into the response document.

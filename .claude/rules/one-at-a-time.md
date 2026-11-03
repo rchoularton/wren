@@ -11,8 +11,8 @@ This rule governs how you present multi-item work of **any** kind. It applies to
 - Present **one item** per message — one comment, one edit, one task, one sub-task, one question, one decision, one option-set to choose from. Never bundle multiple items into a single message, and **never present a long list and then ask for agreement in one bulk prompt at the end.**
 - After presenting it, **stop and wait** for the user's response (applying it, "next", an answer, or feedback) before presenting the next item. The user controls the pace because they act on each item.
 - This holds even when items look related: if a reviewer comment has a response block plus several edits, present the response, then each edit, one message at a time.
-- **Pre-approval is NOT permission to batch.** "I approve all changes", "approved", or any blanket sign-off means the *direction* is agreed. It does **not** mean dump everything into one message, and it does **not** mean auto-advance through items. Keep presenting one item per message and waiting for the user's signal between each.
-- Plural phrasing ("give me the prompts", "the edits") is **not** a batch request. Only batch when the user explicitly says "all in one message" / "give me the whole set at once". When in doubt, present one and wait.
+- **Pre-approval is NOT permission to batch.** "I approve all changes", "approved", "go ahead with all of them", or any blanket sign-off means the *direction* is agreed. It does **not** mean dump everything into one message, and it does **not** mean auto-advance through items. Keep presenting one item per message and waiting for the user's signal between each.
+- Plural phrasing ("give me the prompts", "the edits", "the comments") is **not** a batch request. Only batch when the user explicitly says "all in one message" / "give me the whole set at once". When in doubt, present one and wait.
 
 ## Why
 
@@ -23,9 +23,9 @@ The user applies each change (in Word, in code) and reviews it before moving to 
 When the user asks for a prompt to drive a manuscript edit in Word (a "Claude in Word" prompt), the prompt text must:
 
 1. **Instruct Claude-in-Word to propose the change as a reviewable edit card first** — present the exact before/after (text to REMOVE and text to ADD) and **wait for the user's approval before changing the document.** Do not have it apply the edit outright.
-2. **Turn on Track Changes** and, once approved, apply the change as a tracked change the user still reviews and accepts — nothing auto-accepted.
+2. **State that the user approves the change before it is applied:** turn on Track Changes, and once approved apply the change as a tracked change the user still reviews and accepts — nothing auto-accepted.
 
-A prompt that tells Word to *make* the edit (rather than *propose* it for approval) is wrong.
+Every such prompt must carry both instructions. A prompt that tells Word to *make* the edit (rather than *propose* it for approval) is wrong.
 
 ## How to apply
 
