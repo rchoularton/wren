@@ -3,7 +3,11 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
-## [Unreleased]
+## [0.11.0] - 2026-11-07
+
+Front door plus session memory: `/research` opens with a deterministic status report
+(`npm run status`), papers carry a `next:` line, the papers table is generated, and an
+opt-in Stop hook captures each exchange for `/recall` with a sandboxed summariser.
 
 ### Added
 - Opt-in session capture (#25): `tiers.session_capture: true` makes a Stop hook write 2-5 summary bullets per exchange (one detached `claude -p --model haiku` call) to `<memory>/context/sessions/YYYY-MM-DD.md`; `/recall` (`npm run recall -- <terms>`) searches them with dates and session headings; a small "Recent sessions" block joins session start. Off by default. See `docs/guides/session-memory.md`.
