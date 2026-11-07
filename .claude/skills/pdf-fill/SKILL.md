@@ -26,7 +26,7 @@ Find the items in a paper's Zotero collection that have no PDF and attach one fr
    ```bash
    npm run pdf:fill -- <paper-id>
    ```
-   Pass `--keys` and `--only` through if the user gave them. Show the summary line (`found / attached / manual / failed`) and the manual list.
+   Pass `--keys` and `--only` through if the user gave them; `--keys` works on the listed items directly and ignores the paper's collection. Show the summary line (`found / attached / manual / failed`) and the manual list.
 3. **Ask ONE question:** apply the N attachable PDFs to Zotero? Wait for the answer.
 4. **On yes, apply:**
    ```bash
@@ -39,7 +39,7 @@ Find the items in a paper's Zotero collection that have no PDF and attach one fr
 
 - Dry run is the default; only `--apply` writes to Zotero.
 - Every download must start with `%PDF` and be under 50 MB.
-- Items that already have an uploaded PDF are skipped.
+- Items that already have an uploaded PDF are skipped. An empty PDF attachment shell is reported as `stub` and listed for manual repair; no second PDF is attached.
 - The JSONL log is `outputs/pdf-fill/<paper-id>-<date>.jsonl`.
 
 ## Related

@@ -5,6 +5,24 @@
 import { fetchPdf, encodeDoi, userAgent } from './download.mjs';
 
 export const NAME = 'publisher-sniff';
+const MAX_LANDING_BYTES = 2 * 1024 * 1024;
+
+/** Read a text body up to maxBytes; returns null if it is larger. */
+async function readCapped(res, maxBytes) {
+  const declared = Number(res.headers.get('content-length'));
+  if (res.headers.get('content-length') && Number.isFinite(declared) && declared > maxBytes) return null;
+  const reader = res.body.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > maxBytes) { await reader.cancel(); return null; }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
 
 export function extractCitationPdfUrl(html) {
   if (!html) return null;
@@ -26,7 +44,10 @@ export async function lookup({ doi }, { fetch = globalThis.fetch, env = process.
       headers: { 'User-Agent': userAgent(env), Accept: 'text/html,application/xhtml+xml' },
     });
     if (!res.ok) return { ok: false, reason: `landing_failed: HTTP ${res.status}` };
-    html = await res.text();
+    const ctype = (res.headers.get('content-type') || '').toLowerCase();
+    if (!/html|xml/.test(ctype)) return { ok: false, reason: `landing_not_html (${ctype || 'no content-type'})` };
+    html = await readCapped(res, MAX_LANDING_BYTES);
+    if (html === null) return { ok: false, reason: 'landing_too_large (over 2 MB)' };
     landing = res.url || `https://doi.org/${doi}`;
   } catch (err) {
     return { ok: false, reason: `landing_failed: ${err.message}` };

@@ -18,13 +18,15 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createClientFromEnv, hasPdfAttachment, loadFetch, projectRoot } from './_lib/zotero-client.mjs';
+import { createClientFromEnv, hasPdfAttachment, hasPdfStub, loadFetch, projectRoot } from './_lib/zotero-client.mjs';
 import * as unpaywall from './sources/unpaywall.mjs';
 import * as openalex from './sources/openalex.mjs';
 import * as sniff from './sources/publisher-sniff.mjs';
 
 const SOURCES = [unpaywall, openalex, sniff];
 const ONLY = { unpaywall: unpaywall.NAME, openalex: openalex.NAME, sniff: sniff.NAME };
+
+const STUB_NOTE = 'attachment shell without a file; delete it in Zotero or fix manually';
 
 function usage(msg) {
   if (msg) console.error(msg);
@@ -84,7 +86,7 @@ function manualMarkdown(label, rows, prefix) {
   for (const r of rows) {
     const target = r.doi ? `https://doi.org/${r.doi}` : r.url;
     const link = target ? prefix + target : '(no DOI or URL)';
-    lines.push(`- \`${r.key}\` ${r.firstAuthor} ${r.year}: ${r.title} - ${link}`);
+    lines.push(`- \`${r.key}\` ${r.firstAuthor} ${r.year}: ${r.title} - ${link}${r.note ? ` (${r.note})` : ''}`);
   }
   return lines.join('\n') + '\n';
 }
@@ -108,7 +110,7 @@ async function main() {
   const items = raw.filter((it) => !['attachment', 'note'].includes(it.data?.itemType)).map(summarise);
   console.log(`  ${items.length} bibliographic items`);
 
-  const counts = { items: items.length, already_had_pdf: 0, found: 0, attached: 0, manual: 0, failed: 0 };
+  const counts = { items: items.length, already_had_pdf: 0, found: 0, attached: 0, manual: 0, stub: 0, failed: 0 };
   const manual = [];
   const log = [];
   const notified = new Set();
@@ -117,8 +119,16 @@ async function main() {
     const tag = `[${i + 1}/${items.length}] ${item.key} ${item.firstAuthor} ${item.year}`;
     const rec = { at: new Date().toISOString(), key: item.key, doi: item.doi, apply };
     try {
-      if (hasPdfAttachment(await client.listChildren(item.key))) {
+      const children = await client.listChildren(item.key);
+      if (hasPdfAttachment(children)) {
         counts.already_had_pdf++;
+        continue;
+      }
+      if (hasPdfStub(children)) {
+        console.log(`  ${tag}: PDF attachment shell without a file, not attaching a second PDF`);
+        counts.stub++;
+        manual.push({ ...item, note: STUB_NOTE });
+        log.push({ ...rec, status: 'stub' });
         continue;
       }
     } catch (err) {
@@ -192,9 +202,9 @@ async function main() {
     }
   } else if (manual.length) {
     console.log(`\nManual (would be written to outputs/pdf-fill/${slug}-manual.md on --apply):`);
-    for (const r of manual) console.log(`  ${r.key} ${r.doi ? prefix + 'https://doi.org/' + r.doi : r.url || '(no DOI or URL)'}`);
+    for (const r of manual) console.log(`  ${r.key} ${r.doi ? prefix + 'https://doi.org/' + r.doi : r.url || '(no DOI or URL)'}${r.note ? ` (${r.note})` : ''}`);
   }
-  console.log(`\nfound=${counts.found} attached=${counts.attached} manual=${counts.manual} failed=${counts.failed} already_had_pdf=${counts.already_had_pdf}${apply ? '' : ' (dry run, nothing written)'}`);
+  console.log(`\nfound=${counts.found} attached=${counts.attached} manual=${counts.manual} stub=${counts.stub} failed=${counts.failed} already_had_pdf=${counts.already_had_pdf}${apply ? '' : ' (dry run, nothing written)'}`);
   console.log(`SUMMARY ${JSON.stringify({ ...counts, apply })}`);
   process.exit(counts.failed ? 2 : 0);
 }

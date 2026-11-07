@@ -25,6 +25,10 @@ const argv = process.argv.slice(2);
 const flagVal = (f) => (argv.includes(f) ? argv[argv.indexOf(f) + 1] : null);
 const planPath = argv.find((a, i) => !a.startsWith('--') && !['--only', '--log'].includes(argv[i - 1]));
 const apply = argv.includes('--apply');
+if (argv.includes('--only') && (!flagVal('--only') || flagVal('--only').startsWith('--'))) {
+  console.error('--only needs a comma-separated list of attachment keys');
+  process.exit(1);
+}
 const only = flagVal('--only') ? new Set(flagVal('--only').split(',')) : null;
 if (!planPath) {
   console.error('Usage: reparent-orphan-attachments.mjs <plan.json> [--apply] [--only K1,K2] [--log file.jsonl]');
@@ -39,9 +43,14 @@ const sleep = (ms) => (ms ? new Promise((r) => setTimeout(r, ms)) : null);
 const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
 
 const done = new Set();
+const createdParents = new Map(); // attachmentKey -> parent created by an earlier run whose PATCH failed
 if (fs.existsSync(logPath)) {
   for (const line of fs.readFileSync(logPath, 'utf8').split('\n').filter(Boolean)) {
-    try { const r = JSON.parse(line); if (r.ok && r.apply) done.add(r.attachmentKey); } catch { /* ignore bad line */ }
+    try {
+      const r = JSON.parse(line);
+      if (r.ok && r.apply) done.add(r.attachmentKey);
+      else if (r.createdParentKey && r.stage === 'patch') createdParents.set(r.attachmentKey, r.createdParentKey);
+    } catch { /* ignore bad line */ }
   }
 }
 
@@ -88,12 +97,14 @@ for (const e of plan) {
       }
     } else {
       let parentKey;
-      if (e.existingParentKey) {
+      const parentHint = e.existingParentKey || createdParents.get(e.attachmentKey);
+      if (parentHint) {
         rec.action = 'attach-existing';
-        const p = await get(e.existingParentKey);
-        if (p.data.deleted || ['attachment', 'note'].includes(p.data.itemType)) throw new Error(`existing parent ${e.existingParentKey} unusable (type ${p.data.itemType}, deleted ${p.data.deleted})`);
-        console.log(`${apply ? 'APPLY' : 'DRY'} ${e.attachmentKey} [${att.data.title}] -> existing ${p.data.itemType} ${e.existingParentKey}: "${p.data.title}"`);
-        parentKey = e.existingParentKey;
+        if (!e.existingParentKey) console.log(`  note ${e.attachmentKey}: reusing parent ${parentHint} created by an earlier run`);
+        const p = await get(parentHint);
+        if (p.data.deleted || ['attachment', 'note'].includes(p.data.itemType)) throw new Error(`existing parent ${parentHint} unusable (type ${p.data.itemType}, deleted ${p.data.deleted})`);
+        console.log(`${apply ? 'APPLY' : 'DRY'} ${e.attachmentKey} [${att.data.title}] -> existing ${p.data.itemType} ${parentHint}: "${p.data.title}"`);
+        parentKey = parentHint;
       } else {
         rec.action = 'create';
         const { item, dropped } = await buildItem(e, att);
@@ -104,6 +115,9 @@ for (const e of plan) {
           parentKey = post.data?.successful?.['0']?.key;
           if (!parentKey) throw new Error(`create failed: ${JSON.stringify(post.data?.failed)}`);
           await sleep(pace);
+          // Record the new parent BEFORE the PATCH so a failed PATCH never leaves it orphaned on rerun.
+          fs.mkdirSync(path.dirname(logPath), { recursive: true });
+          fs.appendFileSync(logPath, JSON.stringify({ attachmentKey: e.attachmentKey, createdParentKey: parentKey, ok: false, stage: 'patch', apply: true, at: new Date().toISOString() }) + '\n');
         }
       }
       if (apply) {

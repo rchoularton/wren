@@ -32,8 +32,16 @@ export function parseEnv(text) {
     if (!m) continue;
     let val = m[2].trim();
     const q = val[0];
-    if ((q === '"' || q === "'") && val.lastIndexOf(q) > 0) {
-      val = val.slice(1, val.lastIndexOf(q));
+    let close = -1;
+    if (q === '"' || q === "'") {
+      for (let i = 1; i < val.length; i++) {
+        if (val[i] === '\\' && q === '"') { i++; continue; }
+        if (val[i] === q) { close = i; break; }
+      }
+    }
+    if (close > 0) {
+      // Quoted value: anything after the closing quote (e.g. ` # comment`) is ignored.
+      val = val.slice(1, close);
       if (q === '"') val = val.replace(/\\n/g, '\n').replace(/\\"/g, '"');
     } else {
       val = val.replace(/\s+#.*$/, '').trim(); // inline comment on unquoted value
@@ -48,6 +56,8 @@ export function loadDotEnv(env = process.env, root = projectRoot(env)) {
   const file = path.join(root, '.env');
   if (!fs.existsSync(file)) return {};
   const parsed = parseEnv(fs.readFileSync(file, 'utf8'));
+  // WREN_FAKE_* is test-only and must come from the process environment, never a file.
+  for (const k of Object.keys(parsed)) if (k.startsWith('WREN_FAKE_')) delete parsed[k];
   for (const [k, v] of Object.entries(parsed)) if (env[k] === undefined) env[k] = v;
   return parsed;
 }
@@ -89,9 +99,11 @@ export function createClient({ fetch = globalThis.fetch, env = process.env, slee
     return { 'Zotero-API-Key': env.ZOTERO_API_KEY, 'Zotero-API-Version': '3', ...extra };
   }
 
+  const MAX_WAIT_S = 60;
   const secs = (v) => {
+    if (v === null || v === undefined || String(v).trim() === '') return null;
     const n = Number(v);
-    return Number.isFinite(n) && n >= 0 ? n : null;
+    return Number.isFinite(n) && n >= 0 ? Math.min(n, MAX_WAIT_S) : null;
   };
 
   /**
@@ -120,7 +132,7 @@ export function createClient({ fetch = globalThis.fetch, env = process.env, slee
         if (attempt >= maxRetries) {
           throw new ZoteroError(`Zotero rate limit (429) persisted after ${maxRetries} retries: ${method} ${p}`, { status: 429, code: 'rate_limited' });
         }
-        await sleep((wait ?? 2 ** attempt) * 1000);
+        await sleep(Math.min(wait ?? 2 ** attempt, MAX_WAIT_S) * 1000);
         continue;
       }
       const text = await res.text();
@@ -241,6 +253,11 @@ export async function createClientFromEnv(env = process.env) {
 }
 
 /** True if any child is a PDF attachment with an uploaded file (md5 present). */
+/** A PDF attachment item with no uploaded file (empty md5): a shell left by a failed upload. */
+export function hasPdfStub(children) {
+  return children.some((c) => c.data?.itemType === 'attachment' && c.data?.contentType === 'application/pdf' && !c.data?.md5);
+}
+
 export function hasPdfAttachment(children) {
   return children.some((c) => {
     const d = c.data;

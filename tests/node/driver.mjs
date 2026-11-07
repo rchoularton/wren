@@ -6,6 +6,7 @@ import path from 'node:path';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 const lib = await import(pathToFileURL(path.join(root, 'scripts/zotero/_lib/zotero-client.mjs')).href);
+const sn = await import(pathToFileURL(path.join(root, 'scripts/zotero/sources/publisher-sniff.mjs')).href);
 const dl = await import(pathToFileURL(path.join(root, 'scripts/zotero/sources/download.mjs')).href);
 const [cmd, arg] = process.argv.slice(2);
 const out = (v) => console.log(JSON.stringify(v));
@@ -39,6 +40,9 @@ try {
     out({ status: r.status, sleeps });
   } else if (cmd === 'download') {
     const r = await dl.fetchPdf(arg, { fetch: fakeFetch });
+    out({ ok: r.ok, reason: r.reason, length: r.buffer?.length });
+  } else if (cmd === 'sniff') {
+    const r = await sn.lookup({ doi: arg }, { fetch: fakeFetch, env: process.env });
     out({ ok: r.ok, reason: r.reason, length: r.buffer?.length });
   } else if (cmd === 'env') {
     out(lib.parseEnv(fs.readFileSync(arg, 'utf8')));

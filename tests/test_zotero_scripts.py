@@ -305,3 +305,101 @@ def test_only_flag_limits_sources_and_keys_flag_skips_collection(run):
     assert p.returncode == 0, p.stderr
     urls = " ".join(c["url"] for c in run.calls)
     assert "openalex" in urls and "unpaywall" not in urls and "doi.org/10.1/c" not in urls and "collections" not in urls
+
+
+# --- review follow-ups -------------------------------------------------------
+@pytest.mark.parametrize("headers,expected", [
+    ({"Backoff": "9"}, [9000]),
+    ({}, [1000]),
+    ({"Retry-After": "99999"}, [60000]),
+    ({"Backoff-After": "4"}, [4000]),
+])
+def test_429_wait_comes_from_headers_with_fallback_and_cap(run, headers, expected):
+    routes = [r(f"{LIB}/items/ITEM0001", sequence=[{"status": 429, "headers": headers}, {"json": {"ok": 1}}])]
+    assert driver(run, "retry429", routes=routes) == {"status": 200, "sleeps": expected}
+
+
+def test_backoff_header_honoured_on_success_and_retries_are_bounded(run):
+    ok = [r(f"{LIB}/items/ITEM0001", {"json": {"ok": 1}, "headers": {"Backoff": "3"}})]
+    assert driver(run, "retry429", routes=ok) == {"status": 200, "sleeps": [3000]}
+    always = [r(f"{LIB}/items/ITEM0001", {"status": 429})]
+    res = driver(run, "retry429", routes=always)
+    assert "rate limit" in res["error"]["message"] and res["error"]["status"] == 429
+    assert len(run.calls) == 4  # first try + 3 retries
+
+
+def test_reparent_only_without_value_is_a_usage_error(run, tmp_path):
+    plan = tmp_path / "plan.json"
+    plan.write_text("[]")
+    for args in ([str(plan), "--only"], [str(plan), "--only", "--apply"]):
+        p = run.go(REPARENT, args, [])
+        assert p.returncode == 1 and "--only needs" in p.stderr
+    assert run.calls == []
+
+
+def test_reparent_rerun_reuses_parent_created_before_failed_patch(run, proj, tmp_path):
+    plan = tmp_path / "plan.json"
+    plan.write_text(json.dumps([{"attachmentKey": "ATT00001", "item": {"itemType": "journalArticle", "title": "New parent"}}]))
+    orphan = {"key": "ATT00001", "version": 3, "data": {"key": "ATT00001", "itemType": "attachment", "title": "t"}}
+    with_parent = {**orphan, "data": {**orphan["data"], "parentItem": "NEWPAR01"}}
+    log = proj / "outputs" / "pdf-fill" / "reparent.jsonl"
+
+    first = [r(f"{LIB}/items/ATT00001", {"json": orphan}),
+             r(f"{LIB}/items/new?itemType=journalArticle", {"json": {"itemType": "journalArticle", "title": "", "creators": [], "tags": [], "collections": []}}),
+             r(regex=r"/users/42/items$", method="POST", response={"json": {"successful": {"0": {"key": "NEWPAR01"}}}}),
+             r(f"{LIB}/items/ATT00001", method="PATCH", response={"status": 412, "text": "changed"})]
+    p1 = run.go(REPARENT, [str(plan), "--apply"], first)
+    assert p1.returncode == 2
+    lines = [json.loads(x) for x in log.read_text().splitlines()]
+    assert lines[0] == {**lines[0], "attachmentKey": "ATT00001", "createdParentKey": "NEWPAR01", "ok": False, "stage": "patch"}
+    assert [c["method"] for c in run.calls].count("POST") == 1
+
+    second = [r(f"{LIB}/items/ATT00001", sequence=[{"json": orphan}, {"json": with_parent}]),
+              r(f"{LIB}/items/NEWPAR01", {"json": item("NEWPAR01", "New parent")}),
+              r(f"{LIB}/items/ATT00001", method="PATCH", response={"status": 204})]
+    p2 = run.go(REPARENT, [str(plan), "--apply"], second)
+    assert p2.returncode == 0, p2.stdout + p2.stderr
+    assert [c for c in run.calls if c["method"] == "POST"] == [] and all(c["matched"] for c in run.calls)
+    assert json.loads([c for c in run.calls if c["method"] == "PATCH"][0]["body"])["parentItem"] == "NEWPAR01"
+
+
+def test_sniff_caps_landing_page_and_requires_html(run):
+    meta = '<html><head><meta name="citation_pdf_url" content="/files/m.pdf"></head></html>'
+    routes = [
+        r("https://doi.org/10.1/m", {"text": meta, "headers": {"content-type": "text/html; charset=utf-8"}, "finalUrl": "https://pub.example/a/m"}),
+        r("https://pub.example/files/m.pdf", {"bytes": 3000}),
+        r("https://doi.org/10.1/big", {"bytes": 3 * 1024 * 1024, "headers": {"content-type": "text/html"}}),
+        r("https://doi.org/10.1/bighdr", {"text": "x", "headers": {"content-type": "text/html", "content-length": str(3 * 1024 * 1024)}}),
+        r("https://doi.org/10.1/json", {"text": meta, "headers": {"content-type": "application/json"}}),
+    ]
+    assert driver(run, "sniff", "10.1/m", routes=routes) == {"ok": True, "length": 3000}
+    assert "too_large" in driver(run, "sniff", "10.1/big", routes=routes)["reason"]
+    assert "too_large" in driver(run, "sniff", "10.1/bighdr", routes=routes)["reason"]
+    assert "not_html" in driver(run, "sniff", "10.1/json", routes=routes)["reason"]
+
+
+def test_dotenv_never_supplies_fake_fetch(run, proj):
+    (proj / ".env").write_text("WREN_FAKE_FETCH=/evil.mjs\nWREN_FAKE_FETCH_FIXTURE=/x\nZOTERO_LIBRARY_ID=5\n")
+    loaded = driver(run, "dotenv", str(proj))
+    assert "WREN_FAKE_FETCH" not in loaded and "WREN_FAKE_FETCH_FIXTURE" not in loaded
+    assert loaded["ZOTERO_LIBRARY_ID"] == "5"
+
+
+def test_env_parser_inline_comments_after_quotes(run, tmp_path):
+    f = tmp_path / "c.env"
+    f.write_text('F="a" # say "hi"\nG=\'b\' # c\nKEY=a#b\nH=val # note\nI="esc \\" q" # x\n')
+    assert driver(run, "env", str(f)) == {"F": "a", "G": "b", "KEY": "a#b", "H": "val", "I": 'esc " q'}
+
+
+def test_pdf_stub_is_reported_and_nothing_is_written(run, proj):
+    stub = {"key": "STUB0001", "version": 2, "data": {"key": "STUB0001", "itemType": "attachment", "contentType": "application/pdf", "filename": "x.pdf"}}
+    routes = [r(f"{LIB}/collections/COLL0001/items/top", {"json": [item("DDDDDDDD", "Has shell", "10.1/d")]}),
+              r(f"{LIB}/items/DDDDDDDD/children", {"json": [stub]})]
+    p = run.go(PDF_FILL, ["paper-a", "--apply"], routes)
+    assert p.returncode == 0, p.stderr
+    s = summary(p)
+    assert (s["stub"], s["found"], s["attached"], s["manual"]) == (1, 0, 0, 0)
+    assert [c for c in run.calls if c["method"] != "GET"] == [] and all(c["matched"] for c in run.calls)
+    assert not any("unpaywall" in c["url"] for c in run.calls)
+    manual = (proj / "outputs" / "pdf-fill" / "paper-a-manual.md").read_text()
+    assert "attachment shell without a file; delete it in Zotero or fix manually" in manual and "DDDDDDDD" in manual
