@@ -14,6 +14,8 @@
     "paper:setup": "pip install -r requirements.txt",
     "paper:build": "python3 scripts/paper_utils/build.py",
     "paper:extract": "python3 scripts/paper_utils/extract_cli.py",
+    "status": "python3 scripts/utils/wren_status.py",
+    "papers:table": "python3 scripts/utils/papers_table.py",
     "paper:status": "python3 scripts/paper_utils/status.py",
     "paper:list": "python3 scripts/paper_utils/status.py",
     "memory:bootstrap": "node scripts/research_memory/bootstrap.mjs",

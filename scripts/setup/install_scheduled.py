@@ -80,10 +80,12 @@ else
 fi
 notify START "{key}" "scheduled run"
 if {job['command']} >> "$LOG_FILE" 2>&1; then
+  echo "=== WREN_JOB_END exit=0 ===" >> "$LOG_FILE"
   notify DONE "{key}" "see $LOG_FILE"
   exit 0
 else
   rc=$?
+  echo "=== WREN_JOB_END exit=$rc ===" >> "$LOG_FILE"
   notify ERROR "{key}" "exit $rc — see $LOG_FILE"
   exit $rc
 fi

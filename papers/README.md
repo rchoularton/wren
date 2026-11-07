@@ -9,11 +9,21 @@ echo "my-paper" > .current_paper      # marks it active for hooks + skills
 
 Then edit `papers/my-paper/STATUS.md` frontmatter.
 
+## Your papers
+
+Generated from each `STATUS.md` frontmatter by `npm run papers:table`. Do not edit between the markers.
+
+<!-- papers:begin -->
+| Paper | Title | Journal | Phase | Status |
+|---|---|---|---|---|
+| `example-paper` | Example Working Paper — replace with your title | Target Journal | 1 | scoping |
+<!-- papers:end -->
+
 ## The per-paper template
 
 | File / dir | What it holds |
 |---|---|
-| `STATUS.md` | Phase/status dashboard (YAML frontmatter) + a "▶ RESUME HERE" pointer |
+| `STATUS.md` | Phase/status dashboard (YAML frontmatter, including the one-line `next:` step) + a "▶ RESUME HERE" pointer |
 | `PLAN.md` | Forward-looking task plan |
 | `METHODS_LOG.md` | Methods decisions and pre-registration |
 | `NOTES.md` | Long-form analytical history, newest on top |
