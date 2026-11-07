@@ -30,6 +30,7 @@ jobs:
           node --check scripts/research_memory/audit.mjs
           node --check scripts/research_memory/bootstrap.mjs
           node --check scripts/research_memory/config.mjs
+          for f in $(find scripts/zotero tests/node -name '*.mjs'); do node --check "$f"; done
 
       - name: Byte-compile the scripts/ tree (Python)
         run: python3 -m py_compile $(find scripts -name '*.py')
