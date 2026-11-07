@@ -27,7 +27,7 @@ Generated from each `STATUS.md` frontmatter by `npm run papers:table`. Do not ed
 | `PLAN.md` | Forward-looking task plan |
 | `METHODS_LOG.md` | Methods decisions and pre-registration |
 | `NOTES.md` | Long-form analytical history, newest on top |
-| `config.json` | Title, journal style, version, optional external draft-sync path |
+| `config.json` | Title, journal style, version, optional external draft-sync path, optional `zotero_collection` (8-character Zotero collection key, used by `/pdf-fill`; leave empty if unused) |
 | `drafts/` | Markdown and Word drafts (build with `npm run paper:build <id>`) |
 | `figures/` | Publication figures (PNG + PDF) |
 | `outputs/` | Paper-specific summary CSVs/JSONs |

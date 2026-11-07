@@ -24,6 +24,8 @@
     "tokens": "python3 scripts/utils/token_report.py",
     "context:size": "python3 scripts/utils/context_size.py",
     "recall": "bash scripts/utils/recall_context.sh",
+    "pdf:fill": "node scripts/zotero/pdf-fill.mjs",
+    "zotero:reparent": "node scripts/zotero/reparent-orphan-attachments.mjs",
     "test": "python3 -m pytest -q"
   },
   "keywords": [

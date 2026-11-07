@@ -13,3 +13,5 @@ Set `references.provider` to choose your reference manager. All citation-aware s
 You can also add any other MCP server — a SQLite/DuckDB connector, a filesystem MCP, or a domain-specific server for your field — via `.mcp.json.template` or `settings.local.json`.
 
 The full setup steps for each provider (API keys, `.mcp.json` wiring, the Mendeley REST API caveat, and general MCP-server instructions) live in [`docs/integrations.md`](../integrations.md), which stays the single source of truth for this content so it doesn't drift out of sync.
+
+With the `zotero` provider, `/pdf-fill` attaches missing PDFs to a paper's collection from open-access sources (needs `ZOTERO_API_KEY`, `ZOTERO_LIBRARY_ID`, and `UNPAYWALL_EMAIL` for the Unpaywall source); see `scripts/zotero/README.md`.

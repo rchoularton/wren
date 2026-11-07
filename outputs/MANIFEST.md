@@ -7,5 +7,6 @@ Registry of every directory under `outputs/`. Add a one-line entry when you crea
 | Directory | Status | What it holds | Produced by |
 |-----------|--------|---------------|-------------|
 | `_logs/` | current | Processing logs from scripts | (various) |
+| `pdf-fill/` | current | `/pdf-fill` JSONL logs, manual-download lists (`<paper>-manual.md`), reparent log; created on `--apply` | `scripts/zotero/pdf-fill.mjs`, `reparent-orphan-attachments.mjs` |
 
 _Add rows as you create output directories. Name directories after the analysis script (snake_case)._
