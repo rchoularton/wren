@@ -207,7 +207,12 @@ def test_injection_on_is_capped(env, run_hook):
     assert "bullet number 49" in block  # newest kept
 
 
-def test_context_size_total_within_budget():
-    out = subprocess.run([sys.executable, str(REPO_ROOT / "scripts/utils/context_size.py"), "--json"],
-                         capture_output=True, text=True, timeout=60, check=True).stdout
-    assert json.loads(out)["total_bytes"] < 34_000
+def test_context_size_default_total_and_optin_line():
+    r = subprocess.run([sys.executable, str(REPO_ROOT / "scripts/utils/context_size.py"), "--json"],
+                       capture_output=True, text=True, timeout=60, check=True)
+    d = json.loads(r.stdout)
+    assert d["total_bytes"] < 34_000  # default config: capture off, 0 bytes of sessions
+    assert 0 < d["optin_session_capture_bytes"] <= 1200
+    text = subprocess.run([sys.executable, str(REPO_ROOT / "scripts/utils/context_size.py")],
+                          capture_output=True, text=True, timeout=60, check=True).stdout
+    assert "with session_capture on: +" in text

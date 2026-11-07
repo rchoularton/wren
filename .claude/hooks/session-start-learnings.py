@@ -24,7 +24,7 @@ MAX_LEARNINGS = 5
 MAX_AUTHOR_DECISIONS = 8
 AUTHOR_DECISION_SNIPPET = 160
 MAX_SESSION_BULLETS = 8
-MAX_SESSION_BYTES = 88  # hard cap on the "Recent sessions" block; sized to the 34,000-byte context budget (issue asked 1,200)
+MAX_SESSION_BYTES = 1200  # hard cap on the "Recent sessions" block (opt-in; not in the context budget)
 
 
 def memory_dir() -> Path:

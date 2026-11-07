@@ -8,7 +8,7 @@ tokenizer) for each standing-context source, then a total:
   - each file in .claude/rules/
   - .claude/memory-seed/MEMORY.md
   - each agent's `description:` field in .claude/agents/*.md
-  - the maximum injection of the two SessionStart hooks (session capture switched on), measured by running
+  - the maximum injection of the two SessionStart hooks (default config, session capture off), measured by running
     each hook against a scaffold fixture filled to its caps
 
 Usage:
@@ -67,8 +67,8 @@ def _run_hook(hook: Path, event: dict, env: dict) -> str:
         return ""
 
 
-def hook_injections() -> dict[str, int]:
-    """Bytes injected by each SessionStart hook with every cap filled."""
+def _measure_hooks() -> tuple[int, int, int]:
+    """(learnings, welcome, learnings with session_capture on), caps filled."""
     max_learnings, max_decisions = _load_hook_caps()
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -93,10 +93,9 @@ def hook_injections() -> dict[str, int]:
             (mem / f"learning_{today}_{i:02d}.md").write_text(
                 f"---\nname: fake learning number {i} with a typical-length title\n"
                 f"type: learning\n---\nbody\n")
-        # Session capture on, with far more bullets than the injection cap allows.
+        # Far more session bullets than the injection cap allows. The default
+        # config has session_capture off, so the first run injects none of them.
         cfg = root / "research-config.yml"
-        cfg.write_text(cfg.read_text().replace(
-            "session_capture: false", "session_capture: true"))
         sdir = mem / "context" / "sessions"
         sdir.mkdir(parents=True)
         (sdir / f"{today}.md").write_text(
@@ -107,10 +106,28 @@ def hook_injections() -> dict[str, int]:
         hooks = REPO_ROOT / ".claude" / "hooks"
         learnings = _run_hook(hooks / "session-start-learnings.py", {"source": "compact"}, env)
         welcome = _run_hook(hooks / "session-start-welcome.py", {}, env)
+        cfg.write_text(cfg.read_text().replace(
+            "session_capture: false", "session_capture: true"))
+        learnings_on = _run_hook(hooks / "session-start-learnings.py", {"source": "compact"}, env)
+    return _size(learnings), _size(welcome), _size(learnings_on)
+
+
+def hook_injections() -> dict[str, int]:
+    """Bytes injected by each SessionStart hook in the default config (capture off)."""
+    learnings, welcome, _ = _measure_hooks()
     return {
-        "session-start-learnings (max, compact)": _size(learnings),
-        "session-start-welcome (max)": _size(welcome),
+        "session-start-learnings (max, compact)": learnings,
+        "session-start-welcome (max)": welcome,
     }
+
+
+def optin_cost() -> int:
+    """Extra bytes per session start with tiers.session_capture on, at the cap.
+
+    Reported separately; NOT part of the budgeted total (capture is off by default).
+    """
+    learnings, _, learnings_on = _measure_hooks()
+    return learnings_on - learnings
 
 
 def measure() -> list[tuple[str, str, int]]:
@@ -141,7 +158,8 @@ def main() -> None:
     args = ap.parse_args()
     rows = measure()
     if args.json:
-        print(json.dumps({"rows": rows, "total_bytes": total(rows)}))
+        print(json.dumps({"rows": rows, "total_bytes": total(rows),
+                          "optin_session_capture_bytes": optin_cost()}))
         return
     width = max(len(name) for _, name, _ in rows)
     print(f"{'source':<{width}}  {'bytes':>7}  {'~tokens (est.)':>14}")
@@ -151,6 +169,7 @@ def main() -> None:
     print("-" * (width + 25))
     t = total(rows)
     print(f"{'TOTAL':<{width}}  {t:>7}  {t // BYTES_PER_TOKEN:>14}")
+    print(f"with session_capture on: +{optin_cost()} bytes (opt-in; not counted in TOTAL)")
     print(f"\nTokens are an estimate: bytes / {BYTES_PER_TOKEN}.")
 
 

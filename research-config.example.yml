@@ -90,4 +90,5 @@ tiers:
   # Opt-in session log: after each exchange a detached `claude -p --model haiku` call (one cheap
   # model call, local only) writes 2-5 bullets to <auto-memory dir>/context/sessions/YYYY-MM-DD.md,
   # searchable with /recall. Delete the logs any time: rm -r <auto-memory dir>/context/sessions
+  # While enabled it also adds up to 1.2 kB to each session start (recent bullets).
   session_capture: false

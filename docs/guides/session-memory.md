@@ -23,4 +23,4 @@ After each exchange, the Stop hook starts a detached, time-limited `claude -p --
 ## Using it
 
 - `/recall <topic>` (or `npm run recall -- <terms>`) searches the logs and answers citing the date and session heading. When nothing matches it says so.
-- At session start, with capture on, a very short "Recent sessions" block from today's and yesterday's logs is added to context. It is capped to fit the standing-context budget (`npm run context:size`).
+- At session start, with capture on, a short "Recent sessions" block from today's and yesterday's logs is added to context: the last 8 bullets, hard-capped at 1,200 bytes. It adds up to 1.2 kB to each session start while enabled. `npm run context:size` reports this as a separate "with session_capture on" line; the budgeted total is measured with capture off.
