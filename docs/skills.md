@@ -38,6 +38,7 @@ Type these as slash commands in Claude Code once your project is open. All 18 sh
 | `/methods-audit` `[paper-id] [--fix]` | Audit a paper's analysis scripts for exploration artifacts, stale values, and reproducibility gaps before you freeze. |
 | `/qc-team` `[paper-id] [--skeptic-only]` | Three-agent adversarial QC (Skeptic → Responder → Team Leader) — verifies stats against source data, produces a Must-Fix / Should-Fix verdict. |
 | `/research-memory` `[status\|recall <topic>\|log <artifact> "<note>"\|inspect <artifact>]` | Query and update the corpus memory — recall findings, log notes, check status across your literature and projects. See [Corpus memory](guides/corpus-memory.md). |
+| `/recall` `<topic>` | Search the opt-in session logs and answer with dates and session headings. Needs `tiers.session_capture: true`. See [Session memory](guides/session-memory.md). |
 | `/retro` `[quick\|full]` | Quick session retrospective — capture process improvements, research insights, and system feedback into cross-session memory. |
 
 All shipped skills are available today. Future work is on the [roadmap](roadmap.md).

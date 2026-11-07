@@ -23,6 +23,8 @@ LOOKBACK_DAYS = 7
 MAX_LEARNINGS = 5
 MAX_AUTHOR_DECISIONS = 8
 AUTHOR_DECISION_SNIPPET = 160
+MAX_SESSION_BULLETS = 8
+MAX_SESSION_BYTES = 1200  # hard cap on the "Recent sessions" block (opt-in; not in the context budget)
 
 
 def memory_dir() -> Path:
@@ -119,6 +121,65 @@ def author_decisions(root: Path, paper_dir: Path) -> List[str]:
     return hits
 
 
+def session_capture_enabled(root: Path) -> bool:
+    """True only if `tiers.session_capture: true` in research-config.yml."""
+    try:
+        inside, indent = False, None
+        for line in (root / "research-config.yml").read_text(encoding="utf-8").splitlines():
+            if re.match(r"^tiers\s*:", line):
+                inside = True
+                continue
+            if not inside or not line.strip() or line.lstrip().startswith("#"):
+                continue
+            if not line.startswith((" ", "\t")):
+                return False
+            cur = len(line) - len(line.lstrip())
+            if indent is None:
+                indent = cur  # indentation of tiers:'s first child
+            if cur != indent:
+                continue  # nested block or block-scalar content
+            m = re.match(r"^\s+session_capture\s*:\s*(\S+)", line)
+            if m:
+                return m.group(1).strip("\"'").lower() == "true"
+    except Exception:
+        pass
+    return False
+
+
+def recent_sessions_block(mem: Path) -> str:
+    """Last few bullets from today's/yesterday's session logs, hard-capped."""
+    try:
+        sdir = mem / "context" / "sessions"
+        today = datetime.now()
+        bullets: List[str] = []
+        for d in (today - timedelta(days=1), today):  # oldest first
+            f = sdir / f"{d.strftime('%Y-%m-%d')}.md"
+            if f.is_file():
+                bullets += [f"- ({f.stem}) {l.strip()[2:]}" for l in
+                            f.read_text(encoding="utf-8").splitlines()
+                            if l.startswith("- ")]
+        bullets = bullets[-MAX_SESSION_BULLETS:]
+        if not bullets:
+            return ""
+        head = "## Recent sessions\n"
+        kept: List[str] = []
+        for b in reversed(bullets):  # newest first, until the cap binds
+            b = b[:300]
+            used = len((head + "\n".join(kept)).encode("utf-8")) + (1 if kept else 0)
+            room = MAX_SESSION_BYTES - used
+            if room >= len(b.encode("utf-8")):
+                kept.insert(0, b)
+                continue
+            if not kept and room > 20:  # newest bullet alone: truncate to fit
+                kept.insert(0, b.encode("utf-8")[: room - 1].decode("utf-8", "ignore") + "…")
+            break
+        if not kept:
+            return ""
+        return (head + "\n".join(kept)).rstrip()
+    except Exception:
+        return ""
+
+
 def get_pinned_anchors() -> str:
     """Live paper state re-injected after compaction; "" on any problem."""
     try:
@@ -165,15 +226,20 @@ def main() -> None:
 
     anchors = get_pinned_anchors() if source == "compact" else ""
 
-    learnings = get_recent_learnings(memory_dir())
+    mem = memory_dir()
+    sessions = recent_sessions_block(mem) if session_capture_enabled(project_root()) else ""
+    learnings = get_recent_learnings(mem)
     if not learnings:
-        print(json.dumps({"additionalContext": anchors} if anchors else {}))
+        parts = [p for p in (anchors, sessions) if p]
+        print(json.dumps({"additionalContext": "\n\n".join(parts)} if parts else {}))
         return
 
     block = "## Recent Session Learnings (last 7 days)\n"
     block += "Captured via /retro from previous sessions:\n"
     block += "\n".join(learnings)
     block += "\n\nReview relevant learning_*.md files in memory/ if pertinent to today's work."
+    if sessions:
+        block += "\n\n" + sessions
     if anchors:
         block = anchors + "\n\n" + block
 

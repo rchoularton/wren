@@ -73,6 +73,7 @@ nav:
   - Guides:
       - Papers & the build engine: guides/papers.md
       - Corpus memory: guides/corpus-memory.md
+      - Session memory: guides/session-memory.md
       - Databases: guides/databases.md
       - References & integrations: guides/references.md
       - Reading documents cheaply: guides/documents.md

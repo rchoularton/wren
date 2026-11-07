@@ -23,6 +23,7 @@
     "doc:md": "python3 .claude/lib/doc_to_md.py",
     "tokens": "python3 scripts/utils/token_report.py",
     "context:size": "python3 scripts/utils/context_size.py",
+    "recall": "bash scripts/utils/recall_context.sh",
     "test": "python3 -m pytest -q"
   },
   "keywords": [

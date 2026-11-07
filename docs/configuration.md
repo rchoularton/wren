@@ -128,9 +128,10 @@ notifications:
 ```yaml
 tiers:
   research_memory: true               # two-layer corpus memory engine (grep-queryable)
+  session_capture: false              # opt-in dated session log + /recall
 ```
 
-Toggles the [corpus memory](guides/corpus-memory.md) add-on.
+`research_memory` toggles the [corpus memory](guides/corpus-memory.md) add-on. `session_capture` (default `false`) turns on [session memory](guides/session-memory.md): one cheap model call per exchange, logs kept locally.
 
 ---
 

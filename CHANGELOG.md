@@ -6,6 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 ## [Unreleased]
 
 ### Added
+- Opt-in session capture (#25): `tiers.session_capture: true` makes a Stop hook write 2-5 summary bullets per exchange (one detached `claude -p --model haiku` call) to `<memory>/context/sessions/YYYY-MM-DD.md`; `/recall` (`npm run recall -- <terms>`) searches them with dates and session headings; a small "Recent sessions" block joins session start. Off by default. See `docs/guides/session-memory.md`.
 - Front door status (#24): `scripts/utils/wren_status.py` (`npm run status`, no model tokens) reports papers by tier with their `next:` line and each scheduled job's last run, verdict and overdue state; `npm run papers:table` regenerates the table in `papers/README.md` from frontmatter; a `next:` key in the STATUS.md template.
 
 ### Changed
