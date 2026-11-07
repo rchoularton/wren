@@ -6,6 +6,7 @@ while Wren is pre-1.0, every release that adds a tool is a MINOR bump.
 
 ## Shipped
 
+- **0.11.0** — `/research` front door with a deterministic status report (`npm run status`), `next:` line and generated papers table; opt-in session capture + `/recall` with a sandboxed summariser.
 - **0.10.0** — context diet with a size guard; always-run-the-check, Wren voice, and gold-standard versioning rules; document-to-Markdown cache (`npm run doc:md`); tighter npm tarball.
 - **0.9.0** — `/peer-review` agent suite; read-only reviewers, critique-tier pin, model-ID drift check; review-stage gate, post-compaction re-pin, and model-advisory hooks; pytest harness in CI.
 - **0.8.0** — `/lit-digest` + the scheduled-jobs/email tier (launchd/cron).
@@ -14,19 +15,6 @@ while Wren is pre-1.0, every release that adds a tool is a MINOR bump.
 - **0.5.0** — the wren logo across the docs, README, and the terminal.
 - **0.4.0** — guided onboarding (`/setup wren`): a tour, an interview, tool setup, first paper.
 - **0.3.0** — renamed to **Wren**; published to npm as `create-wren`.
-
-## In progress
-
-*Status as of 2026-11-03.*
-
-- **0.11 — Front door + session memory.** The deterministic status script (`npm run status`),
-  the `next:` line in `STATUS.md`, the generated papers table, and the rebuilt `/research` and
-  `/paper` skills are reviewed and ready to merge
-  ([#47](https://github.com/rchoularton/wren/pull/47), closing
-  [#24](https://github.com/rchoularton/wren/issues/24)). Scheduled jobs now write an explicit
-  end-of-run marker so the status report can tell a clean run from a failed one. Opt-in session
-  capture and `/recall` ([#25](https://github.com/rchoularton/wren/issues/25)) start once #47
-  lands, since they read the new `STATUS.md` shape.
 
 ## Planned
 
@@ -37,7 +25,6 @@ for it, then the bigger skills.
 
 | Release | Theme | What ships |
 |---|---|---|
-| **0.11** | Front door + session memory | `/research` rebuilt around a deterministic status script: papers by tier from `STATUS.md` frontmatter with a `next:` line, scheduled-job verdicts, a generated papers table; opt-in session capture + `/recall` over dated session logs |
 | **0.12** | Library automation | `/librarian-team` — weekly Zotero audit + discovery with an approval queue; `/pdf-fill` with open-access sources and a configurable institution proxy; orphan-attachment repair |
 | **0.13** | Submission-grade audit | `/claim-audit` — enumerated, adversarial manuscript audit; `/code-capsule` — a reproducibility package from the gold standard; journal-submission-prep and reference-manager agents; `/consistency-check` as a multi-paper option |
 | **1.0** | Stable release | a light test suite, polish, docs, announcement |
