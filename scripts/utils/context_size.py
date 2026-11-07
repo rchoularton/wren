@@ -8,7 +8,7 @@ tokenizer) for each standing-context source, then a total:
   - each file in .claude/rules/
   - .claude/memory-seed/MEMORY.md
   - each agent's `description:` field in .claude/agents/*.md
-  - the maximum injection of the two SessionStart hooks, measured by running
+  - the maximum injection of the two SessionStart hooks (session capture switched on), measured by running
     each hook against a scaffold fixture filled to its caps
 
 Usage:
@@ -93,6 +93,16 @@ def hook_injections() -> dict[str, int]:
             (mem / f"learning_{today}_{i:02d}.md").write_text(
                 f"---\nname: fake learning number {i} with a typical-length title\n"
                 f"type: learning\n---\nbody\n")
+        # Session capture on, with far more bullets than the injection cap allows.
+        cfg = root / "research-config.yml"
+        cfg.write_text(cfg.read_text().replace(
+            "session_capture: false", "session_capture: true"))
+        sdir = mem / "context" / "sessions"
+        sdir.mkdir(parents=True)
+        (sdir / f"{today}.md").write_text(
+            "### 09:00 - session abcd1234 (auto-captured)\n" + "".join(
+                f"- {'Decided something about the analysis and recorded the reasoning in the notes ' * 3}{i}\n"
+                for i in range(40)))
         env = {"CLAUDE_PROJECT_DIR": str(root), "HOME": str(home)}
         hooks = REPO_ROOT / ".claude" / "hooks"
         learnings = _run_hook(hooks / "session-start-learnings.py", {"source": "compact"}, env)

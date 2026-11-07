@@ -26,6 +26,7 @@
       "WebSearch",
       "WebFetch",
       "Skill(retro)",
+      "Skill(recall)",
       "Skill(rigor-check)",
       "Skill(paper)",
       "Skill(draft)",
@@ -116,6 +117,10 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-retro-nudge.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-session-capture.sh\""
           }
         ]
       }

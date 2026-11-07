@@ -87,3 +87,7 @@ notifications:
 # --- Optional tiers ----------------------------------------------------------
 tiers:
   research_memory: true               # two-layer corpus memory engine (grep-queryable)
+  # Opt-in session log: after each exchange a detached `claude -p --model haiku` call (one cheap
+  # model call, local only) writes 2-5 bullets to <auto-memory dir>/context/sessions/YYYY-MM-DD.md,
+  # searchable with /recall. Delete the logs any time: rm -r <auto-memory dir>/context/sessions
+  session_capture: false
