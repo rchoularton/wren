@@ -21,18 +21,24 @@ enabled=$(python3 - <<'PY' 2>/dev/null
 import os, re
 try:
     root = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
-    inside = False
+    inside, indent = False, None
     for line in open(os.path.join(root, "research-config.yml"), encoding="utf-8"):
         if re.match(r"^tiers\s*:", line):
             inside = True
             continue
-        if inside:
-            if line.strip() and not line.startswith((" ", "\t", "#")):
-                break
-            m = re.match(r"^\s+session_capture\s*:\s*(\S+)", line)
-            if m:
-                print("yes" if m.group(1).strip("\"'").lower() == "true" else "no")
-                break
+        if not inside or not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if not line.startswith((" ", "\t")):
+            break
+        cur = len(line) - len(line.lstrip())
+        if indent is None:
+            indent = cur  # indentation of tiers:'s first child
+        if cur != indent:
+            continue  # nested block or block-scalar content: not a direct child
+        m = re.match(r"^\s+session_capture\s*:\s*(\S+)", line)
+        if m:
+            print("yes" if m.group(1).strip("\"'").lower() == "true" else "no")
+            break
 except Exception:
     pass
 PY
@@ -41,15 +47,16 @@ if [[ "$enabled" != "yes" ]]; then
   exit 0
 fi
 
-read -r transcript_path session_id < <(echo "$payload" | python3 -c '
+parsed=$(echo "$payload" | python3 -c '
 import json,sys
 d=json.load(sys.stdin)
-print((d.get("transcript_path","") or "-"), (d.get("session_id","") or "-"))' 2>/dev/null)
+print(d.get("transcript_path","") or "")
+print(d.get("session_id","") or "")' 2>/dev/null)
+{ IFS= read -r transcript_path; IFS= read -r session_id; } <<< "$parsed"
 
-if [[ -z "$transcript_path" || "$transcript_path" == "-" || ! -f "$transcript_path" ]]; then
+if [[ -z "$transcript_path" || ! -f "$transcript_path" ]]; then
   exit 0
 fi
-[[ "$session_id" == "-" ]] && session_id=""
 
 nohup python3 "${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/capture_session.py" \
   "$transcript_path" "$session_id" >/dev/null 2>&1 &

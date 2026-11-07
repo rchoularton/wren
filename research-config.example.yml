@@ -87,8 +87,9 @@ notifications:
 # --- Optional tiers ----------------------------------------------------------
 tiers:
   research_memory: true               # two-layer corpus memory engine (grep-queryable)
-  # Opt-in session log: after each exchange a detached `claude -p --model haiku` call (one cheap
-  # model call, local only) writes 2-5 bullets to <auto-memory dir>/context/sessions/YYYY-MM-DD.md,
-  # searchable with /recall. Delete the logs any time: rm -r <auto-memory dir>/context/sessions
-  # While enabled it also adds up to 1.2 kB to each session start (recent bullets).
+  # Opt-in session log: after each exchange a detached `claude -p --model haiku` call (one cheap model
+  # call) writes 2-5 bullets to <auto-memory dir>/context/sessions/YYYY-MM-DD.md, searchable with /recall.
+  # Only the binary is local: up to ~6,000 characters of each exchange go to the Anthropic API, as in any
+  # session, and nowhere else. Keep it off if material must stay off third-party services.
+  # Delete the logs: rm -r <auto-memory dir>/context/sessions. While on, it adds up to 1.2 kB per session start.
   session_capture: false

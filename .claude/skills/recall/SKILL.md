@@ -13,8 +13,10 @@ capture (`<auto-memory dir>/context/sessions/YYYY-MM-DD.md`). Read-only.
 ## Step 0: Is capture on?
 
 Check `tiers.session_capture` in `research-config.yml`. If it is not `true`,
-say: "Session capture is off, so there are no logs to search. Enable it by
-setting `tiers.session_capture: true` (see docs/guides/session-memory.md)."
+say: "Session capture is off, so there are no logs to search. Enabling
+`tiers.session_capture: true` makes one cheap model call per exchange and sends
+up to ~6,000 characters of it to the Anthropic API (see
+docs/guides/session-memory.md)."
 Stop there.
 
 ## Step 1: Search

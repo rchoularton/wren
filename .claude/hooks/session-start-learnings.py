@@ -124,16 +124,23 @@ def author_decisions(root: Path, paper_dir: Path) -> List[str]:
 def session_capture_enabled(root: Path) -> bool:
     """True only if `tiers.session_capture: true` in research-config.yml."""
     try:
-        inside = False
+        inside, indent = False, None
         for line in (root / "research-config.yml").read_text(encoding="utf-8").splitlines():
             if re.match(r"^tiers\s*:", line):
                 inside = True
-            elif inside:
-                if line.strip() and not line.startswith((" ", "\t", "#")):
-                    return False
-                m = re.match(r"^\s+session_capture\s*:\s*(\S+)", line)
-                if m:
-                    return m.group(1).strip("\"'").lower() == "true"
+                continue
+            if not inside or not line.strip() or line.lstrip().startswith("#"):
+                continue
+            if not line.startswith((" ", "\t")):
+                return False
+            cur = len(line) - len(line.lstrip())
+            if indent is None:
+                indent = cur  # indentation of tiers:'s first child
+            if cur != indent:
+                continue  # nested block or block-scalar content
+            m = re.match(r"^\s+session_capture\s*:\s*(\S+)", line)
+            if m:
+                return m.group(1).strip("\"'").lower() == "true"
     except Exception:
         pass
     return False

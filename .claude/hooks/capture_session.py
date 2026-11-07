@@ -23,6 +23,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 from datetime import datetime
@@ -137,18 +138,59 @@ def find_claude() -> str | None:
     return shutil.which("claude")
 
 
+# Sandbox flags for the headless call. The excerpt is untrusted text (it can
+# contain pasted web content), so the summarizer gets no tools, no settings, no
+# MCP servers and no session file. Verified present in `claude --help` of the
+# installed CLI on 2026-11-07: --tools, --setting-sources, --strict-mcp-config,
+# --no-session-persistence. NOT present: --max-turns (so it is not passed; with
+# --tools "" the model cannot take extra turns anyway). Presence is re-checked at
+# run time from `claude --help` (no session is started); a missing required flag
+# means nothing is captured and the reason goes to .capture_errors.log.
+REQUIRED_FLAGS = ("--tools", "--setting-sources", "--strict-mcp-config",
+                  "--no-session-persistence")
+
+
+def build_argv(claude: str) -> list[str]:
+    return [claude, "-p", "--model", MODEL,
+            "--tools", "", "--setting-sources", "", "--strict-mcp-config",
+            "--no-session-persistence"]
+
+
+def check_sandbox_flags(claude: str) -> None:
+    out = subprocess.run([claude, "--help"], capture_output=True, text=True,
+                         timeout=15, stdin=subprocess.DEVNULL)
+    text = out.stdout + out.stderr
+    missing = [f for f in REQUIRED_FLAGS if f not in text]
+    if missing:
+        raise RuntimeError(f"claude CLI lacks sandbox flags {missing}; not capturing")
+
+
+def run_bounded(argv: list[str], prompt: str, env: dict) -> subprocess.CompletedProcess:
+    """Run in its own process group; on timeout kill the whole group."""
+    proc = subprocess.Popen(
+        argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, cwd=str(Path.home()), env=env, start_new_session=True)
+    try:
+        out, err = proc.communicate(prompt, timeout=CLAUDE_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except Exception:
+            proc.kill()
+        proc.communicate()
+        raise
+    return subprocess.CompletedProcess(argv, proc.returncode, out, err)
+
+
 def summarize(user_text: str, assistant_text: str, claude: str) -> str | None:
     prompt = SUMMARY_PROMPT.format(
         user=truncate(user_text, MAX_USER_CHARS),
         assistant=truncate(assistant_text, MAX_ASSISTANT_CHARS),
     )
+    check_sandbox_flags(claude)
     env = dict(os.environ, WREN_CAPTURE_HOOK="1")
-    # Run from $HOME so this project's CLAUDE.md and hooks never load.
-    result = subprocess.run(
-        [claude, "-p", "--model", MODEL, "--no-session-persistence"],
-        input=prompt, capture_output=True, text=True,
-        cwd=str(Path.home()), env=env, timeout=CLAUDE_TIMEOUT_S,
-    )
+    # Runs from $HOME so this project's CLAUDE.md and hooks never load.
+    result = run_bounded(build_argv(claude), prompt, env)
     if result.returncode != 0:
         raise RuntimeError(f"claude -p failed rc={result.returncode}: {result.stderr[:300]}")
     out = result.stdout.strip()
@@ -200,13 +242,25 @@ def main() -> int:
         if digest in seen:
             return 0
 
-        bullets = summarize(user_text, assistant_text, claude)
-        # Record the hash even on SKIP so the same exchange is never re-sent.
+        # Claim the exchange before summarising; a parallel helper exits quietly.
         sessions_dir().mkdir(parents=True, exist_ok=True)
-        with open(hashes, "a") as f:
-            f.write(digest + "\n")
-        if bullets:
-            append_entry(bullets, session_id)
+        lock = sessions_dir() / f".lock-{digest}"
+        try:
+            os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+        except FileExistsError:
+            return 0
+        try:
+            bullets = summarize(user_text, assistant_text, claude)
+            # Record the hash even on SKIP so the same exchange is never re-sent.
+            with open(hashes, "a") as f:
+                f.write(digest + "\n")
+            if bullets:
+                append_entry(bullets, session_id)
+        finally:
+            try:
+                lock.unlink()
+            except OSError:
+                pass
         return 0
     except Exception as e:
         log_error(f"{type(e).__name__}: {e} (transcript={transcript_path})")

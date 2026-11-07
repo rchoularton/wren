@@ -2,7 +2,7 @@
 # Search the opt-in session logs by keyword.
 #
 # Usage: recall_context.sh <term> [term ...]
-#   Terms are OR-combined, case-insensitive.
+#   Terms are OR-combined, case-insensitive FIXED strings (no regex).
 #   WREN_MEMORY_DIR overrides the auto-memory dir (default: derived from the
 #   project path the same way Claude Code does).
 #
@@ -27,9 +27,12 @@ print(Path.home() / ".claude" / "projects" / slug / "memory")')
 fi
 SESSIONS_DIR="$MEMORY_DIR/context/sessions"
 
-# OR pattern, lowercased (BSD awk has no IGNORECASE).
-pattern=$(printf '%s|' "$@")
-pattern=$(printf '%s' "${pattern%|}" | tr '[:upper:]' '[:lower:]')
+for t in "$@"; do
+  if [[ -z "$t" ]]; then
+    echo "usage: recall_context.sh <term> [term ...]  (terms must not be empty)" >&2
+    exit 2
+  fi
+done
 
 found=0
 shopt -s nullglob
@@ -37,9 +40,16 @@ files=("$SESSIONS_DIR"/*.md)
 for ((i = ${#files[@]} - 1; i >= 0; i--)); do  # newest first
   f="${files[i]}"
   day=$(basename "$f" .md)
-  hits=$(awk -v pat="$pattern" -v day="$day" '
+  # Terms go in via the environment (unit-separator joined) and are matched with index(), never as regex.
+  hits=$(TERMS=$(printf '%s\037' "$@") awk -v day="$day" '
+    BEGIN { n = split(ENVIRON["TERMS"], t, "\037"); n-- ; for (i = 1; i <= n; i++) t[i] = tolower(t[i]) }
     /^### / { heading = substr($0, 5) }
-    tolower($0) ~ pat && /^- / { printf "[%s | %s] %s\n", day, heading, $0 }
+    /^- / {
+      line = tolower($0)
+      for (i = 1; i <= n; i++) if (index(line, t[i])) {
+        printf "[%s | %s] %s\n", day, heading, $0; break
+      }
+    }
   ' "$f")
   if [[ -n "$hits" ]]; then
     echo "=== $f ==="

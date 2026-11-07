@@ -16,7 +16,8 @@ tiers:
 After each exchange, the Stop hook starts a detached, time-limited `claude -p --model haiku` call that turns the last exchange into two to five third-person bullets. The bullets are appended to `<auto-memory dir>/context/sessions/YYYY-MM-DD.md`, where `<auto-memory dir>` is `~/.claude/projects/<project-slug>/memory`. A hash file (`sessions/.captured`) prevents the same exchange being written twice; failures go to `sessions/.capture_errors.log`.
 
 - **Cost:** one cheap model call per exchange, on the `haiku` alias (the triage tier).
-- **Privacy:** at most about 6,000 characters of the exchange go to that local `claude` call. Nothing is sent anywhere else. The summarizer is told not to record credentials, but the logs are summaries of your work, so review them before sharing the machine or backing up the memory directory.
+- **Privacy:** only the `claude` binary is local. Its call sends up to about 6,000 characters of the exchange (your text and the assistant's) to the Anthropic API, the same way any session does. Nothing goes to any other service. If your material must stay off third-party services, leave `session_capture` off. The summarizer is told not to record credentials, but the logs are summaries of your work, so review them before sharing the machine or backing up the memory directory.
+- **Sandboxed call:** the summarizer runs with no tools, no settings sources, no MCP servers and no saved session, in its own process group that is killed on timeout. If the installed CLI lacks those flags, nothing is captured and the reason is written to `sessions/.capture_errors.log`.
 - **Never blocks:** the hook exits immediately; if no `claude` binary is found it does nothing. Set `WREN_CLAUDE_BIN` to point at a specific binary.
 - **Delete the logs:** remove `<auto-memory dir>/context/sessions/` (or one day's file). Turning the toggle off stops new capture but leaves existing logs.
 

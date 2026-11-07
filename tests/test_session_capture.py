@@ -53,9 +53,13 @@ def transcript(tmp_path):
     return p
 
 
+HELP = ('if [[ "$1" == "--help" ]]; then echo "--tools --setting-sources '
+        '--strict-mcp-config --no-session-persistence"; exit 0; fi\n')
+
+
 def fake_claude(tmp_path, body, rc=0):
     f = tmp_path / "fake-claude"
-    f.write_text(f"#!/bin/bash\ncat >/dev/null\n{body}\nexit {rc}\n")
+    f.write_text(f"#!/bin/bash\n{HELP}cat >/dev/null\n{body}\nexit {rc}\n")
     f.chmod(0o755)
     return f
 
@@ -147,7 +151,7 @@ def test_capture_sends_bounded_excerpt_with_guard_env(env, tmp_path):
     claude = fake_claude(tmp_path, f'echo "$WREN_CAPTURE_HOOK" > {seen}.env; pwd > {seen}.cwd; echo "- ok"')
     # Rewrite so stdin is kept for size measurement.
     claude.write_text(
-        f'#!/bin/bash\nwc -c > {seen}.size\necho "$WREN_CAPTURE_HOOK" > {seen}.env\n'
+        f'#!/bin/bash\n{HELP}wc -c > {seen}.size\necho "$WREN_CAPTURE_HOOK" > {seen}.env\n'
         f'pwd -P > {seen}.cwd\necho "- ok"\n')
     t = tmp_path / "big.jsonl"
     t.write_text("\n".join(json.dumps(e) for e in [
@@ -216,3 +220,144 @@ def test_context_size_default_total_and_optin_line():
     text = subprocess.run([sys.executable, str(REPO_ROOT / "scripts/utils/context_size.py")],
                           capture_output=True, text=True, timeout=60, check=True).stdout
     assert "with session_capture on: +" in text
+
+
+# --- privacy-review follow-ups ------------------------------------------------
+
+import importlib.util  # noqa: E402
+
+
+def load_capture():
+    spec = importlib.util.spec_from_file_location("capture_session", CAPTURE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_argv_is_sandboxed(monkeypatch):
+    cap = load_capture()
+    calls = {}
+
+    class P:
+        pid = 1
+        returncode = 0
+        def communicate(self, *a, **k):
+            return "- ok", ""
+
+    monkeypatch.setattr(cap.subprocess, "run", lambda argv, **k: type(
+        "R", (), {"stdout": " ".join(cap.REQUIRED_FLAGS), "stderr": ""})())
+    def popen(argv, **k):
+        calls["argv"], calls["kw"] = argv, k
+        return P()
+    monkeypatch.setattr(cap.subprocess, "Popen", popen)
+    assert cap.summarize("u" * 200, "a" * 200, "/fake/claude") == "- ok"
+    argv = calls["argv"]
+    assert argv[argv.index("--tools") + 1] == ""
+    assert argv[argv.index("--setting-sources") + 1] == ""
+    assert "--strict-mcp-config" in argv and "--no-session-persistence" in argv
+    assert calls["kw"]["start_new_session"] is True
+
+
+def test_missing_sandbox_flag_captures_nothing(env, tmp_path):
+    claude = tmp_path / "old-claude"
+    claude.write_text('#!/bin/bash\nif [[ "$1" == "--help" ]]; then echo "--model"; exit 0; fi\n'
+                      'touch ' + str(tmp_path / "ran") + '\necho "- x"\n')
+    claude.chmod(0o755)
+    assert run_capture(env, tmp_path, claude).returncode == 0
+    assert not (tmp_path / "ran").exists()
+    assert not (env["sessions"] / f"{TODAY}.md").exists()
+    assert "lacks sandbox flags" in (env["sessions"] / ".capture_errors.log").read_text()
+
+
+def test_parallel_helpers_write_one_entry(env, tmp_path):
+    claude = fake_claude(tmp_path, "sleep 1\n" + BULLETS)
+    t = transcript(tmp_path)
+    e = {**os.environ, **env["env"], "WREN_CLAUDE_BIN": str(claude)}
+    procs = [subprocess.Popen([sys.executable, str(CAPTURE), str(t), "sess1234abcd"], env=e)
+             for _ in range(2)]
+    assert [p.wait(timeout=30) for p in procs] == [0, 0]
+    text = (env["sessions"] / f"{TODAY}.md").read_text()
+    assert text.count("(auto-captured)") == 1
+    assert len((env["sessions"] / ".captured").read_text().split()) == 1
+    assert not list(env["sessions"].glob(".lock-*"))
+
+
+def test_timeout_kills_process_group(tmp_path, monkeypatch):
+    cap = load_capture()
+    monkeypatch.setattr(cap, "CLAUDE_TIMEOUT_S", 1)
+    pidfile = tmp_path / "child.pid"
+    script = tmp_path / "slow"
+    script.write_text(f"#!/bin/bash\nsleep 30 &\necho $! > {pidfile}\nwait\n")
+    script.chmod(0o755)
+    with pytest.raises(subprocess.TimeoutExpired):
+        cap.run_bounded([str(script)], "x", dict(os.environ))
+    pid = int(pidfile.read_text())
+    time.sleep(0.3)
+    with pytest.raises(ProcessLookupError):
+        os.kill(pid, 0)
+
+
+FALSE_POSITIVES = {
+    "block_scalar": "tiers:\n  research_memory: true\n  note: |\n    session_capture: true\n",
+    "nested": "tiers:\n  research_memory:\n    session_capture: true\n",
+}
+
+
+@pytest.mark.parametrize("case", FALSE_POSITIVES)
+def test_toggle_ignores_nested_key(env, run_hook, tmp_path, case):
+    (env["root"] / "research-config.yml").write_text(FALSE_POSITIVES[case])
+    claude = fake_claude(tmp_path, BULLETS)
+    run_hook(STOP, {"transcript_path": str(transcript(tmp_path)), "session_id": "s"},
+             {**env["env"], "WREN_CLAUDE_BIN": str(claude)})
+    _plant_bullets(env)
+    time.sleep(0.5)
+    assert not (env["sessions"] / ".captured").exists()
+    assert "Recent sessions" not in _ctx(run_hook(START, {}, env["env"]))
+
+
+def test_toggle_direct_child_is_honoured(env, run_hook):
+    (env["root"] / "research-config.yml").write_text(
+        "tiers:\n  research_memory: true\n  session_capture: true  # on\nother:\n  x: 1\n")
+    _plant_bullets(env)
+    assert "Recent sessions" in _ctx(run_hook(START, {}, env["env"]))
+
+
+def test_recall_terms_are_fixed_strings(env):
+    env["sessions"].mkdir(parents=True)
+    (env["sessions"] / "2026-11-01.md").write_text(
+        "### 09:12 - session s\n- Called f(x) twice.\n- Budget was $5.\n- Plain note\n")
+    run = lambda *a: subprocess.run(
+        ["bash", str(RECALL), *a], capture_output=True, text=True, timeout=30,
+        env={**os.environ, "WREN_MEMORY_DIR": str(env["mem"])})
+    assert "Called f(x)" in run("f(x)").stdout
+    assert "Budget was $5" in run("$5").stdout
+    dot = run(".")  # literal dot: matches the bullets that contain one, not everything
+    assert "Plain note" not in dot.stdout and "Called f(x)" in dot.stdout
+    empty = run("")
+    assert empty.returncode == 2 and "usage" in empty.stderr
+
+
+def test_stop_hook_path_with_space_dispatches(env, run_hook, tmp_path):
+    set_toggle(env["root"], "true")
+    d = tmp_path / "dir with space"
+    d.mkdir()
+    t = transcript(d)
+    claude = fake_claude(tmp_path, BULLETS)
+    res = run_hook(STOP, {"transcript_path": str(t), "session_id": "sess1234abcd"},
+                   {**env["env"], "WREN_CLAUDE_BIN": str(claude)})
+    assert res.returncode == 0
+    log = env["sessions"] / f"{TODAY}.md"
+    for _ in range(50):
+        if log.exists():
+            break
+        time.sleep(0.1)
+    assert "Model B was chosen" in log.read_text()
+
+
+def test_stop_hook_on_path_is_fast(env, run_hook, tmp_path):
+    set_toggle(env["root"], "true")
+    claude = fake_claude(tmp_path, "sleep 2\n" + BULLETS)
+    start = time.monotonic()
+    res = run_hook(STOP, {"transcript_path": str(transcript(tmp_path)), "session_id": "s"},
+                   {**env["env"], "WREN_CLAUDE_BIN": str(claude)})
+    assert res.returncode == 0 and time.monotonic() - start < 1.0
