@@ -51,7 +51,7 @@ denied, record it and move on; never try another route to the same effect.
 - Window start: `--since`, else 14 days before `<date>`, worked out by calendar arithmetic yourself (`date +%F` is the only shell date command an unattended run may use).
 - Papers: list `papers/*/STATUS.md` (skip `status: archived`; with `--paper`, just that one).
 - Earlier queues: for every `outputs/librarian/approval_queue_*.json`, run
-  `npm run zotero:queue -- status <file>` and take its pending count from that output only.
+  `npm run zotero:queue -- status <file>` (pass the project-relative path, as listed by Glob) and take its pending count from that output only.
 - Digest: the newest `outputs/lit_digests/digest_*.json` dated within the last 7 days, else "none".
 
 ### Phases 1 and 2: cataloguer and scout, in parallel

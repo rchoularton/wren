@@ -30,6 +30,8 @@ export function realResolve(p) {
 }
 
 export function resolveInside(target, base) {
+  // A final component that already exists as a symlink could redirect the write (even a dangling one).
+  try { if (fs.lstatSync(path.resolve(target)).isSymbolicLink()) return null; } catch { /* does not exist: fine */ }
   const t = realResolve(target);
   const b = realResolve(base);
   return t === b || t.startsWith(b + path.sep) ? t : null;

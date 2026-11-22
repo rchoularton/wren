@@ -119,6 +119,7 @@ def test_librarian_runner_prompt_export_and_exact_tool_list(inst):
     assert GMAIL not in tools
     assert "WREN_JOB_END" in text
     assert '--disallowedTools "Edit" "MultiEdit" "NotebookEdit"' in text
+    assert '--tools "Read,Grep,Glob,Write,Agent,WebSearch,WebFetch,Bash"' in text
 
 
 def test_librarian_runner_adds_gmail_draft_only_when_enabled(inst):

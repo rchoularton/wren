@@ -70,6 +70,7 @@ def jobs_registry(cfg: dict) -> dict:
             "command": (
                 '"$CLAUDE_BIN" -p "/librarian-team --headless" --model sonnet '
                 '--permission-mode acceptEdits '
+                '--tools "Read,Grep,Glob,Write,Agent,WebSearch,WebFetch,Bash" '
                 f'--allowedTools {librarian_allowed} '
                 '--disallowedTools "Edit" "MultiEdit" "NotebookEdit"'
             ),

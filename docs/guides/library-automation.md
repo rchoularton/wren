@@ -37,8 +37,12 @@ a model cannot talk its way around enforce the boundary instead.
 
 **1. A hook.** The runner exports `WREN_UNATTENDED=1`. While it is set to anything except empty,
 `0`, `false` or `no`, `.claude/hooks/pre-tool-unattended-guard.sh` (registered for `Bash`,
-`Write|Edit|MultiEdit|NotebookEdit` and `mcp__.*`) denies every call off this allowlist, whatever
-the allow rules say. A hook denial blocks the call (it exits 2 and prints a PreToolUse `deny`):
+`Write|Edit|MultiEdit|NotebookEdit`, `Read|Grep|Glob`, `WebFetch|WebSearch` and `mcp__.*`) denies every call off
+this allowlist, whatever the allow rules say. Documented Claude Code behaviour this relies on: PreToolUse
+hooks in settings files also fire for sub-agent tool calls; a hook that exits 2 stops the call before
+permission rules are evaluated; when hooks disagree, deny beats allow; any other non-zero exit is a
+non-blocking error and the call proceeds, so the wrapper turns every outcome except exit 0 or 2 (a
+missing `python3`, a crash) into a deny. The hook denies with a `deny` JSON and exit 2:
 
 - **Bash**: only `date +%F`, the duplicate scan (`npm run zotero:duplicates -- --out
   outputs/librarian/duplicates_<date>.json --proposals outputs/librarian/duplicates_<date>.proposals.json`,
@@ -50,6 +54,14 @@ the allow rules say. A hook denial blocks the call (it exits 2 and prints a PreT
   symlinks. The queue, its lock, the duplicate report and `rejected_<date>.json` are written only by the
   scripts. `Edit`, `MultiEdit` and `NotebookEdit` are always denied.
 - **MCP tools**: only the six read-only Zotero tools and the Gmail create-draft tool.
+- **Read, Grep, Glob**: only inside the project; never `.env`, `.env.*` (except `.env.example`), `.mcp.json`,
+  `settings.local.json`, `.npmrc` or anything under `.git/`, and no filename filter aimed at them.
+- **WebFetch**: `https` only, no userinfo in the URL.
+- **Secret values**: for every tool the hook sees, a call is denied if its input contains a value (8+
+  characters) of a `*KEY`, `*TOKEN`, `*SECRET` or `*PASSWORD` variable from `<project>/.env` or the hook's
+  environment, in raw, URL-encoded or base64 form. The reason never repeats the value. This closes the
+  obvious route for sending the Zotero API key (which can write to your library) to a web request; it blocks
+  those literal forms and does not claim to stop every possible encoding.
 
 **2. The scripts.** With `WREN_UNATTENDED` set, `approval-queue.mjs` refuses `approve`,
 `approve-all`, `reject`, `skip` and `reconcile --apply` before it reads the queue or creates a client;
@@ -81,3 +93,6 @@ scheduler:
 Then run `./setup.sh --with-schedule` and the activation command it prints. Test it once with
 `bash scripts/scheduled/weekly_librarian.sh` and read `outputs/_logs/weekly_librarian_<date>.log`.
 More in [Scheduled jobs](scheduled-jobs.md). Review the result with `/librarian-team --review`.
+
+Run this job only in a project folder you have trusted. In an untrusted folder `claude -p` ignores project
+allow rules but still runs settings hooks, so the behaviour would differ from what is described here.

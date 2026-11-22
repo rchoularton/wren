@@ -150,6 +150,8 @@ export function dedupeAction(action, seen) {
   return take(`coll|${d.item_key}|${d.collection_key}`) ? action : null;
 }
 
+const FILE_AGENTS = { cataloguer: 'librarian-cataloguer', scout: 'librarian-scout', duplicates: 'duplicate-scan' };
+
 function parseArgs(argv) {
   const o = { dir: 'outputs/librarian', force: false };
   for (let i = 0; i < argv.length; i++) {
@@ -186,13 +188,18 @@ export function main(argv) {
   const dupes = [];
   const seen = new Set();
   const fileErrors = [];
+  const warnings = [];
   const agents = [];
 
   for (const f of files) {
     let data;
     try { data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch (err) { fileErrors.push(`${f}: invalid JSON (${err.message})`); continue; }
     if (!data || !Array.isArray(data.actions)) { fileErrors.push(`${f}: no "actions" array`); continue; }
-    const agent = typeof data.agent === 'string' && data.agent ? data.agent : f.slice(0, -suffix.length);
+    const prefix = f.slice(0, -suffix.length);
+    const agent = FILE_AGENTS[prefix] || 'unknown';
+    if (typeof data.agent === 'string' && data.agent && data.agent !== agent) {
+      warnings.push(`${f}: file says agent "${data.agent}" but the filename means "${agent}"; using "${agent}"`);
+    }
     agents.push(agent);
     data.actions.forEach((raw, idx) => {
       const { action, reason } = validateAction(raw);
@@ -244,6 +251,7 @@ export function main(argv) {
   for (const r of rejected) console.log(`  rejected  ${r.source_file} #${r.index}: ${r.reason}`);
   for (const d of dupes) console.log(`  duplicate ${d.source_file} #${d.index}: already proposed`);
   for (const e of fileErrors) console.log(`  FILE ERROR ${e}`);
+  for (const w of warnings) console.log(`  WARNING ${w}`);
   if (rejected.length || dupes.length || fileErrors.length) console.log(`Details: ${rejectedPath}`);
   return 0;
 }

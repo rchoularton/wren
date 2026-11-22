@@ -250,3 +250,23 @@ def test_attended_dir_and_out_must_still_be_inside_the_project(tmp_path):
     assert p.returncode == 1 and "project root" in p.stderr and not outside.exists()
     assert run(BUILD, "--date", DATE, "--dir", tmp_path, env=env).returncode == 1
     assert run(BUILD, "--date", DATE, "--dir", d, env=env).returncode == 0
+
+
+# --- source_agent comes from the filename; a disagreeing agent field is a warning
+def test_source_agent_from_filename_with_mismatch_warning(tmp_path):
+    write(tmp_path, f"scout_{DATE}.proposals.json", {"agent": "librarian-cataloguer", "generated": DATE, "actions": [TAG]})
+    write(tmp_path, f"mystery_{DATE}.proposals.json", {"agent": "librarian-scout", "generated": DATE, "actions": [FIX]})
+    p = build(tmp_path)
+    assert p.returncode == 0, p.stderr
+    acts = queue(tmp_path)["actions"]
+    assert {a["type"]: a["source_agent"] for a in acts} == {"add_tag": "librarian-scout", "fix_metadata": "unknown"}
+    assert "WARNING" in p.stdout and "librarian-cataloguer" in p.stdout
+
+
+def test_dangling_symlink_output_is_refused_unattended(tmp_path):
+    lib = lib_dir(tmp_path)
+    write(lib, f"cataloguer_{DATE}.proposals.json", cat_file([TAG]))
+    (lib / f"approval_queue_{DATE}.json").symlink_to(tmp_path / "nowhere.json")
+    p = run(BUILD, "--date", DATE, "--dir", lib, "--out", lib / f"approval_queue_{DATE}.json",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path), "WREN_UNATTENDED": "1"})
+    assert p.returncode == 1 and not (tmp_path / "nowhere.json").exists()
