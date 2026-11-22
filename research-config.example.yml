@@ -80,6 +80,10 @@ scheduler:
       enabled: false
       day: "Mon"
       at: "08:47"
+    weekly_librarian:               # /librarian-team --headless: proposals only, never writes to Zotero
+      enabled: false
+      day: "Wed"
+      at: "09:03"
 
 notifications:
   enabled: true                       # macOS terminal-notifier; auto-off elsewhere

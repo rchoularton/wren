@@ -45,7 +45,7 @@ Then open the folder in Claude Code and run `/paper`. See [Getting Started](gett
 
 ## Skills
 
-All 18 shipped skills are documented on the [Skills](skills.md) page, grouped by what they do: orient & manage, write & submit, discover, and rigor & memory.
+All 21 shipped skills are documented on the [Skills](skills.md) page, grouped by what they do: orient & manage, write & submit, discover, and rigor & memory.
 
 ## Requirements
 

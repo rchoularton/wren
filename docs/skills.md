@@ -1,6 +1,6 @@
 # Skills
 
-Type these as slash commands in Claude Code once your project is open. All 18 ship in the box, grouped by what they do.
+Type these as slash commands in Claude Code once your project is open. All 21 ship in the box, grouped by what they do.
 
 ## Orient & manage
 
@@ -28,6 +28,7 @@ Type these as slash commands in Claude Code once your project is open. All 18 sh
 | `/literature-scan` `[topic-or-paper-id]` | Search recent publications on a topic — flag scooping risks, find citation gaps. |
 | `/zotero-audit` `[--collection <name>] [--since <date>] [--fix]` | Scan your Zotero library for items missing metadata, tags, PDFs, or collections; auto-complete from Crossref. Needs the `zotero` provider. |
 | `/pdf-fill` `<paper-id> [--keys K1,K2] [--only unpaywall\|openalex\|sniff]` | Attach missing PDFs to a paper's Zotero collection from Unpaywall, OpenAlex and publisher meta tags; dry run first, then `--apply`; leftovers go to a manual list. Needs the `zotero` provider. |
+| `/librarian-team` `[--review] [--approve-all] [--headless] [--paper <id>] [--since <date>]` | Weekly Zotero audit and discovery: a cataloguer and a scout propose fixes and new papers, a duplicate scan adds merges, and everything goes to an approval queue you review. `--headless` runs unattended and proposes only. Needs the `zotero` provider. See [Library automation](guides/library-automation.md). |
 | `/lit-digest` `[--since N] [--paper <id>]` | Fast cross-paper sweep for new publications → one digest + an optional Gmail draft. Runs headless on a schedule. See [Scheduled jobs](guides/scheduled-jobs.md). |
 
 ## Rigor & memory

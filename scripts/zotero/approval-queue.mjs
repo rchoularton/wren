@@ -8,7 +8,7 @@
  * Usage:
  *   node scripts/zotero/approval-queue.mjs status <queue-file>
  *   node scripts/zotero/approval-queue.mjs approve <id> <queue-file>
- *   node scripts/zotero/approval-queue.mjs approve-all <queue-file>
+ *   node scripts/zotero/approval-queue.mjs approve-all [--pending] <queue-file>
  *   node scripts/zotero/approval-queue.mjs reject <id> <queue-file> [reason]
  *   node scripts/zotero/approval-queue.mjs skip <id> <queue-file> [reason]
  *   node scripts/zotero/approval-queue.mjs reconcile <queue-file> [--apply] [--include-manual] [--verbose]
@@ -17,6 +17,7 @@
  *   status       counts by status and by type
  *   approve      execute one action (status pending, approved or failed)
  *   approve-all  execute every action whose status is "approved"; pending ones are untouched
+ *               (--pending: also run actions still "pending")
  *   reject/skip  record the decision in the queue file with decided_at (and an optional reason)
  *   reconcile    check pending/approved actions against the live library; dry run unless --apply
  *
@@ -661,11 +662,11 @@ async function cmdApprove(id, file, ctx, { retry = false } = {}) {
   return failed ? EXIT_API : 0;
 }
 
-async function cmdApproveAll(file, ctx) {
+async function cmdApproveAll(file, ctx, { pending = false } = {}) {
   const queue = loadQueue(file);
-  const todo = queue.actions.filter((a) => a.status === 'approved');
-  if (todo.length === 0) { console.log('No approved actions to execute.'); return 0; }
-  console.log(`Executing ${todo.length} approved actions...\n`);
+  const todo = queue.actions.filter((a) => a.status === 'approved' || (pending && a.status === 'pending'));
+  if (todo.length === 0) { console.log(pending ? 'No approved or pending actions to execute.' : 'No approved actions to execute.'); return 0; }
+  console.log(`Executing ${todo.length} ${pending ? 'approved or pending' : 'approved'} actions...\n`);
   ctx.retry = false;
   ctx.persist = () => saveQueue(file, queue);
   let ok = 0;
@@ -776,8 +777,16 @@ export async function createContext() {
   return { client, env: client.env, fetch: await loadFetch(client.env), sleep };
 }
 
+/** True when this run is unattended (WREN_UNATTENDED=1): it may read the queue but never change the library or record a decision. */
+export const isUnattended = (env = process.env) => env.WREN_UNATTENDED === '1';
+
 export async function main(argv) {
   const [command, ...rest] = argv;
+  // Refuse before reading the queue or creating a client.
+  const mutating = ['approve', 'approve-all', 'reject', 'skip'].includes(command) || (command === 'reconcile' && rest.includes('--apply'));
+  if (mutating && isUnattended()) {
+    throw new QueueFileError(`refused: unattended run (WREN_UNATTENDED=1). \`${command}\` changes the library or records a decision and needs a person.`);
+  }
   const need = (n, usage) => { if (rest.length < n) throw new QueueFileError(`Usage: approval-queue.mjs ${usage}`); };
   const makeCtx = createContext;
   switch (command) {
@@ -790,7 +799,12 @@ export async function main(argv) {
       parseId(args[0]);
       return withLock(args[1], async () => cmdApprove(args[0], args[1], await makeCtx(), { retry: rest.includes('--retry') }));
     }
-    case 'approve-all': need(1, 'approve-all <queue-file>'); return withLock(rest[0], async () => cmdApproveAll(rest[0], await makeCtx()));
+    case 'approve-all': {
+      const pending = rest.includes('--pending');
+      const file = rest.find((a) => !a.startsWith('--'));
+      need(1, 'approve-all [--pending] <queue-file>');
+      return withLock(file, async () => cmdApproveAll(file, await makeCtx(), { pending }));
+    }
     case 'reconcile': {
       const file = rest.find((a) => !a.startsWith('--'));
       need(1, 'reconcile <queue-file> [--apply] [--include-manual] [--verbose]');

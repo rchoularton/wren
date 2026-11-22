@@ -18,6 +18,12 @@
  *   node scripts/zotero/detect-duplicates.mjs
  *   node scripts/zotero/detect-duplicates.mjs --out outputs/librarian/duplicates.json
  *   node scripts/zotero/detect-duplicates.mjs --limit 500 [--no-fuzzy]
+ *   node scripts/zotero/detect-duplicates.mjs --out report.json --proposals dups.proposals.json
+ *
+ * --proposals FILE also writes one merge_duplicate proposal per group in the librarian proposals
+ * shape ({agent, generated, actions}) for scripts/zotero/build-queue.mjs. The keeper is the item
+ * with the most non-empty metadata fields; ties go to the earliest dateAdded, then the lowest key.
+ * No file is written when there are no groups. Still read-only on the library.
  *
  * Exit codes: 0 success (duplicates found or not), 1 bad arguments or Zotero API error.
  */
@@ -126,18 +132,65 @@ export function detectDuplicates(items, { fuzzy = true, progress = null } = {}) 
   return clusters;
 }
 
+const BOOKKEEPING = new Set(['key', 'version', 'dateAdded', 'dateModified', 'relations']);
+
+/** Number of non-empty metadata fields on a Zotero item's data (bookkeeping fields excluded). */
+export function metadataScore(item) {
+  const d = item.data || {};
+  let n = 0;
+  for (const [k, v] of Object.entries(d)) {
+    if (BOOKKEEPING.has(k) || v === null || v === undefined) continue;
+    if (typeof v === 'string' && v.trim() === '') continue;
+    if (Array.isArray(v) && v.length === 0) continue;
+    if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) continue;
+    n++;
+  }
+  return n;
+}
+
+/** Deterministic keeper: most non-empty fields, then earliest dateAdded, then lowest key. */
+export function chooseKeeper(members) {
+  const rank = (m) => ({ score: metadataScore(m), added: m.data?.dateAdded || '9999', key: m.key || m.data?.key || '' });
+  return [...members].sort((x, y) => {
+    const a = rank(x); const b = rank(y);
+    if (a.score !== b.score) return b.score - a.score;
+    if (a.added !== b.added) return a.added < b.added ? -1 : 1;
+    return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+  })[0];
+}
+
+/** One merge_duplicate proposal per cluster. `items` are the raw Zotero items the clusters came from. */
+export function duplicateProposals(clusters, items, generated) {
+  const byKey = new Map(items.map((it) => [it.key || it.data?.key, it]));
+  const actions = clusters.map((c) => {
+    const members = c.items.map((s) => byKey.get(s.key)).filter(Boolean);
+    const keeper = chooseKeeper(members);
+    const keepKey = keeper.key || keeper.data?.key;
+    const mergeKeys = c.items.map((s) => s.key).filter((k) => k !== keepKey).sort();
+    const basis = c.method === 'doi' ? `equal DOI ${c.doi}` : `title match (similarity ${c.similarity.toFixed(2)})`;
+    return {
+      type: 'merge_duplicate',
+      title: `Merge ${members.length} duplicates (${basis}): ${keeper.data?.title || 'Untitled'}`.slice(0, 200),
+      details: { keep: keepKey, merge_keys: mergeKeys, basis },
+    };
+  });
+  return { agent: 'duplicate-scan', generated, actions };
+}
+
 function parseArgs(argv) {
-  const a = { out: null, limit: Infinity, fuzzy: true };
+  const a = { out: null, proposals: null, limit: Infinity, fuzzy: true };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--out') a.out = argv[++i];
+    else if (argv[i] === '--proposals') a.proposals = argv[++i];
     else if (argv[i] === '--no-fuzzy') a.fuzzy = false;
     else if (argv[i] === '--limit') {
       const n = Number(argv[++i]);
       if (!Number.isInteger(n) || n < 1) throw new Error('--limit needs a positive integer');
       a.limit = n;
-    } else throw new Error(`Unknown argument ${argv[i]}. Usage: detect-duplicates.mjs [--out FILE] [--limit N] [--no-fuzzy]`);
+    } else throw new Error(`Unknown argument ${argv[i]}. Usage: detect-duplicates.mjs [--out FILE] [--proposals FILE] [--limit N] [--no-fuzzy]`);
   }
   if (a.out === undefined || a.out === '') throw new Error('--out needs a file path');
+  if (a.proposals === undefined || a.proposals === '') throw new Error('--proposals needs a file path');
   return a;
 }
 
@@ -163,6 +216,14 @@ export async function main(argv) {
     console.error(`Report written to ${args.out}`);
   } else {
     process.stdout.write(json + '\n');
+  }
+  if (args.proposals && clusters.length > 0) {
+    const doc = duplicateProposals(clusters, items, report.date);
+    fs.mkdirSync(path.dirname(path.resolve(args.proposals)), { recursive: true });
+    fs.writeFileSync(args.proposals, JSON.stringify(doc, null, 2) + '\n', 'utf8');
+    console.error(`Proposals written to ${args.proposals} (${doc.actions.length} merge_duplicate actions)`);
+  } else if (args.proposals) {
+    console.error('No duplicate groups: no proposals file written');
   }
   console.error(`\nDuplicate scan complete: ${clusters.length} clusters (${report.total_duplicate_items} items involved)`);
 }

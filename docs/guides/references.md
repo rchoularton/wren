@@ -19,3 +19,5 @@ With the `zotero` provider, `/pdf-fill` attaches missing PDFs to a paper's colle
 `npm run zotero:queue -- status <queue.json>` reviews and applies a queue of proposed Zotero changes (approve, reject, skip, reconcile); every write is re-read and only then marked applied. Queue schema in `scripts/zotero/README.md`.
 
 `npm run zotero:duplicates` lists likely duplicate items (exact DOI, then fuzzy title) and never writes to Zotero.
+
+`/librarian-team` ties these together into a weekly audit, discovery and duplicate run whose proposals you approve in a queue; see [Library automation](library-automation.md).
