@@ -20,11 +20,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { createClientFromEnv, projectRoot } from './_lib/zotero-client.mjs';
+import { isUnattended } from './_lib/unattended.mjs';
 
 const argv = process.argv.slice(2);
 const flagVal = (f) => (argv.includes(f) ? argv[argv.indexOf(f) + 1] : null);
 const planPath = argv.find((a, i) => !a.startsWith('--') && !['--only', '--log'].includes(argv[i - 1]));
 const apply = argv.includes('--apply');
+if (apply && isUnattended()) {
+  console.error('refused: unattended run (WREN_UNATTENDED is set); --apply writes to Zotero');
+  process.exit(1);
+}
 if (argv.includes('--only') && (!flagVal('--only') || flagVal('--only').startsWith('--'))) {
   console.error('--only needs a comma-separated list of attachment keys');
   process.exit(1);

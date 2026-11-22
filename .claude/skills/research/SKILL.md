@@ -15,7 +15,7 @@ Run `npm run status` and print its output **verbatim**. Never summarise it, reor
 ## 2. Offer the groups
 
 - **Papers** — `/paper` (resume, switch, start a new paper)
-- **Library** — `/zotero-audit`, `/lit-digest`, `/literature-scan`
+- **Library** — `/zotero-audit`, `/librarian-team`, `/lit-digest`, `/literature-scan`
 - **System** — `npm run status` for jobs (add `-- --full` for every one), `/setup`, `/retro`
 - **Memory** — `/research-memory`. Check `tiers.research_memory` in `research-config.yml` first and offer this group only when it is enabled.
 

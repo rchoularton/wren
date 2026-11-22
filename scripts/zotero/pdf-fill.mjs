@@ -18,6 +18,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { isUnattended } from './_lib/unattended.mjs';
 import { createClientFromEnv, hasPdfAttachment, hasPdfStub, loadFetch, projectRoot } from './_lib/zotero-client.mjs';
 import * as unpaywall from './sources/unpaywall.mjs';
 import * as openalex from './sources/openalex.mjs';
@@ -47,6 +48,7 @@ export function parseArgs(argv) {
     else if (!a.paper) a.paper = t;
     else usage(`Unexpected argument ${t}`);
   }
+  if (a.apply && isUnattended()) usage('refused: unattended run (WREN_UNATTENDED is set); --apply writes to Zotero');
   if (a.apply && a.dryRun) usage('--apply and --dry-run are mutually exclusive');
   if (a.only && !ONLY[a.only]) usage(`--only must be one of: ${Object.keys(ONLY).join(', ')}`);
   if (!a.paper && !a.collection && !a.keys) usage('Give a paper id, --collection KEY, or --keys K1,K2');

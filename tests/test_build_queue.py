@@ -16,12 +16,14 @@ QUEUE = REPO_ROOT / "scripts" / "zotero" / "approval-queue.mjs"
 DATE = "2026-01-15"
 
 
-def run(script, *args):
-    return subprocess.run([NODE, str(script), *map(str, args)], capture_output=True, text=True, timeout=60)
+def run(script, *args, env=None):
+    import os
+    base = {k: v for k, v in os.environ.items() if not k.startswith(("WREN_", "CLAUDE_PROJECT_DIR"))}
+    return subprocess.run([NODE, str(script), *map(str, args)], capture_output=True, text=True, timeout=60, env={**base, **(env or {})})
 
 
 def build(d, *extra, date=DATE):
-    return run(BUILD, "--date", date, "--dir", d, *extra)
+    return run(BUILD, "--date", date, "--dir", d, *extra, env={"CLAUDE_PROJECT_DIR": str(d)})
 
 
 def write(d, name, obj):
@@ -207,3 +209,64 @@ def test_empty_actions_exit_zero_no_queue(d):
     p = build(d)
     assert p.returncode == 0 and "no actions proposed" in p.stdout
     assert not (d / f"approval_queue_{DATE}.json").exists()
+
+
+# --- unattended guard and output-path confinement
+def lib_dir(root):
+    d = root / "outputs" / "librarian"
+    d.mkdir(parents=True)
+    return d
+
+
+def test_unattended_force_is_refused(tmp_path):
+    d = lib_dir(tmp_path)
+    write(d, f"cataloguer_{DATE}.proposals.json", cat_file([TAG]))
+    env = {"CLAUDE_PROJECT_DIR": str(tmp_path), "WREN_UNATTENDED": "1"}
+    assert run(BUILD, "--date", DATE, "--dir", d, env=env).returncode == 0
+    p = run(BUILD, "--date", DATE, "--dir", d, "--force", env=env)
+    assert p.returncode == 1 and "refused: unattended run" in p.stderr
+
+
+def test_unattended_dir_and_out_must_be_inside_outputs_librarian(tmp_path):
+    d = lib_dir(tmp_path)
+    write(d, f"cataloguer_{DATE}.proposals.json", cat_file([TAG]))
+    other = tmp_path / "elsewhere"
+    other.mkdir()
+    write(other, f"cataloguer_{DATE}.proposals.json", cat_file([TAG]))
+    env = {"CLAUDE_PROJECT_DIR": str(tmp_path), "WREN_UNATTENDED": "1"}
+    assert run(BUILD, "--date", DATE, "--dir", other, env=env).returncode == 1
+    p = run(BUILD, "--date", DATE, "--dir", d, "--out", tmp_path / "q.json", env=env)
+    assert p.returncode == 1 and "outputs/librarian" in p.stderr and not (tmp_path / "q.json").exists()
+    assert run(BUILD, "--date", DATE, "--dir", d, "--out", d / "approval_queue_x.json", env=env).returncode == 0
+
+
+def test_attended_dir_and_out_must_still_be_inside_the_project(tmp_path):
+    root = tmp_path / "proj"
+    d = lib_dir(root)
+    write(d, f"cataloguer_{DATE}.proposals.json", cat_file([TAG]))
+    outside = tmp_path / "outside.json"
+    env = {"CLAUDE_PROJECT_DIR": str(root)}
+    p = run(BUILD, "--date", DATE, "--dir", d, "--out", outside, env=env)
+    assert p.returncode == 1 and "project root" in p.stderr and not outside.exists()
+    assert run(BUILD, "--date", DATE, "--dir", tmp_path, env=env).returncode == 1
+    assert run(BUILD, "--date", DATE, "--dir", d, env=env).returncode == 0
+
+
+# --- source_agent comes from the filename; a disagreeing agent field is a warning
+def test_source_agent_from_filename_with_mismatch_warning(tmp_path):
+    write(tmp_path, f"scout_{DATE}.proposals.json", {"agent": "librarian-cataloguer", "generated": DATE, "actions": [TAG]})
+    write(tmp_path, f"mystery_{DATE}.proposals.json", {"agent": "librarian-scout", "generated": DATE, "actions": [FIX]})
+    p = build(tmp_path)
+    assert p.returncode == 0, p.stderr
+    acts = queue(tmp_path)["actions"]
+    assert {a["type"]: a["source_agent"] for a in acts} == {"add_tag": "librarian-scout", "fix_metadata": "unknown"}
+    assert "WARNING" in p.stdout and "librarian-cataloguer" in p.stdout
+
+
+def test_dangling_symlink_output_is_refused_unattended(tmp_path):
+    lib = lib_dir(tmp_path)
+    write(lib, f"cataloguer_{DATE}.proposals.json", cat_file([TAG]))
+    (lib / f"approval_queue_{DATE}.json").symlink_to(tmp_path / "nowhere.json")
+    p = run(BUILD, "--date", DATE, "--dir", lib, "--out", lib / f"approval_queue_{DATE}.json",
+            env={"CLAUDE_PROJECT_DIR": str(tmp_path), "WREN_UNATTENDED": "1"})
+    assert p.returncode == 1 and not (tmp_path / "nowhere.json").exists()

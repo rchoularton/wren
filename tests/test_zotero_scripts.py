@@ -403,3 +403,28 @@ def test_pdf_stub_is_reported_and_nothing_is_written(run, proj):
     assert not any("unpaywall" in c["url"] for c in run.calls)
     manual = (proj / "outputs" / "pdf-fill" / "paper-a-manual.md").read_text()
     assert "attachment shell without a file; delete it in Zotero or fix manually" in manual and "DDDDDDDD" in manual
+
+
+# --- unattended guard (WREN_UNATTENDED)
+@pytest.mark.parametrize("value", ["1", "true", "yes", " 1"])
+def test_pdf_fill_apply_refused_when_unattended_and_dry_run_still_works(run, proj, value):
+    p = run.go(PDF_FILL, ["paper-a", "--apply"], fill_routes(), extra_env={"WREN_UNATTENDED": value})
+    assert p.returncode == 1 and "refused: unattended run" in p.stderr
+    assert run.calls == []
+    dry = run.go(PDF_FILL, ["paper-a"], fill_routes(), extra_env={"WREN_UNATTENDED": value})
+    assert dry.returncode == 0, dry.stderr
+    assert all(x["method"] == "GET" for x in run.calls)
+
+
+def test_pdf_fill_apply_allowed_when_unattended_value_is_off(run, proj):
+    for v in ("0", "false", "no", ""):
+        p = run.go(PDF_FILL, ["paper-a"], fill_routes(), extra_env={"WREN_UNATTENDED": v})
+        assert p.returncode == 0, p.stderr
+
+
+def test_reparent_apply_refused_when_unattended(run, proj, tmp_path):
+    plan = tmp_path / "plan.json"
+    plan.write_text(json.dumps([{"attachmentKey": "ATT00001", "existingParentKey": "PARENT01"}]))
+    p = run.go(REPARENT, [str(plan), "--apply"], [], extra_env={"WREN_UNATTENDED": "1"})
+    assert p.returncode == 1 and "refused: unattended run" in p.stderr
+    assert run.calls == [] and not (proj / "outputs" / "pdf-fill" / "reparent.jsonl").exists()

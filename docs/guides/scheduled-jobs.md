@@ -60,6 +60,15 @@ name. The default is Claude's connector tool `mcp__claude_ai_Gmail__create_draft
 Gmail MCP exposes its draft tool under a different name, edit the generated runner's
 `--allowedTools` to match.
 
+## The weekly librarian job
+
+`weekly_librarian` runs `/librarian-team --headless` (Wednesdays 09:03 by default). It is
+proposals-only. Its runner exports `WREN_UNATTENDED=1`, which turns on
+`.claude/hooks/pre-tool-unattended-guard.sh`: that hook, not the `--allowedTools` list, restricts the
+run to a handful of exact commands, the librarian report and proposal files, and read-only Zotero
+tools. You review the queue yourself with `/librarian-team --review`. See
+[Library automation](library-automation.md) for exactly what is allowed and what stays outside the boundary.
+
 ## Cross-platform notes
 
 - **macOS** uses launchd; **Linux** uses cron; **`none`** generates the runners but registers

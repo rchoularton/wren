@@ -77,6 +77,7 @@ nav:
       - Databases: guides/databases.md
       - References & integrations: guides/references.md
       - Reading documents cheaply: guides/documents.md
+      - Library automation: guides/library-automation.md
       - Scheduled jobs: guides/scheduled-jobs.md
   - Configuration: configuration.md
   - Contributing: contributing.md

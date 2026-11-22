@@ -41,11 +41,11 @@ flowchart LR
 
 ## Your research toolkit
 
-Eighteen skills — each a slash-command you type in Claude Code — grouped by the job they do. Full one-line descriptions are in [Skills](#skills) below.
+Twenty-one skills — each a slash-command you type in Claude Code — grouped by the job they do. Full one-line descriptions are in [Skills](#skills) below.
 
 ```mermaid
 mindmap
-  root(("Wren — 18 skills"))
+  root(("Wren — 21 skills"))
     Orient
       /research
       /paper
@@ -54,6 +54,8 @@ mindmap
       /literature-scan
       /lit-digest
       /zotero-audit
+      /pdf-fill
+      /librarian-team
     Write and submit
       /draft
       /figure
@@ -67,6 +69,7 @@ mindmap
       /methods-audit
       /rigor-check
       /research-memory
+      /recall
       /retro
 ```
 
@@ -108,14 +111,14 @@ Then open the folder in Claude Code and run `/setup wren` — a guided tour that
 
 ## Skills
 
-Type these in Claude Code once the project is open. All 18 ship in the box:
+Type these in Claude Code once the project is open. All 21 ship in the box:
 
 | | |
 |---|---|
 | **Orient & manage** | `/research` (workspace entry point) · `/paper` (portfolio: status, resume, start a paper) · `/setup wren` (guided onboarding) · `/setup` (reconfigure) |
 | **Write & submit** | `/draft` (analysis → prose) · `/cover-letter` · `/revision-response` · `/ref-check` (validate citations) · `/peer-review` · `/figure` (figure design → critique loop) |
-| **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/lit-digest` (weekly cross-paper sweep → digest) · `/zotero-audit` (library hygiene) |
-| **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/qc-team` (3-agent adversarial QC) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/retro` (capture a learning) |
+| **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/lit-digest` (weekly cross-paper sweep → digest) · `/zotero-audit` (library hygiene) · `/pdf-fill` (attach open-access PDFs) · `/librarian-team` (weekly library audit + discovery, approval queue) |
+| **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/qc-team` (3-agent adversarial QC) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/recall` (search session logs) · `/retro` (capture a learning) |
 
 Some skills — like `/qc-team` and `/figure` — spin up background sub-agents to run adversarial review and figure critique loops. What's next is on the [roadmap](https://rchoularton.github.io/wren/roadmap/).
 
