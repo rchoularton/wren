@@ -25,7 +25,7 @@ payload=$(cat)
 UNATTENDED=""
 if [[ -n "${WREN_UNATTENDED:-}" ]]; then
   UNATTENDED=1
-  verdict=$(printf '%s' "$payload" | python3 "$(dirname "$0")/unattended_guard.py" 2>/dev/null)
+  verdict=$(printf '%s' "$payload" | bash "$(dirname "$0")/pre-tool-unattended-guard.sh")
   rc=$?
   if [[ $rc -ne 0 || -n "$verdict" ]]; then
     [[ -n "$verdict" ]] && echo "$verdict"
@@ -46,7 +46,7 @@ except Exception:
 ts=$(date "+%Y-%m-%d %H:%M:%S")
 
 if [[ -z "$target" ]]; then
-  [[ -n "$UNATTENDED" ]] || [[ -n "$UNATTENDED" ]] || echo '{"decision":"approve"}'
+  [[ -n "$UNATTENDED" ]] || echo '{"decision":"approve"}'
   exit 0
 fi
 

