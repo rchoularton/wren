@@ -8,6 +8,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 ### Added
 - Zotero client and `/pdf-fill` (#26): a dependency-free client (`scripts/zotero/_lib/zotero-client.mjs`: user/group URLs, 412/403/429 handling, the documented file-upload flow, a `.env` parser) and `npm run pdf:fill -- <paper>`, which attaches missing PDFs from Unpaywall, OpenAlex and publisher meta tags, verifies each by re-reading, and lists leftovers (optionally behind `INSTITUTION_PROXY_PREFIX`) in `outputs/pdf-fill/`. Dry run by default.
 - `npm run zotero:reparent -- <plan.json>`: plan-driven repair of parentless Zotero attachments (dry run by default, re-read verification, JSONL log, idempotent). The approval-queue fixes named in the issue are deferred to #7.
+- Librarian scripts, part 1 of #7: `npm run zotero:queue` (`scripts/zotero/approval-queue.mjs`) reviews and applies a queue of proposed Zotero changes (status, approve, approve-all, reject, skip, reconcile). Reject/skip persist with `decided_at`, `fix_metadata` refuses placeholder values and drops fields invalid for the item type, approved `add_item` records with a DOI are typed from Crossref, every write carries the item version and is re-read before the action is marked `applied`, and the queue file is rewritten atomically. Schema in `scripts/zotero/README.md`; queues live in `outputs/librarian/`.
+- `npm run zotero:duplicates` (`scripts/zotero/detect-duplicates.mjs`): read-only duplicate report grouped by exact DOI, then fuzzy title. `scripts/zotero/_lib/crossref-item.mjs` maps a Crossref work to a correctly typed Zotero item.
 
 ## [0.11.0] - 2026-11-07
 

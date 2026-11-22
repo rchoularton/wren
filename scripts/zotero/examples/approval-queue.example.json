@@ -1,0 +1,71 @@
+{
+  "date": "2026-01-15",
+  "source": "librarian-team weekly run",
+  "actions": [
+    {
+      "id": 1,
+      "type": "add_item",
+      "status": "pending",
+      "title": "Add: An example journal article",
+      "paper": "paper-a",
+      "details": {
+        "doi": "10.1234/example.2026.001",
+        "title": "An example journal article",
+        "authors": [
+          "Doe, Jane",
+          "John Roe"
+        ],
+        "venue": "Journal of Examples",
+        "date": "2026",
+        "relevance": "high"
+      }
+    },
+    {
+      "id": 2,
+      "type": "fix_metadata",
+      "status": "pending",
+      "title": "Fill missing abstract",
+      "details": {
+        "item_key": "ABCD2345",
+        "proposed_changes": {
+          "abstract": "A real abstract taken from the publisher page.",
+          "pages": "101-118"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "add_tag",
+      "status": "approved",
+      "title": "Tag with a topic",
+      "details": {
+        "item_key": "ABCD2345",
+        "tags": [
+          "topic-example"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "type": "add_to_collection",
+      "status": "pending",
+      "title": "File in a collection",
+      "details": {
+        "item_key": "ABCD2345",
+        "collection_key": "COLL0001"
+      }
+    },
+    {
+      "id": 5,
+      "type": "merge_duplicate",
+      "status": "pending",
+      "title": "Merge two records of one article",
+      "details": {
+        "keep": "ABCD2345",
+        "merge_keys": [
+          "EFGH6789"
+        ]
+      }
+    }
+  ]
+}
