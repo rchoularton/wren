@@ -38,20 +38,23 @@ def jobs_registry(cfg: dict) -> dict:
     digest_tools = "WebSearch WebFetch Read Write Edit Bash"
     if gmail:
         digest_tools += " mcp__claude_ai_Gmail__create_draft"
-    # Unattended librarian run: explicit tools only. Reads, the report/proposal files, the
-    # sub-agents, three scripts (duplicates, build-queue, queue status), and optionally a Gmail
-    # DRAFT. No bare Bash, no Edit, and no approve/reject/skip/reconcile (WREN_UNATTENDED=1 in the
-    # runner refuses those too).
+    # Unattended librarian run. This list is a convenience, NOT the boundary: project allow rules are
+    # additive to --allowedTools. The boundary is .claude/hooks/pre-tool-unattended-guard.sh (active
+    # because the runner exports WREN_UNATTENDED) plus the script-level guards. The Bash entries match
+    # exactly the forms that hook allows.
     librarian_tools = [
         "Read", "Grep", "Glob", "Write", "Agent", "WebSearch", "WebFetch",
         "mcp__zotero__zotero_search_items", "mcp__zotero__zotero_get_item_metadata",
         "mcp__zotero__zotero_get_recent", "mcp__zotero__zotero_get_tags",
         "mcp__zotero__zotero_get_collections", "mcp__zotero__zotero_search_collections",
-        "Bash(date:*)", "Bash(npm run zotero:duplicates:*)", "Bash(npm run zotero:build-queue:*)",
-        "Bash(npm run zotero:queue -- status:*)",
+        "Bash(date +%F)",
+        "Bash(npm run zotero:duplicates -- --out outputs/librarian/duplicates_:*)",
+        "Bash(npm run zotero:build-queue -- --date:*)",
+        "Bash(npm run zotero:queue -- status outputs/librarian/approval_queue_:*)",
     ]
     if gmail:
         librarian_tools.append("mcp__claude_ai_Gmail__create_draft")
+    librarian_allowed = " ".join(f'"{t}"' for t in librarian_tools)  # one quoted argument per tool: patterns contain spaces
     return {
         "weekly_digest": {
             "desc": "Weekly literature digest (/lit-digest)",
@@ -67,7 +70,8 @@ def jobs_registry(cfg: dict) -> dict:
             "command": (
                 '"$CLAUDE_BIN" -p "/librarian-team --headless" --model sonnet '
                 '--permission-mode acceptEdits '
-                f'--allowedTools "{" ".join(librarian_tools)}"'
+                f'--allowedTools {librarian_allowed} '
+                '--disallowedTools "Edit" "MultiEdit" "NotebookEdit"'
             ),
             "cadence": "weekly",
             "env": {"WREN_UNATTENDED": "1"},  # the queue script refuses every decision/write command

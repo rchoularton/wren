@@ -63,11 +63,11 @@ Gmail MCP exposes its draft tool under a different name, edit the generated runn
 ## The weekly librarian job
 
 `weekly_librarian` runs `/librarian-team --headless` (Wednesdays 09:03 by default). It is
-proposals-only: it can read your library and write report and proposal files, and nothing else.
-Its `--allowedTools` list is explicit (no bare `Bash`, no `Edit`, none of the queue's approve,
-reject, skip or reconcile commands), and its runner exports `WREN_UNATTENDED=1`, which makes the
-queue script refuse those commands anyway. You review the queue yourself with
-`/librarian-team --review`. See [Library automation](library-automation.md).
+proposals-only. Its runner exports `WREN_UNATTENDED=1`, which turns on
+`.claude/hooks/pre-tool-unattended-guard.sh`: that hook, not the `--allowedTools` list, restricts the
+run to a handful of exact commands, the librarian report and proposal files, and read-only Zotero
+tools. You review the queue yourself with `/librarian-team --review`. See
+[Library automation](library-automation.md) for exactly what is allowed and what stays outside the boundary.
 
 ## Cross-platform notes
 

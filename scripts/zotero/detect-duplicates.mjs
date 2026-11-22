@@ -23,14 +23,16 @@
  * --proposals FILE also writes one merge_duplicate proposal per group in the librarian proposals
  * shape ({agent, generated, actions}) for scripts/zotero/build-queue.mjs. The keeper is the item
  * with the most non-empty metadata fields; ties go to the earliest dateAdded, then the lowest key.
- * No file is written when there are no groups. Still read-only on the library.
+ * Groups are split by itemType (never a cross-type merge); leftovers go to `mixed_type` in the JSON
+ * report. No file is written when there are no same-type groups. Still read-only on the library.
  *
  * Exit codes: 0 success (duplicates found or not), 1 bad arguments or Zotero API error.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createClientFromEnv } from './_lib/zotero-client.mjs';
+import { checkOutputPath } from './_lib/unattended.mjs';
+import { createClientFromEnv, projectRoot } from './_lib/zotero-client.mjs';
 import { normaliseDoi } from './_lib/crossref-item.mjs';
 import { TITLE_THRESHOLD, normaliseTitle, jaroWinkler } from './_lib/dup-match.mjs';
 
@@ -150,7 +152,8 @@ export function metadataScore(item) {
 
 /** Deterministic keeper: most non-empty fields, then earliest dateAdded, then lowest key. */
 export function chooseKeeper(members) {
-  const rank = (m) => ({ score: metadataScore(m), added: m.data?.dateAdded || '9999', key: m.key || m.data?.key || '' });
+  const ts = (m) => { const t = Date.parse(m.data?.dateAdded); return Number.isFinite(t) ? t : Infinity; };
+  const rank = (m) => ({ score: metadataScore(m), added: ts(m), key: m.key || m.data?.key || '' });
   return [...members].sort((x, y) => {
     const a = rank(x); const b = rank(y);
     if (a.score !== b.score) return b.score - a.score;
@@ -159,10 +162,34 @@ export function chooseKeeper(members) {
   })[0];
 }
 
-/** One merge_duplicate proposal per cluster. `items` are the raw Zotero items the clusters came from. */
+/**
+ * Never merge across item types: split each cluster by itemType. Same-type subgroups of two or more
+ * become proposals; everything else in a cluster that spans types is reported as mixed_type.
+ */
+export function splitByType(clusters) {
+  const groups = [];
+  const mixed = [];
+  for (const c of clusters) {
+    const byType = new Map();
+    for (const it of c.items) {
+      const t = it.itemType || '';
+      if (!byType.has(t)) byType.set(t, []);
+      byType.get(t).push(it);
+    }
+    const left = [];
+    for (const members of byType.values()) {
+      if (members.length >= 2) groups.push({ ...c, items: members });
+      else left.push(...members);
+    }
+    if (byType.size > 1 && left.length) mixed.push({ method: c.method, doi: c.doi ?? null, similarity: c.similarity, items: left });
+  }
+  return { groups, mixed };
+}
+
+/** One merge_duplicate proposal per same-type group. `items` are the raw Zotero items the clusters came from. */
 export function duplicateProposals(clusters, items, generated) {
   const byKey = new Map(items.map((it) => [it.key || it.data?.key, it]));
-  const actions = clusters.map((c) => {
+  const actions = splitByType(clusters).groups.map((c) => {
     const members = c.items.map((s) => byKey.get(s.key)).filter(Boolean);
     const keeper = chooseKeeper(members);
     const keepKey = keeper.key || keeper.data?.key;
@@ -196,6 +223,9 @@ function parseArgs(argv) {
 
 export async function main(argv) {
   const args = parseArgs(argv);
+  const root = projectRoot();
+  if (args.out) checkOutputPath(args.out, root, '--out');
+  if (args.proposals) checkOutputPath(args.proposals, root, '--proposals');
   const client = await createClientFromEnv();
   console.error('Fetching Zotero library items (read-only)...');
   const all = await client.listTopItems(null, { limit: args.limit });
@@ -207,6 +237,7 @@ export async function main(argv) {
     items_scanned: items.length,
     duplicate_clusters: clusters.length,
     total_duplicate_items: clusters.reduce((n, c) => n + c.items.length, 0),
+    mixed_type: splitByType(clusters).mixed,
     clusters,
   };
   const json = JSON.stringify(report, null, 2);
@@ -217,13 +248,13 @@ export async function main(argv) {
   } else {
     process.stdout.write(json + '\n');
   }
-  if (args.proposals && clusters.length > 0) {
-    const doc = duplicateProposals(clusters, items, report.date);
+  const doc = args.proposals ? duplicateProposals(clusters, items, report.date) : null;
+  if (doc && doc.actions.length > 0) {
     fs.mkdirSync(path.dirname(path.resolve(args.proposals)), { recursive: true });
     fs.writeFileSync(args.proposals, JSON.stringify(doc, null, 2) + '\n', 'utf8');
     console.error(`Proposals written to ${args.proposals} (${doc.actions.length} merge_duplicate actions)`);
   } else if (args.proposals) {
-    console.error('No duplicate groups: no proposals file written');
+    console.error('No same-type duplicate groups: no proposals file written');
   }
   console.error(`\nDuplicate scan complete: ${clusters.length} clusters (${report.total_duplicate_items} items involved)`);
 }

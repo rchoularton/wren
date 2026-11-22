@@ -12,6 +12,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { isUnattended, checkOutputPath } from './_lib/unattended.mjs';
+import { projectRoot } from './_lib/zotero-client.mjs';
 import { normaliseDoi } from './_lib/crossref-item.mjs';
 import { isPlaceholder, fixPairsOf, saveQueue, zoteroField } from './approval-queue.mjs';
 
@@ -165,6 +167,12 @@ function parseArgs(argv) {
 
 export function main(argv) {
   const o = parseArgs(argv);
+  if (o.force && isUnattended()) throw new UsageError('refused: unattended run (WREN_UNATTENDED is set); --force is not allowed');
+  const root = projectRoot();
+  try {
+    checkOutputPath(o.dir, root, '--dir');
+    if (o.out) checkOutputPath(o.out, root, '--out');
+  } catch (err) { throw new UsageError(err.message); }
   const dir = path.resolve(o.dir);
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) throw new UsageError(`Directory not found: ${o.dir}`);
   const suffix = `_${o.date}.proposals.json`;

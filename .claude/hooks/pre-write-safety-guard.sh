@@ -20,6 +20,19 @@ mkdir -p "$LOG_DIR" 2>/dev/null || true
 
 payload=$(cat)
 
+# Unattended run (WREN_UNATTENDED set): the allowlist guard owns the verdict. A deny from it is
+# passed through, and this hook never emits its own "approve", so it cannot mask a deny.
+UNATTENDED=""
+if [[ -n "${WREN_UNATTENDED:-}" ]]; then
+  UNATTENDED=1
+  verdict=$(printf '%s' "$payload" | python3 "$(dirname "$0")/unattended_guard.py" 2>/dev/null)
+  rc=$?
+  if [[ $rc -ne 0 || -n "$verdict" ]]; then
+    [[ -n "$verdict" ]] && echo "$verdict"
+    exit $rc
+  fi
+fi
+
 target=$(echo "$payload" | python3 -c '
 import json, sys
 try:
@@ -33,7 +46,7 @@ except Exception:
 ts=$(date "+%Y-%m-%d %H:%M:%S")
 
 if [[ -z "$target" ]]; then
-  echo '{"decision":"approve"}'
+  [[ -n "$UNATTENDED" ]] || [[ -n "$UNATTENDED" ]] || echo '{"decision":"approve"}'
   exit 0
 fi
 
@@ -56,4 +69,4 @@ EOF
   done < "$PROTECTED_FILE"
 fi
 
-echo '{"decision":"approve"}'
+[[ -n "$UNATTENDED" ]] || echo '{"decision":"approve"}'

@@ -32,6 +32,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { createClientFromEnv, loadFetch } from './_lib/zotero-client.mjs';
+import { isUnattended } from './_lib/unattended.mjs';
 import { fetchCrossrefWork, crossrefWorkToZoteroItem, normaliseDoi } from './_lib/crossref-item.mjs';
 import { TITLE_THRESHOLD, normaliseTitle, jaroWinkler } from './_lib/dup-match.mjs';
 
@@ -777,15 +778,13 @@ export async function createContext() {
   return { client, env: client.env, fetch: await loadFetch(client.env), sleep };
 }
 
-/** True when this run is unattended (WREN_UNATTENDED=1): it may read the queue but never change the library or record a decision. */
-export const isUnattended = (env = process.env) => env.WREN_UNATTENDED === '1';
 
 export async function main(argv) {
   const [command, ...rest] = argv;
   // Refuse before reading the queue or creating a client.
   const mutating = ['approve', 'approve-all', 'reject', 'skip'].includes(command) || (command === 'reconcile' && rest.includes('--apply'));
   if (mutating && isUnattended()) {
-    throw new QueueFileError(`refused: unattended run (WREN_UNATTENDED=1). \`${command}\` changes the library or records a decision and needs a person.`);
+    throw new QueueFileError(`refused: unattended run (WREN_UNATTENDED is set). \`${command}\` changes the library or records a decision and needs a person.`);
   }
   const need = (n, usage) => { if (rest.length < n) throw new QueueFileError(`Usage: approval-queue.mjs ${usage}`); };
   const makeCtx = createContext;
