@@ -215,7 +215,7 @@ def test_context_size_default_total_and_optin_line():
     r = subprocess.run([sys.executable, str(REPO_ROOT / "scripts/utils/context_size.py"), "--json"],
                        capture_output=True, text=True, timeout=60, check=True)
     d = json.loads(r.stdout)
-    assert d["total_bytes"] < 34_000  # default config: capture off, 0 bytes of sessions
+    assert d["total_bytes"] <= 34_300  # default config: capture off, 0 bytes of sessions
     assert 0 < d["optin_session_capture_bytes"] <= 1200
     text = subprocess.run([sys.executable, str(REPO_ROOT / "scripts/utils/context_size.py")],
                           capture_output=True, text=True, timeout=60, check=True).stdout

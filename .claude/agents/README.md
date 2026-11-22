@@ -32,6 +32,10 @@ review / synthesis → `opus`; standard drafting/analysis → `sonnet`; routine/
 - `peer-reviewer-methods`, `peer-reviewer-significance`, `peer-reviewer-presentation`,
   `peer-review-editor` — three independent referees plus a handling editor, orchestrated by the
   `/peer-review` skill. The presentation referee runs on `sonnet`; the rest on `opus`.
+- `librarian-cataloguer`, `librarian-scout` — the weekly Zotero audit and discovery pair (`haiku` /
+  `sonnet`). Read-only on the library via a `tools:` allowlist (no Bash, no Edit, only the two Zotero
+  read tools); each writes a report and a proposals file to `outputs/librarian/`, which
+  `npm run zotero:build-queue` turns into an approval queue.
 
 Reviewer and critic agents (`qc-*`, `peer-review*`, `scientific-graphics-reviewer`) set
 `disallowedTools: Edit, NotebookEdit`: they are read-only on what they review, so a referee can never
