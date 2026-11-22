@@ -47,6 +47,7 @@ def jobs_registry(cfg: dict) -> dict:
         "mcp__zotero__zotero_search_items", "mcp__zotero__zotero_get_item_metadata",
         "mcp__zotero__zotero_get_recent", "mcp__zotero__zotero_get_tags",
         "mcp__zotero__zotero_get_collections", "mcp__zotero__zotero_search_collections",
+        "Skill(librarian-team)",
         "Bash(date +%F)",
         "Bash(npm run zotero:duplicates -- --out outputs/librarian/duplicates_:*)",
         "Bash(npm run zotero:build-queue -- --date:*)",
@@ -70,7 +71,7 @@ def jobs_registry(cfg: dict) -> dict:
             "command": (
                 '"$CLAUDE_BIN" -p "/librarian-team --headless" --model sonnet '
                 '--permission-mode acceptEdits '
-                '--tools "Read,Grep,Glob,Write,Agent,WebSearch,WebFetch,Bash" '
+                '--tools "Read,Grep,Glob,Write,Agent,WebSearch,WebFetch,Bash,Skill" '
                 f'--allowedTools {librarian_allowed} '
                 '--disallowedTools "Edit" "MultiEdit" "NotebookEdit"'
             ),

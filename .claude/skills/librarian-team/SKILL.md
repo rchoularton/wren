@@ -25,6 +25,7 @@ A headless run has nobody watching. It follows these rules without exception:
 6. Never background a step, and never wait on a monitor or a wakeup. Run every step in the
    foreground, to completion.
 7. If a phase fails, record the error in the report and continue with the next phase.
+8. Always pass a path under `papers/`, `outputs/`, or `research-config.yml` to Read, Grep and Glob (and tell the agents to); calls with no path or a path elsewhere are denied.
 
 These rules are not the boundary. The boundary is the `.claude/hooks/pre-tool-unattended-guard.sh`
 hook and the script-level guards (`WREN_UNATTENDED`), which deny anything else. If a call is

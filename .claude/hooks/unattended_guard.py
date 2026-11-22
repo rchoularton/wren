@@ -11,11 +11,13 @@ Allowed while active:
           with a YYYY-MM-DD date; no shell metacharacters.
   Write - only <project>/outputs/librarian/{cataloguer,scout}_<date>.{md,proposals.json} and report_<date>.md.
   mcp__ - only the read-only Zotero tools the librarian agents use, and the Gmail create-draft tool.
-  Read/Grep/Glob - only inside the project, never secret files (.env, .env.*, .mcp.json, settings.local.json,
-          .npmrc, anything under .git/); a Grep/Glob filename filter aimed at those names is denied too.
+  Read/Grep/Glob - a path argument is required and must resolve into papers/, outputs/, research_memory/,
+          references/, docs/, .claude/agents/, .claude/skills/, or be scripts/zotero/README.md, research-config.yml
+          or README.md. Secret files (.env, .env.*, .mcp.json, settings.local.json, .npmrc, .git/, and hard links
+          to them) stay denied, and a filename filter that could match them is denied.
   WebFetch - https only, no userinfo in the URL. WebSearch is allowed.
-For every tool it sees, the call is also denied when its input contains a secret value (a *KEY/TOKEN/SECRET/PASSWORD
-value of at least 8 characters from <project>/.env or this process's environment), raw, URL-encoded or base64.
+For every tool it sees, the call is also denied when its input contains a secret value (a *KEY/TOKEN/SECRET/PASSWORD/PASSWD
+value of at least 12 characters from <project>/.env or this process's environment), raw, URL-encoded or base64.
 That blocks the literal forms, not every possible encoding.
 Everything else this hook sees (Edit, MultiEdit, NotebookEdit, other mcp__ tools, other commands) is denied.
 """
@@ -76,35 +78,63 @@ def check_bash(command, project):
 
 
 SECRET_BASENAMES = {".mcp.json", "settings.local.json", ".npmrc"}
-SENSITIVE_PATTERN = re.compile(r"(\.env(?!\.example)|\.mcp\.json|settings\.local\.json|\.npmrc|\.git(/|$))")
+READ_ROOTS = ("papers", "outputs", "research_memory", "references", "docs", ".claude/agents", ".claude/skills")
+READ_FILES = ("scripts/zotero/README.md", "research-config.yml", "README.md")
+NEED_PATH = "unattended run: pass a path under an allowed directory"
+# A filename filter that could match ".env" is denied: anything with ".e", a bracket, brace or "?" in it,
+# or a dot followed by a wildcard. Deliberately blunt; an allowed directory can still be searched without it.
+RISKY_GLOB = re.compile(r"\.e|\[|\{|\?|\.[*?\[{]", re.I)
 
 
-def sensitive_name(path):
-    parts = path.replace("\\", "/").split("/")
-    if ".git" in parts:
-        return True
-    base = parts[-1]
-    return base == ".env" or (base.startswith(".env.") and base != ".env.example") or base in SECRET_BASENAMES
+def secret_name(base):
+    b = base.lower()
+    return b == ".env" or (b.startswith(".env.") and b != ".env.example") or b in SECRET_BASENAMES
+
+
+def same_file(a, b):
+    return a.st_dev == b.st_dev and a.st_ino == b.st_ino
 
 
 def check_read(tool, tool_input, project):
+    """Positive allowlist: a path is required and must resolve into one of READ_ROOTS or READ_FILES."""
     root = os.path.realpath(project)
-    for key in ("file_path", "path", "notebook_path"):
-        v = tool_input.get(key)
-        if v is None or v == "":
-            continue  # no path: defaults inside the project, and ripgrep skips git-ignored files such as .env
-        if not isinstance(v, str):
+    key = "file_path" if tool == "Read" else "path"
+    v = tool_input.get(key)
+    if not isinstance(v, str) or not v.strip():
+        return NEED_PATH
+    for other in ("file_path", "path", "notebook_path"):
+        w = tool_input.get(other)
+        if w is not None and not isinstance(w, str):
             return "unattended run: unreadable path"
-        p = v if os.path.isabs(v) else os.path.join(project, v)
+    for other in ("file_path", "path", "notebook_path"):
+        w = tool_input.get(other)
+        if not w:
+            continue
+        p = w if os.path.isabs(w) else os.path.join(project, w)
         real = os.path.realpath(p)
-        if real != root and not real.startswith(root + os.sep):
-            return "unattended run: reading outside the project is not allowed"
-        if sensitive_name(p) or sensitive_name(real):
+        rel = os.path.relpath(real, root).replace(os.sep, "/")
+        inside = not rel.startswith("..") and rel != "."
+        ok = inside and (rel in READ_FILES or any(rel == d or rel.startswith(d + "/") for d in READ_ROOTS))
+        if not ok:
+            return "unattended run: reading outside the allowed directories is not allowed"
+        if secret_name(os.path.basename(p)) or secret_name(os.path.basename(real)) or ".git" in rel.split("/"):
             return "unattended run: reading secret files is not allowed"
-    for key in ("glob", "pattern"):
-        v = tool_input.get(key)
-        if isinstance(v, str) and (SENSITIVE_PATTERN.search(v) and not v.endswith(".env.example")):
-            return "unattended run: file filter targets secret files"
+        try:
+            target = os.stat(real)
+            guarded = [os.path.join(root, ".mcp.json"), os.path.join(root, ".claude", "settings.local.json")]
+            guarded += [os.path.join(root, n) for n in os.listdir(root) if n.lower().startswith(".env") and n.lower() != ".env.example"]
+            for g in guarded:
+                try:
+                    if same_file(target, os.stat(g)):
+                        return "unattended run: reading secret files is not allowed"
+                except OSError:
+                    continue
+        except OSError:
+            pass  # target does not exist: the tool will report that itself
+    for gkey in ("glob", "pattern"):
+        g = tool_input.get(gkey)
+        if tool in ("Grep", "Glob") and isinstance(g, str) and RISKY_GLOB.search(g):
+            return "unattended run: file filter could match secret files"
     return None
 
 
@@ -124,29 +154,30 @@ def check_web(tool, tool_input):
 
 
 def read_dotenv(path):
+    """Parse KEY=value lines. Missing file: {}. Present but unreadable: OSError (the caller fails closed)."""
     out = {}
-    try:
-        with open(path, encoding="utf-8") as f:
-            for raw in f:
-                line = raw.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                if line.startswith("export "):
-                    line = line[7:]
-                k, _, v = line.partition("=")
-                v = v.strip()
-                if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
-                    v = v[1:-1]
-                out[k.strip()] = v
-    except OSError:
-        pass
+    if not os.path.lexists(path):
+        return out
+    with open(path, "rb") as f:
+        text = f.read().decode("utf-8", errors="ignore")
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[7:]
+        k, _, v = line.partition("=")
+        v = v.strip()
+        if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+            v = v[1:-1]
+        out[k.strip()] = v
     return out
 
 
 def secret_values(project):
     pool = dict(read_dotenv(os.path.join(project, ".env")))
     pool.update(os.environ)
-    return {v for k, v in pool.items() if re.search(r"KEY|TOKEN|SECRET|PASSWORD", k, re.I) and isinstance(v, str) and len(v) >= 8}
+    return {v for k, v in pool.items() if re.search(r"(^|_)(KEY|TOKEN|SECRET|PASSWORD|PASSWD)(_|$)", k, re.I) and isinstance(v, str) and len(v) >= 12}
 
 
 def forms(v):
@@ -200,7 +231,11 @@ def decide():
     project = os.environ.get("CLAUDE_PROJECT_DIR") or event.get("cwd")
     if not isinstance(project, str) or not project:
         deny("unattended run: project directory unknown")
-    if contains_secret(tool_input, project):
+    try:
+        leaked = contains_secret(tool_input, project)
+    except OSError:
+        deny("unattended guard: cannot read .env to protect secrets")
+    if leaked:
         deny("unattended run: tool input contains a secret value")
     if tool == "Bash":
         cmd = tool_input.get("command")

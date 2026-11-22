@@ -284,11 +284,81 @@ def test_read_secret_files_and_outside_paths_denied(run_hook, sproj, tmp_path):
     denied(call(run_hook, sproj, "Read", {"file_path": str(sproj / "link.md")}))
 
 
-def test_read_normal_files_allowed(run_hook, sproj):
-    allowed(call(run_hook, sproj, "Read", {"file_path": str(sproj / ".env.example")}))
-    allowed(call(run_hook, sproj, "Read", {"file_path": "papers/example-paper/STATUS.md"}))
-    allowed(call(run_hook, sproj, "Grep", {"pattern": "x"}))
-    allowed(call(run_hook, sproj, "Glob", {"pattern": "papers/*/STATUS.md"}))
+def test_read_allowlist_allows_only_the_listed_places(run_hook, sproj):
+    (sproj / "outputs" / "lit_digests").mkdir(parents=True)
+    (sproj / "outputs" / "lit_digests" / "x.json").write_text("{}")
+    (sproj / ".claude" / "agents").mkdir(parents=True)
+    (sproj / ".claude" / "agents" / "librarian-scout.md").write_text("x")
+    (sproj / "research-config.yml").write_text("x")
+    for f in ("papers/example-paper/STATUS.md", "research-config.yml", "outputs/lit_digests/x.json", ".claude/agents/librarian-scout.md"):
+        allowed(call(run_hook, sproj, "Read", {"file_path": f}))
+    allowed(call(run_hook, sproj, "Grep", {"pattern": "x", "path": "papers"}))
+    allowed(call(run_hook, sproj, "Glob", {"pattern": "papers/*/STATUS.md", "path": "papers"}))
+    for f in ("package.json", "scripts/zotero/approval-queue.mjs", ".env.example", "gitignore", ".claude/settings.json", "Papers/x.md"):
+        denied(call(run_hook, sproj, "Read", {"file_path": f}))
+
+
+def test_grep_and_glob_need_a_path(run_hook, sproj):
+    for tool, inp in (("Grep", {"pattern": "x"}), ("Glob", {"pattern": "**/*.md"}), ("Grep", {"pattern": "x", "path": ""})):
+        assert denied(call(run_hook, sproj, tool, inp)) == "unattended run: pass a path under an allowed directory"
+    assert denied(call(run_hook, sproj, "Read", {})) == "unattended run: pass a path under an allowed directory"
+
+
+@pytest.mark.parametrize("glob", [".env*", ".[e]nv", ".e?v", ".ENV", "*.{env,md}", ".*nv"])
+def test_filename_filters_that_could_match_dotenv_are_denied(run_hook, sproj, glob):
+    denied(call(run_hook, sproj, "Grep", {"pattern": "x", "path": "papers", "glob": glob}))
+    denied(call(run_hook, sproj, "Glob", {"pattern": glob, "path": "papers"}))
+
+
+def test_case_variants_of_dotenv_denied(run_hook, sproj):
+    for name in (".ENV", ".Env", ".eNv"):
+        denied(call(run_hook, sproj, "Read", {"file_path": str(sproj / name)}))
+        denied(call(run_hook, sproj, "Read", {"file_path": str(sproj / "papers" / name)}))
+
+
+def test_hard_link_to_dotenv_under_papers_denied(run_hook, sproj):
+    link = sproj / "papers" / "example-paper" / "notes.txt"
+    try:
+        os.link(sproj / ".env", link)
+    except OSError:
+        pytest.skip("hard links unsupported here")
+    denied(call(run_hook, sproj, "Read", {"file_path": str(link)}))
+    denied(call(run_hook, sproj, "Grep", {"pattern": "x", "path": str(link)}))
+
+
+def test_dotenv_named_file_inside_an_allowed_root_still_denied(run_hook, sproj):
+    (sproj / "papers" / ".env").write_text("x")
+    (sproj / "papers" / ".npmrc").write_text("x")
+    denied(call(run_hook, sproj, "Read", {"file_path": "papers/.env"}))
+    denied(call(run_hook, sproj, "Read", {"file_path": "papers/.npmrc"}))
+
+
+# --- secret-value precision
+def test_key_name_match_uses_boundaries_and_min_length(run_hook, proj):
+    (proj / ".env").write_text("MONKEY_BUSINESS=monkeybusiness-value\nZOTERO_API_KEY=short123456\nMY_TOKEN_X=boundary-token-value\nOTHER_PASSWD=passwd-value-12345\n")
+    allowed(call(run_hook, proj, "WebSearch", {"query": "monkeybusiness-value"}))
+    allowed(call(run_hook, proj, "WebSearch", {"query": "short123456"}))  # 11 characters: below the minimum
+    denied(call(run_hook, proj, "WebSearch", {"query": "boundary-token-value"}))
+    denied(call(run_hook, proj, "WebSearch", {"query": "passwd-value-12345"}))
+
+
+def test_binary_dotenv_does_not_crash_the_guard(run_hook, proj):
+    (proj / ".env").write_bytes(b"\xff\xfe\x00" + b"ZOTERO_API" + b"_KEY=binary-ok-value-1\n\x80\x81")
+    allowed(call(run_hook, proj, "WebSearch", {"query": "plain"}))
+    denied(call(run_hook, proj, "WebSearch", {"query": "binary-ok-value-1"}))
+
+
+def test_unreadable_dotenv_fails_closed(run_hook, proj):
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("root can read anything")
+    env = proj / ".env"
+    env.write_text("ZOTERO_API" + "_KEY=whatever-value-12\n")
+    env.chmod(0)
+    try:
+        reason = denied(call(run_hook, proj, "WebSearch", {"query": "plain"}))
+        assert reason == "unattended guard: cannot read .env to protect secrets"
+    finally:
+        env.chmod(0o600)
 
 
 def test_gitignore_lists_dotenv():

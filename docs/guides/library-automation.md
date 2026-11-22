@@ -47,21 +47,31 @@ missing `python3`, a crash) into a deny. The hook denies with a `deny` JSON and 
 - **Bash**: only `date +%F`, the duplicate scan (`npm run zotero:duplicates -- --out
   outputs/librarian/duplicates_<date>.json --proposals outputs/librarian/duplicates_<date>.proposals.json`,
   optionally `--limit N` and `--no-fuzzy`), `npm run zotero:build-queue -- --date <date>`, and
-  `npm run zotero:queue -- status outputs/librarian/approval_queue_<date>.json`. No shell
+  `npm run zotero:queue -- status outputs/librarian/approval_queue_<date>.json` (an absolute path that resolves to that same file inside the project is also allowed). No shell
   metacharacters (`; & | $ ` > < ( ) { }`, newlines) are accepted.
 - **Write**: only `outputs/librarian/cataloguer_<date>.md` and `.proposals.json`,
   `scout_<date>.md` and `.proposals.json`, and `report_<date>.md`, after resolving `..` and
   symlinks. The queue, its lock, the duplicate report and `rejected_<date>.json` are written only by the
   scripts. `Edit`, `MultiEdit` and `NotebookEdit` are always denied.
 - **MCP tools**: only the six read-only Zotero tools and the Gmail create-draft tool.
-- **Read, Grep, Glob**: only inside the project; never `.env`, `.env.*` (except `.env.example`), `.mcp.json`,
-  `settings.local.json`, `.npmrc` or anything under `.git/`, and no filename filter aimed at them.
+- **Read, Grep, Glob**: a positive allowlist. A path argument is required (`file_path` for Read, `path` for
+  Grep and Glob), and its resolved real path must be inside `papers/`, `outputs/`, `research_memory/`,
+  `references/`, `docs/`, `.claude/agents/` or `.claude/skills/`, or be `scripts/zotero/README.md`,
+  `research-config.yml` or `README.md`. Everything else is denied, including `package.json`, `.env.example`
+  and the rest of `scripts/`. Inside those places it still denies a file whose lower-cased name is `.env`,
+  starts with `.env.` , or is `.mcp.json`, `settings.local.json` or `.npmrc`, anything under `.git/`, and any
+  file with the same device and inode as the project's `.env*` files, `.mcp.json` or
+  `.claude/settings.local.json` (so a hard link does not work). A Grep or Glob filename filter that contains
+  `.e`, `[`, `{`, `?` or a dot followed by a wildcard is denied, because it could match `.env` on a
+  case-insensitive filesystem.
 - **WebFetch**: `https` only, no userinfo in the URL.
-- **Secret values**: for every tool the hook sees, a call is denied if its input contains a value (8+
-  characters) of a `*KEY`, `*TOKEN`, `*SECRET` or `*PASSWORD` variable from `<project>/.env` or the hook's
+- **Secret values**: for every tool the hook sees, a call is denied if its input contains a value (12+
+  characters) of a variable whose name has `KEY`, `TOKEN`, `SECRET`, `PASSWORD` or `PASSWD` as a whole
+  underscore-separated word (`MONKEY_BUSINESS` does not count) from `<project>/.env` or the hook's
   environment, in raw, URL-encoded or base64 form. The reason never repeats the value. This closes the
   obvious route for sending the Zotero API key (which can write to your library) to a web request; it blocks
-  those literal forms and does not claim to stop every possible encoding.
+  those literal forms and does not claim to stop every possible encoding. If `<project>/.env` exists but cannot
+  be read, every guarded call is denied ("cannot read .env to protect secrets").
 
 **2. The scripts.** With `WREN_UNATTENDED` set, `approval-queue.mjs` refuses `approve`,
 `approve-all`, `reject`, `skip` and `reconcile --apply` before it reads the queue or creates a client;
@@ -69,12 +79,21 @@ missing `python3`, a crash) into a deny. The hook denies with a `deny` JSON and 
 and `build-queue.mjs` and `detect-duplicates.mjs` write only inside `outputs/librarian/`. Even attended,
 they refuse output paths outside the project root. `status` and a dry `reconcile` still work.
 
-**What stays outside this boundary.** The hook does not restrict `Read`, `Grep`, `Glob`, `WebSearch`,
-`WebFetch` or `Agent`, and it does not cover the web-reading sub-agents' own model calls (the scout
-reads web pages; its output is treated as data and reaches Zotero only through your review), the optional Gmail draft, or anything you change: loosening
-`.claude/settings.json`, removing the hook registration, or editing the generated runner removes
-the protection. The hook fails open if it times out or `python3` is missing, so keep the
-`claude` run on a machine where `python3` works.
+**What stays outside this boundary.** The hook does not restrict `WebSearch` or `Agent` (it scans their input for
+secrets, but a search can still carry anything that is not a known secret), and it does not cover the sub-agents'
+own model calls or the optional Gmail draft. Loosening `.claude/settings.json`, removing the hook registration, or
+editing the generated runner removes the protection. The hook fails closed if `python3` is missing or the guard
+crashes. What Claude Code does when a hook times out is documented as not blocking the call, and I have not
+verified how this hook behaves under a timeout.
+
+## What no hook can remove
+
+- The run reads text written by other people (web pages, Crossref records, Zotero fields). The control is
+  keeping secrets out of its reach, not detecting every way they could be encoded.
+- Web search and fetch send search terms and paper titles to third parties. That is how discovery works.
+- Proposals still depend on your review. `/librarian-team --approve-all` approves everything with one
+  confirmation, so read the report first.
+- Anyone who can edit `.claude/settings.json` or the generated runner can remove the boundary.
 
 ## Enable the scheduled job
 

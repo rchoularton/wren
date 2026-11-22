@@ -87,7 +87,7 @@ def test_phase0_checks_todays_queue_first_and_agent_output_is_data():
 REQUIRED = ["Read", "Grep", "Glob", "Write", "Agent", "WebSearch", "WebFetch",
             "mcp__zotero__zotero_search_items", "mcp__zotero__zotero_get_item_metadata", "mcp__zotero__zotero_get_recent",
             "mcp__zotero__zotero_get_tags", "mcp__zotero__zotero_get_collections", "mcp__zotero__zotero_search_collections",
-            "Bash(date +%F)", "Bash(npm run zotero:duplicates -- --out outputs/librarian/duplicates_:*)",
+            "Skill(librarian-team)", "Bash(date +%F)", "Bash(npm run zotero:duplicates -- --out outputs/librarian/duplicates_:*)",
             "Bash(npm run zotero:build-queue -- --date:*)", "Bash(npm run zotero:queue -- status outputs/librarian/approval_queue_:*)"]
 GMAIL = "mcp__claude_ai_Gmail__create_draft"
 
@@ -119,7 +119,7 @@ def test_librarian_runner_prompt_export_and_exact_tool_list(inst):
     assert GMAIL not in tools
     assert "WREN_JOB_END" in text
     assert '--disallowedTools "Edit" "MultiEdit" "NotebookEdit"' in text
-    assert '--tools "Read,Grep,Glob,Write,Agent,WebSearch,WebFetch,Bash"' in text
+    assert '--tools "Read,Grep,Glob,Write,Agent,WebSearch,WebFetch,Bash,Skill"' in text
 
 
 def test_librarian_runner_adds_gmail_draft_only_when_enabled(inst):
