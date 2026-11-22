@@ -7,8 +7,11 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import shutil
 import subprocess
+import time
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
 import pytest
@@ -33,13 +36,15 @@ class Run:
         self.fixture = tmp_path / "fixture.json"
         self.log = tmp_path / "calls.jsonl"
 
-    def go(self, script, args, routes=()):
+    def go(self, script, args, routes=(), drop=()):
         self.fixture.write_text(json.dumps({"routes": list(routes)}))
         self.log.write_text("")
         base = {k: v for k, v in os.environ.items()
                 if not k.startswith(("ZOTERO_", "UNPAYWALL_", "CROSSREF_", "INSTITUTION_", "WREN_", "CLAUDE_PROJECT_DIR"))}
         env = {**base, "CLAUDE_PROJECT_DIR": str(self.root), "ZOTERO_API_KEY": "key", "ZOTERO_LIBRARY_ID": "42",
                "WREN_FAKE_FETCH": str(FAKE), "WREN_FAKE_FETCH_FIXTURE": str(self.fixture), "WREN_FAKE_FETCH_LOG": str(self.log)}
+        for k in drop:
+            env.pop(k, None)
         proc = subprocess.run([NODE, str(script), *map(str, args)], capture_output=True, text=True, env=env, timeout=60)
         unmatched = [c for c in self.calls if not c["matched"]]
         assert not unmatched, f"unmatched (would-be network) calls: {unmatched}"
@@ -326,3 +331,283 @@ def test_crossref_mapping_covers_every_type_in_the_field_lists(run):
         assert set(item) <= allowed, f"{cr_type}: invalid fields {set(item) - allowed}"
     assert "publicationTitle" not in res["items"]["book-chapter"]
     assert res["items"]["report"]["institution"] == "Pub"
+
+
+# ---------- review round 2 ----------
+
+NEWTAGS = [{"tag": "librarian-team"}, {"tag": "source-paper-a"}, {"tag": "relevance-high"}]
+
+
+def rejects(run, q, aid):
+    return run.go(QUEUE, ["approve", aid, q])
+
+
+@pytest.mark.parametrize("status", ["rejected", "skipped", "applied"])
+def test_approve_refuses_decided_or_applied_actions(run, status):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": status, "details": {"item_key": "ABCD2345", "tags": ["t"]}}])
+    p = run.go(QUEUE, ["approve", 1, q])
+    assert p.returncode == 1 and "cannot execute" in p.stderr
+    assert run.calls == [] and load(q)["actions"][0]["status"] == status
+
+
+def test_approve_of_failed_action_needs_retry(run):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "failed", "error": "boom", "details": {"item_key": "ABCD2345", "tags": ["t"]}}])
+    p = run.go(QUEUE, ["approve", 1, q])
+    assert p.returncode == 1 and "--retry" in p.stderr and run.calls == []
+
+
+@pytest.mark.parametrize("bad", ["1abc", "1.5", "-1", ""])
+def test_action_id_must_be_digits(run, bad):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "pending", "details": {}}])
+    for cmd in ("approve", "reject", "skip"):
+        p = run.go(QUEUE, [cmd, bad, q])
+        assert p.returncode == 1 and "whole number" in p.stderr
+
+
+def test_missing_api_key_exits_1_with_config_message(run):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "approved", "details": {"item_key": "ABCD2345", "tags": ["t"]}}])
+    p = run.go(QUEUE, ["approve", 1, q], drop=["ZOTERO_API_KEY"])
+    assert p.returncode == 1 and "ZOTERO_API_KEY" in p.stderr
+    p = run.go(QUEUE, ["approve-all", q], drop=["ZOTERO_LIBRARY_ID"])
+    assert p.returncode == 1 and "ZOTERO_LIBRARY_ID" in p.stderr
+
+
+def test_reconcile_exits_2_when_an_action_errors(run):
+    q = reconcile_queue(run)
+    routes = [{"method": "GET", "url": f"{LIB}/items/DONE0001", "response": {"status": 500, "text": "x"}}, RECON_ROUTES[1]]
+    p = run.go(QUEUE, ["reconcile", q], routes)
+    assert p.returncode == 2 and "error: 1" in p.stdout
+
+
+# --- add_tag / add_to_collection with verify
+def test_add_to_collection_applies_with_version_and_verifies(run):
+    q = write_queue(run, [{"id": 1, "type": "add_to_collection", "status": "approved", "details": {"item_key": "ABCD2345", "collection_key": "COLL0001"}}])
+    routes = [get_item("ABCD2345", sequence=[zitem("ABCD2345", collections=["OTHER001"]), zitem("ABCD2345", collections=["OTHER001", "COLL0001"], version=4)]), patch_ok("ABCD2345")]
+    p = run.go(QUEUE, ["approve", 1, q], routes)
+    assert p.returncode == 0, p.stderr
+    w = run.writes()[0]
+    assert json.loads(w["body"]) == {"collections": ["OTHER001", "COLL0001"]} and w["headers"]["If-Unmodified-Since-Version"] == "3"
+    assert load(q)["actions"][0]["status"] == "applied"
+
+
+def test_add_to_collection_reread_mismatch_is_failed(run):
+    q = write_queue(run, [{"id": 1, "type": "add_to_collection", "status": "approved", "details": {"item_key": "ABCD2345", "collection_key": "COLL0001"}}])
+    p = run.go(QUEUE, ["approve", 1, q], [get_item("ABCD2345", zitem("ABCD2345")), patch_ok("ABCD2345")])
+    assert p.returncode == 2 and load(q)["actions"][0]["status"] == "failed"
+
+
+# --- merge_duplicate
+KEEP_DATA = dict(title="The same title of an article about food systems", DOI="10.1234/same", tags=[{"tag": "a"}], collections=[], relations={})
+
+
+def merge_routes(loser_title="The same title of an article about food systems", loser_doi="https://doi.org/10.1234/SAME", loser_type="journalArticle"):
+    keep0 = zitem("KEEP0001", **KEEP_DATA)
+    keep1 = zitem("KEEP0001", version=4, **{**KEEP_DATA, "tags": [{"tag": "a"}, {"tag": "b"}], "collections": ["COLL0001"],
+                                             "relations": {"dc:replaces": [f"http://zotero.org/users/42/items/LOSE0001"]}})
+    lose0 = zitem("LOSE0001", loser_type, version=5, title=loser_title, DOI=loser_doi, tags=[{"tag": "b"}], collections=["COLL0001"])
+    lose1 = zitem("LOSE0001", loser_type, version=6, title=loser_title, DOI=loser_doi, deleted=1)
+    child0 = zitem("CHILD001", "attachment", version=7, parentItem="LOSE0001")
+    child1 = zitem("CHILD001", "attachment", version=8, parentItem="KEEP0001")
+    return [
+        {"method": "GET", "url": f"{LIB}/items/LOSE0001/children", "response": {"json": [child0]}},
+        get_item("KEEP0001", sequence=[keep0, keep1]),
+        get_item("LOSE0001", sequence=[lose0, lose1]),
+        get_item("CHILD001", child1),
+        patch_ok("KEEP0001"), patch_ok("LOSE0001"), patch_ok("CHILD001"),
+    ]
+
+
+def merge_action(**details):
+    return {"id": 1, "type": "merge_duplicate", "status": "approved", "details": details}
+
+
+def test_merge_duplicate_happy_path_orders_writes_and_verifies(run):
+    q = write_queue(run, [merge_action(keep="KEEP0001", merge_keys=["LOSE0001"])])
+    p = run.go(QUEUE, ["approve", 1, q], merge_routes())
+    assert p.returncode == 0, p.stderr
+    w = run.writes()
+    assert [x["url"].rsplit("/", 1)[1] for x in w] == ["KEEP0001", "CHILD001", "LOSE0001"]
+    keep_body = json.loads(w[0]["body"])
+    assert {t["tag"] for t in keep_body["tags"]} == {"a", "b"} and keep_body["collections"] == ["COLL0001"]
+    assert keep_body["relations"]["dc:replaces"] == ["http://zotero.org/users/42/items/LOSE0001"]
+    assert json.loads(w[2]["body"]) == {"deleted": 1}
+    assert w[2]["headers"]["If-Unmodified-Since-Version"] == "5", "trash PATCH must use the version from the single loser read"
+    assert [c for c in run.calls if c["url"].endswith("/items/LOSE0001") and c["method"] == "GET"].__len__() == 2  # one read + one verify
+    act = load(q)["actions"][0]
+    assert act["status"] == "applied" and act["result"]["trashed"] == ["LOSE0001"]
+
+
+@pytest.mark.parametrize("details", [{"keep": "KEEP0001", "merge": "KEEP0001"}, {"keep": "KEEP0001", "merge_keys": ["KEEP0001", "LOSE0001"]}, {"keep": "KEEP0001"}])
+def test_merge_duplicate_refuses_self_merge_and_empty_set_before_any_request(run, details):
+    q = write_queue(run, [merge_action(**details)])
+    p = run.go(QUEUE, ["approve", 1, q])
+    assert p.returncode == 2 and run.calls == []
+    act = load(q)["actions"][0]
+    assert act["status"] == "failed" and act["error"]
+
+
+def test_merge_duplicate_refuses_dissimilar_pair_without_writing(run):
+    q = write_queue(run, [merge_action(keep="KEEP0001", merge="LOSE0001")])
+    p = run.go(QUEUE, ["approve", 1, q], merge_routes(loser_title="Entirely different subject matter here", loser_doi="10.9999/other"))
+    assert p.returncode == 2 and run.writes() == []
+    assert "does not look like a duplicate" in load(q)["actions"][0]["error"]
+
+
+def test_merge_duplicate_refuses_different_item_types(run):
+    q = write_queue(run, [merge_action(keep="KEEP0001", merge="LOSE0001")])
+    p = run.go(QUEUE, ["approve", 1, q], merge_routes(loser_type="book"))
+    assert p.returncode == 2 and run.writes() == []
+
+
+# --- lock
+def lock_body(ago_minutes):
+    return json.dumps({"pid": 4242, "at": (datetime.now(timezone.utc) - timedelta(minutes=ago_minutes)).isoformat()})
+
+
+def test_second_command_exits_1_while_queue_is_locked(run):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "pending", "details": {}}])
+    lock = q.with_name(q.name + ".lock")
+    lock.write_text(lock_body(1))
+    before = q.read_bytes()
+    p = run.go(QUEUE, ["reject", 1, q])
+    assert p.returncode == 1 and "locked by pid 4242" in p.stderr
+    assert q.read_bytes() == before and lock.exists(), "a refused command must not touch the queue or the other holder's lock"
+    assert run.go(QUEUE, ["status", q]).returncode == 0, "status takes no lock"
+    assert run.go(QUEUE, ["reconcile", q]).returncode == 0, "dry-run reconcile takes no lock"
+
+
+def test_stale_lock_is_replaced_with_warning_and_lock_is_removed_afterwards(run):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "pending", "details": {}}])
+    lock = q.with_name(q.name + ".lock")
+    lock.write_text(lock_body(120))
+    p = run.go(QUEUE, ["reject", 1, q])
+    assert p.returncode == 0 and "stale lock" in p.stderr
+    assert load(q)["actions"][0]["status"] == "rejected" and not lock.exists()
+
+
+def test_lock_removed_after_failed_command(run):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "approved", "details": {"item_key": "ABCD2345", "tags": ["t"]}}])
+    p = run.go(QUEUE, ["approve", 1, q], [get_item("ABCD2345", zitem("ABCD2345")), patch_ok("ABCD2345", 412)])
+    assert p.returncode == 2 and not q.with_name(q.name + ".lock").exists()
+    p = run.go(QUEUE, ["approve", 99, q])
+    assert p.returncode == 1 and not q.with_name(q.name + ".lock").exists()
+
+
+# --- retry safety
+def test_failed_add_item_saves_created_key_before_verify_and_retry_adopts_it(run):
+    q = write_queue(run, [add_item_action("10.1234/retry.1")])
+    work = {"message": {"type": "journal-article", "title": ["Retry title"], "DOI": "10.1234/retry.1"}}
+    bad = zitem("NEWKEY01", "journalArticle", title="Retry title", DOI="10.1234/retry.1")  # tags missing -> verify fails
+    p = run.go(QUEUE, ["approve", 1, q], [crossref("10.1234/retry.1", {"json": work}), post_items(), get_item("NEWKEY01", bad)])
+    assert p.returncode == 2
+    act = load(q)["actions"][0]
+    assert act["status"] == "failed" and act["created_key"] == "NEWKEY01"
+
+    good = zitem("NEWKEY01", "journalArticle", title="Retry title", DOI="10.1234/retry.1", tags=NEWTAGS)
+    p = run.go(QUEUE, ["approve", 1, q, "--retry"], [get_item("NEWKEY01", good)])
+    assert p.returncode == 0, p.stderr
+    assert run.writes() == [], "retry must not create a second item"
+    act = load(q)["actions"][0]
+    assert act["status"] == "applied" and act["result"]["adopted"] is True
+
+
+def test_retry_without_created_key_adopts_existing_item_with_same_doi(run):
+    q = write_queue(run, [{**add_item_action("10.1234/dup.1"), "status": "failed", "error": "earlier"}])
+    existing = zitem("OLDKEY01", "journalArticle", title="Existing", DOI="10.1234/DUP.1")
+    p = run.go(QUEUE, ["approve", 1, q, "--retry"], [{"method": "GET", "url": f"{LIB}/items?q=", "response": {"json": [existing]}}])
+    assert p.returncode == 0, p.stderr
+    assert run.writes() == []
+    act = load(q)["actions"][0]
+    assert act["status"] == "applied" and act["result"]["key"] == "OLDKEY01"
+
+
+# --- placeholders in creators / titles
+@pytest.mark.parametrize("value", ["[no title]", "[unknown]", "[n.d.]"])
+def test_bracketed_values_are_placeholders(run, value):
+    q = write_queue(run, [{"id": 1, "type": "fix_metadata", "status": "approved", "details": {"item_key": "ABCD2345", "proposed_changes": {"date": value}}}])
+    p = run.go(QUEUE, ["approve", 1, q])
+    assert p.returncode == 2 and "placeholder" in load(q)["actions"][0]["error"] and run.calls == []
+
+
+def test_fix_metadata_refuses_placeholder_creator_names(run):
+    q = write_queue(run, [{"id": 1, "type": "fix_metadata", "status": "approved", "details": {"item_key": "ABCD2345", "proposed_changes": {"authors": ["Doe, Jane", "Unknown"]}}}])
+    p = run.go(QUEUE, ["approve", 1, q], [get_item("ABCD2345", zitem("ABCD2345", title="T")), type_fields("journalArticle", ["title"])])
+    assert p.returncode == 2 and "placeholder creator" in load(q)["actions"][0]["error"] and run.writes() == []
+
+
+def test_add_item_refuses_empty_title_and_placeholder_authors(run):
+    a = add_item_action(None)
+    a["title"] = ""
+    a["details"] = {"title": "", "authors": ["Doe, Jane"]}
+    b = {**add_item_action(None), "id": 2}
+    b["details"] = {"title": "A real title", "authors": ["n/a"]}
+    q = write_queue(run, [a, b])
+    for i in (1, 2):
+        p = run.go(QUEUE, ["approve", i, q])
+        assert p.returncode == 2
+    errs = [x["error"] for x in load(q)["actions"]]
+    assert "no usable title" in errs[0] and "placeholder creator" in errs[1]
+    assert run.writes() == []
+
+
+# --- reconcile fix_metadata equality
+def test_reconcile_fix_metadata_only_already_done_when_value_equals(run):
+    q = write_queue(run, [
+        {"id": 1, "type": "fix_metadata", "status": "pending", "details": {"item_key": "SAME0001", "proposed_changes": {"abstract": "  The  Abstract "}}},
+        {"id": 2, "type": "fix_metadata", "status": "pending", "details": {"item_key": "DIFF0001", "proposed_changes": {"abstract": "New abstract"}}},
+        {"id": 3, "type": "fix_metadata", "status": "pending", "details": {"item_key": "EMPT0001", "proposed_changes": {"abstract": "New abstract"}}},
+    ])
+    routes = [get_item("SAME0001", zitem("SAME0001", abstractNote="the abstract")), get_item("DIFF0001", zitem("DIFF0001", abstractNote="Old abstract")), get_item("EMPT0001", zitem("EMPT0001", abstractNote=""))]
+    p = run.go(QUEUE, ["reconcile", q, "--apply"], routes)
+    assert p.returncode == 0, p.stderr
+    assert "differs: 1" in p.stdout and "already_done: 1" in p.stdout and "outstanding: 1" in p.stdout
+    a = {x["id"]: x["status"] for x in load(q)["actions"]}
+    assert a == {1: "already_done", 2: "pending", 3: "pending"}
+
+
+# --- Crossref details
+def run_crossref_driver(run, *args):
+    p = run.go(LDRIVER, list(args))
+    assert p.returncode == 0, p.stderr
+    return json.loads(p.stdout)
+
+
+def test_crossref_creator_types_valid_per_type_and_invalid_role_becomes_contributor(run):
+    res = run_crossref_driver(run, "crossref-map")
+    for cr_type, item in res["items"].items():
+        valid = set(TYPE_FIELDS["creatorTypes"][item["itemType"]])
+        assert {c["creatorType"] for c in item["creators"]} <= valid, cr_type
+    odd = run_crossref_driver(run, "crossref-odd")
+    assert odd["role_fallback"] == "contributor" and odd["role_kept"] == "reviewedAuthor"
+    assert odd["date_null_parts"] == "2024-05"
+    assert odd["date_created"] == "2023-01-02"
+
+
+def test_normalise_doi(run):
+    cases = run_crossref_driver(run, "doi-cases")
+    for raw, want in cases:
+        assert want["got"] == want["want"], raw
+
+
+# --- detect-duplicates at scale
+def test_detect_duplicates_3000_titles_fast_and_still_finds_planted_pair(run):
+    rnd = random.Random(7)
+    vocab = [f"{rnd.choice('bcdfghjklmnprstvw')}{rnd.choice('aeiou')}{rnd.choice('bcdfghjklmnprstvw')}{rnd.choice('aeiou')}{rnd.choice('bcdfghjklmnprstvw')}{i}" for i in range(2500)]
+    items = [top_item(f"K{i:07d}", " ".join(rnd.sample(vocab, 8))) for i in range(3000)]
+    items.append(top_item("PLANT001", "Anticipatory action triggers for drought forecasting in smallholder systems"))
+    items.append(top_item("PLANT002", "Anticipatory action triggers for drought forecasting in smallholder systems."))
+    routes = [{"method": "GET", "url": "/items/top", "sequence": [{"json": items}, {"json": []}]}]
+    t0 = time.time()
+    p = run.go(DUPES, [], routes)
+    elapsed = time.time() - t0
+    assert p.returncode == 0, p.stderr
+    rep = json.loads(p.stdout)
+    assert elapsed < 10, f"took {elapsed:.1f}s"
+    assert any({i["key"] for i in c["items"]} == {"PLANT001", "PLANT002"} for c in rep["clusters"])
+    assert "fuzzy pass: 1000/" in p.stderr
+
+
+def test_detect_duplicates_no_fuzzy_skips_title_pass(run):
+    p = run.go(DUPES, ["--no-fuzzy"], [{"method": "GET", "url": "/items/top", "response": {"json": DUP_ITEMS}}])
+    assert p.returncode == 0, p.stderr
+    assert [c["method"] for c in json.loads(p.stdout)["clusters"]] == ["doi"]

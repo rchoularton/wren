@@ -182,5 +182,51 @@
       "rights",
       "extra"
     ]
+  },
+  "creatorTypes": {
+    "_comment": "From api.zotero.org/itemTypeCreatorTypes, fetched once during development; tests never fetch it.",
+    "journalArticle": [
+      "author",
+      "contributor",
+      "editor",
+      "reviewedAuthor",
+      "translator"
+    ],
+    "bookSection": [
+      "author",
+      "bookAuthor",
+      "contributor",
+      "editor",
+      "seriesEditor",
+      "translator"
+    ],
+    "book": [
+      "author",
+      "contributor",
+      "editor",
+      "seriesEditor",
+      "translator"
+    ],
+    "report": [
+      "author",
+      "contributor",
+      "editor",
+      "seriesEditor",
+      "translator"
+    ],
+    "conferencePaper": [
+      "author",
+      "contributor",
+      "editor",
+      "seriesEditor",
+      "translator"
+    ],
+    "preprint": [
+      "author",
+      "contributor",
+      "editor",
+      "reviewedAuthor",
+      "translator"
+    ]
   }
 }

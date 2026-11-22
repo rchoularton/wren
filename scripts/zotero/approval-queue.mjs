@@ -32,6 +32,7 @@ import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { createClientFromEnv, loadFetch } from './_lib/zotero-client.mjs';
 import { fetchCrossrefWork, crossrefWorkToZoteroItem, normaliseDoi } from './_lib/crossref-item.mjs';
+import { TITLE_THRESHOLD, normaliseTitle, jaroWinkler } from './_lib/dup-match.mjs';
 
 const EXIT_ARGS = 1;
 const EXIT_API = 2;
@@ -64,14 +65,28 @@ const NON_FIX_FIELDS = new Set(['collection', 'collections', 'tag', 'tags']);
 // Values that are a note to a human, not a value. Whole-value matches only for the bare words,
 // so real text that merely starts with a common word ("Missing data in ...") passes.
 const PLACEHOLDER_WORDS = /^(unknown|n\/?a|none|null|undefined|tbd|todo|tba|-+|\?+|\.+|untitled|manual|missing)$/i;
-const PLACEHOLDER_PHRASES = /^[(<[]?\s*(full\s+)?(fetch|crossref|apply-time|extract (from|via)\b|to be (assigned|determined|confirmed|added|filled|extracted)\b|see (catalogu|report|attached|above|below)|assign\b|\(?missing\))/i;
+const PLACEHOLDER_PHRASES = /^[(<[]?\s*(full\s+)?(fetch\s+(from|via|at|the)\b|crossref\s+(abstract|metadata|lookup|record)\b|apply-time\b|extract (from|via)\b|to be (assigned|determined|confirmed|added|filled|extracted)\b|see (catalogu|report|attached|above|below)|assign\b|\(?missing\))/i;
+
+// Fully bracketed values ("[no title]", "[unknown]", "[n.d.]", "<to be filled>") are notes, not values.
+const BRACKETED = /^(\[[^\]]*\]|<[^>]*>)$/;
 
 export function isPlaceholder(v) {
   if (v === undefined || v === null) return true;
   if (Array.isArray(v)) return v.length === 0;
   if (typeof v === 'object') return false;
   const s = String(v).trim();
-  return s === '' || PLACEHOLDER_WORDS.test(s) || PLACEHOLDER_PHRASES.test(s);
+  return s === '' || PLACEHOLDER_WORDS.test(s) || PLACEHOLDER_PHRASES.test(s) || BRACKETED.test(s);
+}
+
+/** Names of creators whose name parts are placeholders (an empty first name is allowed). */
+export function placeholderCreators(creators) {
+  const bad = [];
+  for (const c of creators || []) {
+    const main = c.name ?? c.lastName;
+    const parts = [main, ...(c.firstName ? [c.firstName] : [])];
+    if (parts.some((x) => isPlaceholder(x))) bad.push(JSON.stringify(c.name ?? `${c.firstName || ''} ${c.lastName || ''}`.trim()));
+  }
+  return bad;
 }
 
 /** Normalise any creator representation into Zotero creator objects. */
@@ -175,40 +190,67 @@ const writeToken = () => crypto.randomBytes(16).toString('hex');
 // ---------- Action executors ----------
 // Each returns a result object, or throws. A throw marks the action `failed`.
 
+async function verifyCreated(ctx, key, expect) {
+  const after = await getItemOrNull(ctx, key);
+  const got = after?.data;
+  if (!got) throw new VerifyError(`re-read found no item ${key} after create`);
+  const problems = [];
+  if (isTrashed(got)) problems.push('item is in the trash');
+  if (expect.itemType && got.itemType !== expect.itemType) problems.push(`itemType ${got.itemType} != ${expect.itemType}`);
+  if (expect.title !== undefined && got.title !== expect.title) problems.push('title differs');
+  if (expect.DOI && normaliseDoi(got.DOI) !== normaliseDoi(expect.DOI)) problems.push('DOI differs');
+  const gotTags = new Set((got.tags || []).map((t) => t.tag));
+  if (!expect.tags.every((t) => gotTags.has(t))) problems.push('tags missing');
+  if (problems.length) throw new VerifyError(`item ${key} re-read does not match: ${problems.join('; ')}`);
+  return got;
+}
+
 async function executeAddItem(action, ctx) {
   const d = action.details || {};
   const tags = ['librarian-team', `source-${action.paper || 'unknown'}`, `relevance-${d.relevance || 'medium'}`];
+  const doi = normaliseDoi(d.doi || d.DOI);
+
+  // Retry safety: never create a second item for an action that may already have created one.
+  if (action.created_key) {
+    await verifyCreated(ctx, action.created_key, { DOI: doi, tags });
+    return { key: action.created_key, adopted: true, verified: true };
+  }
+  if (ctx.retry && doi) {
+    const hits = (await ctx.client.getJson(`/items?${new URLSearchParams({ q: doi, qmode: 'everything', limit: '5' })}`)) || [];
+    const hit = hits.find((it) => normaliseDoi(it.data?.DOI) === doi && !isTrashed(it.data));
+    if (hit) {
+      action.created_key = hit.key;
+      return { key: hit.key, adopted: true, note: 'an item with this DOI already existed; adopted instead of creating another', verified: true };
+    }
+  }
 
   // With a DOI, Crossref decides the item type and fields. The proposer's metadata is the
   // fallback when there is no DOI, Crossref is unreachable, or the type has no mapping.
-  const doi = normaliseDoi(d.doi || d.DOI);
   const work = doi ? await fetchCrossrefWork(doi, { fetch: ctx.fetch, mailto: ctx.env.CROSSREF_EMAIL || ctx.env.UNPAYWALL_EMAIL || '' }) : null;
   let item = work ? crossrefWorkToZoteroItem(work) : null;
   let source = 'crossref';
   if (!item) {
     source = 'proposer';
     const abstract = d.abstract || '';
+    const title = d.title || action.title || '';
     item = doi
-      ? { itemType: 'journalArticle', title: d.title || action.title || 'Untitled', creators: toCreators(d.authors), abstractNote: abstract, publicationTitle: d.venue || '', date: d.date || '', DOI: doi, url: d.url || '' }
-      : { itemType: 'webpage', title: d.title || action.title || 'Untitled', creators: toCreators(d.authors), abstractNote: d.venue ? `[Source: ${d.venue}] ${abstract}`.trim() : abstract, date: d.date || '', url: d.url || '' };
+      ? { itemType: 'journalArticle', title, creators: toCreators(d.authors), abstractNote: abstract, publicationTitle: d.venue || '', date: d.date || '', DOI: doi, url: d.url || '' }
+      : { itemType: 'webpage', title, creators: toCreators(d.authors), abstractNote: d.venue ? `[Source: ${d.venue}] ${abstract}`.trim() : abstract, date: d.date || '', url: d.url || '' };
   }
+  if (isPlaceholder(item.title)) throw new Error(`refused: the item has no usable title (${JSON.stringify(item.title)})`);
+  const badNames = placeholderCreators(item.creators);
+  if (badNames.length) throw new Error(`refused placeholder creator name(s): ${badNames.join(', ')}`);
   item.tags = tags.map((tag) => ({ tag }));
   item.collections = [];
 
   const created = await ctx.client.request('/items', { method: 'POST', body: [item], headers: { 'Zotero-Write-Token': writeToken() } });
   const key = created.data?.successful?.['0']?.key || created.data?.success?.['0'];
   if (!key) throw new Error(`Zotero rejected the item: ${JSON.stringify(created.data?.failed ?? created.data)}`);
+  // Record the key before verifying, so a crash or a failed verify cannot lead to a second create.
+  action.created_key = key;
+  ctx.persist?.();
 
-  const after = await getItemOrNull(ctx, key);
-  const got = after?.data;
-  if (!got) throw new VerifyError(`re-read found no item ${key} after create`);
-  const problems = [];
-  if (got.itemType !== item.itemType) problems.push(`itemType ${got.itemType} != ${item.itemType}`);
-  if (got.title !== item.title) problems.push('title differs');
-  if (item.DOI && (got.DOI || '').toLowerCase() !== item.DOI.toLowerCase()) problems.push('DOI differs');
-  const gotTags = new Set((got.tags || []).map((t) => t.tag));
-  if (!tags.every((t) => gotTags.has(t))) problems.push('tags missing');
-  if (problems.length) throw new VerifyError(`item ${key} created but re-read does not match: ${problems.join('; ')}`);
+  await verifyCreated(ctx, key, { itemType: item.itemType, title: item.title, DOI: item.DOI, tags });
   return { key, title: item.title, itemType: item.itemType, source, verified: true };
 }
 
@@ -235,6 +277,11 @@ async function executeFixMetadata(action, ctx) {
       continue;
     }
     patch[zf] = zf === 'creators' ? toCreators(value) : value;
+  }
+  if (patch.creators) {
+    const badNames = placeholderCreators(patch.creators);
+    if (badNames.length) throw new Error(`refused placeholder creator name(s): ${badNames.join(', ')}`);
+    if (patch.creators.length === 0) throw new Error('refused: creators value held no usable creator');
   }
   for (const w of warnings) console.warn(`  warning: ${w}`);
   if (Object.keys(patch).length === 0) throw new Error(`no applicable fields left; ${warnings.join('; ')}`);
@@ -292,10 +339,28 @@ async function executeAddToCollection(action, ctx) {
 async function executeMergeDuplicate(action, ctx) {
   const { keep: keepKey, losers } = mergeKeysOf(action.details || {});
   if (!keepKey || losers.length === 0) throw new Error('merge_duplicate action missing keep/merge keys');
+  if (losers.includes(keepKey)) throw new Error(`refused: the keeper ${keepKey} is also listed as an item to merge away`);
 
   const keep = await ctx.client.getItem(keepKey);
   const kd = keep.data || {};
   if (isTrashed(kd)) throw new Error(`keeper ${keepKey} is in the trash; refusing to merge into it`);
+
+  // One read per loser serves the similarity check, the tag/collection merge and the version
+  // precondition on its trash PATCH, so a change in between gives a 412 instead of a lost tag.
+  const live = [];
+  for (const lk of losers) {
+    const loser = await getItemOrNull(ctx, lk);
+    if (!loser || isTrashed(loser.data)) continue; // already gone or trashed
+    const ld = loser.data || {};
+    const sameType = ld.itemType === kd.itemType;
+    const doiK = normaliseDoi(kd.DOI);
+    const sameDoi = doiK !== '' && doiK === normaliseDoi(ld.DOI);
+    const sim = jaroWinkler(normaliseTitle(kd.title), normaliseTitle(ld.title));
+    if (!sameType || !(sameDoi || sim >= TITLE_THRESHOLD)) {
+      throw new Error(`refused: ${lk} does not look like a duplicate of ${keepKey} (itemType ${ld.itemType} vs ${kd.itemType}; DOI ${sameDoi ? 'equal' : 'differs or missing'}; title similarity ${sim.toFixed(2)} < ${TITLE_THRESHOLD}). No change was made.`);
+    }
+    live.push({ key: lk, item: loser });
+  }
 
   const tagSet = new Set((kd.tags || []).map((t) => t.tag));
   const mergedTags = [...(kd.tags || [])];
@@ -304,12 +369,7 @@ async function executeMergeDuplicate(action, ctx) {
   const relations = { ...(kd.relations || {}) };
   const prev = relations['dc:replaces'];
   const replaces = Array.isArray(prev) ? [...prev] : prev ? [prev] : [];
-
-  const live = [];
-  for (const lk of losers) {
-    const loser = await getItemOrNull(ctx, lk);
-    if (!loser || isTrashed(loser.data)) continue; // already gone or trashed
-    live.push({ key: lk, item: loser });
+  for (const { key: lk, item: loser } of live) {
     for (const t of loser.data?.tags || []) if (!tagSet.has(t.tag)) { mergedTags.push({ tag: t.tag }); tagSet.add(t.tag); }
     for (const c of loser.data?.collections || []) if (!colSet.has(c)) { mergedCols.push(c); colSet.add(c); }
     const uri = itemURI(ctx, lk);
@@ -327,14 +387,13 @@ async function executeMergeDuplicate(action, ctx) {
 
   const trashed = [];
   const reassigned = [];
-  for (const { key: lk } of live) {
+  for (const { key: lk, item: loser } of live) {
     for (const child of await ctx.client.listChildren(lk)) {
       await ctx.client.request(`/items/${child.key}`, { method: 'PATCH', body: { parentItem: keepKey }, version: child.version ?? child.data?.version });
       if ((await ctx.client.getItem(child.key)).data?.parentItem !== keepKey) throw new VerifyError(`re-read shows child ${child.key} still not under ${keepKey}`);
       reassigned.push(child.key);
     }
-    const fresh = await ctx.client.getItem(lk);
-    await ctx.client.request(`/items/${lk}`, { method: 'PATCH', body: { deleted: 1 }, version: fresh.version ?? fresh.data?.version });
+    await ctx.client.request(`/items/${lk}`, { method: 'PATCH', body: { deleted: 1 }, version: loser.version ?? loser.data?.version });
     if (!isTrashed((await ctx.client.getItem(lk)).data)) throw new VerifyError(`re-read shows ${lk} not in the trash`);
     trashed.push(lk);
   }
@@ -371,16 +430,35 @@ async function reconAddTag(action, ctx) {
   return wanted.every((t) => tags.has(t)) ? 'already_done' : 'outstanding';
 }
 
+const squash = (v) => String(v ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+// 'already_done' only when every concrete proposed value EQUALS the current value. A different
+// non-empty value is 'differs' (stays pending for a human); an empty field is 'outstanding'.
 async function reconFixMetadata(action, ctx) {
   const d = action.details || {};
   const key = itemKeyOf(d);
-  const pairs = fixPairsOf(d).filter(([f]) => !NON_FIX_FIELDS.has(f));
+  const pairs = fixPairsOf(d).filter(([f, v]) => !NON_FIX_FIELDS.has(f) && !isPlaceholder(v));
   if (!key || pairs.length === 0) return 'needs-manual';
   const item = await getItemOrNull(ctx, key);
   if (!item) return 'needs-manual';
-  if (pairs.every(([f]) => isFieldFilled(item.data || {}, f))) return 'already_done';
-  // A placeholder-only fix cannot be executed, so it is not "outstanding".
-  return pairs.some(([, v]) => !isPlaceholder(v)) ? 'outstanding' : 'needs-manual';
+  const data = item.data || {};
+  let allEqual = true;
+  let differs = false;
+  for (const [f, v] of pairs) {
+    const zf = zoteroField(f);
+    if (zf === 'creators') {
+      const flat = (cs) => JSON.stringify((cs || []).map((c) => squash(`${c.name || ''}|${c.firstName || ''}|${c.lastName || ''}`)));
+      if (flat(toCreators(v)) === flat(data.creators)) continue;
+      allEqual = false;
+      if (isFieldFilled(data, 'creators')) differs = true;
+      continue;
+    }
+    if (squash(data[zf]) === squash(v)) continue;
+    allEqual = false;
+    if (isFieldFilled(data, f)) differs = true;
+  }
+  if (allEqual) return 'already_done';
+  return differs ? 'differs' : 'outstanding';
 }
 
 async function reconMergeDuplicate(action, ctx) {
@@ -456,7 +534,56 @@ export function saveQueue(filePath, queue, io = fs) {
   }
 }
 
-const findAction = (queue, id) => queue.actions.find((a) => a.id === parseInt(id, 10));
+const parseId = (id) => {
+  if (!/^\d+$/.test(String(id))) throw new QueueFileError(`Action id must be a whole number, got "${id}"`);
+  return Number(id);
+};
+const findAction = (queue, id) => queue.actions.find((a) => a.id === parseId(id));
+
+// ---------- Lock ----------
+// Commands that write the queue hold <queue>.lock (created with O_EXCL, containing the pid and
+// an ISO time) for their whole run, so two commands cannot overwrite each other's decisions.
+
+const STALE_LOCK_MS = 30 * 60 * 1000;
+
+function removeLock(lockPath) { try { fs.unlinkSync(lockPath); } catch { /* already gone */ } }
+
+export function acquireLock(file, { now = Date.now(), warn = console.error } = {}) {
+  const lockPath = `${file}.lock`;
+  const body = JSON.stringify({ pid: process.pid, at: new Date(now).toISOString() });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      fs.writeFileSync(lockPath, body, { flag: 'wx' });
+      return () => removeLock(lockPath);
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      let held = {};
+      try { held = JSON.parse(fs.readFileSync(lockPath, 'utf8')); } catch { /* unreadable: fall back to mtime */ }
+      let since = Date.parse(held.at);
+      if (!Number.isFinite(since)) { try { since = fs.statSync(lockPath).mtimeMs; } catch { since = now; } }
+      if (now - since < STALE_LOCK_MS) {
+        throw new QueueFileError(`queue is locked by pid ${held.pid ?? 'unknown'} since ${new Date(since).toISOString()} (${lockPath}). If that process is gone, delete the lock file or wait 30 minutes.`);
+      }
+      warn(`warning: replacing stale lock (pid ${held.pid ?? 'unknown'}, since ${new Date(since).toISOString()})`);
+      removeLock(lockPath);
+    }
+  }
+  throw new QueueFileError(`could not take the queue lock ${lockPath}`);
+}
+
+async function withLock(file, fn) {
+  if (!fs.existsSync(file)) throw new QueueFileError(`File not found: ${file}`);
+  const release = acquireLock(file);
+  const onSignal = (sig) => () => { release(); process.exit(sig === 'SIGINT' ? 130 : 143); };
+  const handlers = ['SIGINT', 'SIGTERM'].map((sig) => [sig, onSignal(sig)]);
+  for (const [sig, h] of handlers) process.once(sig, h);
+  try {
+    return await fn();
+  } finally {
+    for (const [sig, h] of handlers) process.removeListener(sig, h);
+    release();
+  }
+}
 
 async function runAction(action, ctx) {
   const executor = EXECUTORS[action.type];
@@ -469,6 +596,7 @@ function recordResult(action, result) {
   action.applied_at = nowIso();
   action.result = result;
   delete action.error;
+  delete action.failed_at;
 }
 
 function recordFailure(action, err) {
@@ -479,13 +607,18 @@ function recordFailure(action, err) {
 
 // ---------- Commands ----------
 
-async function cmdApprove(id, file, ctx) {
+async function cmdApprove(id, file, ctx, { retry = false } = {}) {
   const queue = loadQueue(file);
   const action = findAction(queue, id);
   if (!action) throw new QueueFileError(`Action ID ${id} not found in queue`);
+  if (action.status === 'failed' && !retry) {
+    throw new QueueFileError(`Action ${id} failed earlier (${action.error || 'no reason recorded'}). Check Zotero for a partial change, then re-run with --retry.`);
+  }
   if (!['approved', 'pending', 'failed'].includes(action.status)) {
     throw new QueueFileError(`Action ${id} has status "${action.status}" - cannot execute`);
   }
+  ctx.retry = retry || action.status === 'failed';
+  ctx.persist = () => saveQueue(file, queue);
   let failed = false;
   try {
     recordResult(action, await runAction(action, ctx));
@@ -505,6 +638,8 @@ async function cmdApproveAll(file, ctx) {
   const todo = queue.actions.filter((a) => a.status === 'approved');
   if (todo.length === 0) { console.log('No approved actions to execute.'); return 0; }
   console.log(`Executing ${todo.length} approved actions...\n`);
+  ctx.retry = false;
+  ctx.persist = () => saveQueue(file, queue);
   let ok = 0;
   let failed = 0;
   for (const action of todo) {
@@ -547,7 +682,7 @@ async function cmdReconcile(file, { apply, includeManual, verbose }, ctx) {
   const queue = loadQueue(file);
   const wanted = includeManual ? ['pending', 'approved', 'needs-manual'] : ['pending', 'approved'];
   const targets = queue.actions.filter((a) => wanted.includes(a.status));
-  const buckets = { already_done: [], outstanding: [], 'needs-manual': [], error: [] };
+  const buckets = { already_done: [], outstanding: [], differs: [], 'needs-manual': [], error: [] };
 
   for (const action of targets) {
     const recon = RECONCILERS[action.type];
@@ -577,12 +712,13 @@ async function cmdReconcile(file, { apply, includeManual, verbose }, ctx) {
   console.log(apply ? '  -> applied: already_done / needs-manual written back; outstanding left as is'
     : '  -> dry run: nothing written (pass --apply to persist)');
   if (buckets.outstanding.length) { console.log('\n  OUTSTANDING (still to do):'); buckets.outstanding.forEach((a) => console.log(label(a))); }
+  if (buckets.differs.length) { console.log('\n  DIFFERS (the field already holds a different value; left pending for you to decide):'); buckets.differs.forEach((a) => console.log(label(a))); }
   if (verbose) {
     for (const k of ['already_done', 'needs-manual', 'error']) {
-      if (buckets[k].length) { console.log(`\n  ${k.toUpperCase()}:`); buckets[k].forEach((a) => console.log(label(a))); }
+      if (buckets[k].length) { console.log(`\n  ${k.toUpperCase()}:`); buckets[k].forEach((a) => console.log(label(a) + (k === 'error' ? ` - ${a.reconcile_error}` : ''))); }
     }
   }
-  return 0;
+  return buckets.error.length ? EXIT_API : 0;
 }
 
 function cmdDecide(status, id, file, reason) {
@@ -609,19 +745,28 @@ export async function main(argv) {
   const need = (n, usage) => { if (rest.length < n) throw new QueueFileError(`Usage: approval-queue.mjs ${usage}`); };
   const makeCtx = async () => {
     const client = await createClientFromEnv();
+    for (const v of ['ZOTERO_API_KEY', 'ZOTERO_LIBRARY_ID']) {
+      if (!client.env[v]) throw new QueueFileError(`${v} is not set. Add it to .env (see scripts/zotero/README.md).`);
+    }
     return { client, env: client.env, fetch: await loadFetch(client.env), sleep };
   };
   switch (command) {
     case 'status': need(1, 'status <queue-file>'); return cmdStatus(rest[0]);
-    case 'reject': need(2, 'reject <id> <queue-file> [reason]'); return cmdDecide('rejected', rest[0], rest[1], rest.slice(2).join(' ') || null);
-    case 'skip': need(2, 'skip <id> <queue-file> [reason]'); return cmdDecide('skipped', rest[0], rest[1], rest.slice(2).join(' ') || null);
-    case 'approve': need(2, 'approve <id> <queue-file>'); loadQueue(rest[1]); return cmdApprove(rest[0], rest[1], await makeCtx());
-    case 'approve-all': need(1, 'approve-all <queue-file>'); loadQueue(rest[0]); return cmdApproveAll(rest[0], await makeCtx());
+    case 'reject': need(2, 'reject <id> <queue-file> [reason]'); parseId(rest[0]); return withLock(rest[1], async () => cmdDecide('rejected', rest[0], rest[1], rest.slice(2).join(' ') || null));
+    case 'skip': need(2, 'skip <id> <queue-file> [reason]'); parseId(rest[0]); return withLock(rest[1], async () => cmdDecide('skipped', rest[0], rest[1], rest.slice(2).join(' ') || null));
+    case 'approve': {
+      const args = rest.filter((a) => a !== '--retry');
+      need(2, 'approve <id> <queue-file> [--retry]');
+      parseId(args[0]);
+      return withLock(args[1], async () => cmdApprove(args[0], args[1], await makeCtx(), { retry: rest.includes('--retry') }));
+    }
+    case 'approve-all': need(1, 'approve-all <queue-file>'); return withLock(rest[0], async () => cmdApproveAll(rest[0], await makeCtx()));
     case 'reconcile': {
       const file = rest.find((a) => !a.startsWith('--'));
       need(1, 'reconcile <queue-file> [--apply] [--include-manual] [--verbose]');
-      loadQueue(file);
-      return cmdReconcile(file, { apply: rest.includes('--apply'), includeManual: rest.includes('--include-manual'), verbose: rest.includes('--verbose') }, await makeCtx());
+      const opts = { apply: rest.includes('--apply'), includeManual: rest.includes('--include-manual'), verbose: rest.includes('--verbose') };
+      const go = async () => cmdReconcile(file, opts, await makeCtx());
+      return opts.apply ? withLock(file, go) : (loadQueue(file), go());
     }
     default: throw new QueueFileError(USAGE);
   }

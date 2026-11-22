@@ -28,13 +28,21 @@ export const CROSSREF_TO_ZOTERO_TYPE = {
   'reference-book': 'book',
 };
 
-/** Lower-case a DOI and strip resolver prefixes ("https://doi.org/", "doi:"). */
+/**
+ * Lower-case a DOI and strip resolver prefixes ("https://doi.org/", "https://www.doi.org/",
+ * "doi:"), percent-encoding, and trailing punctuation from copy-paste. A trailing ")" is
+ * stripped only when the parentheses are unbalanced.
+ */
 export function normaliseDoi(s) {
   if (!s || typeof s !== 'string') return '';
-  return s.trim().toLowerCase()
-    .replace(/^https?:\/\/(dx\.)?doi\.org\//, '')
-    .replace(/^doi:\s*/, '')
-    .replace(/[\s.,;)]+$/, '');
+  let d = s.trim().toLowerCase().replace(/^https?:\/\/(www\.)?(dx\.)?doi\.org\//, '').replace(/^doi:\s*/, '');
+  try { d = decodeURIComponent(d); } catch { /* leave as is */ }
+  for (;;) {
+    const t = d.replace(/[\s.,;]+$/, '');
+    if (t !== d) { d = t; continue; }
+    if (d.endsWith(')') && (d.match(/\)/g) || []).length > (d.match(/\(/g) || []).length) { d = d.slice(0, -1); continue; }
+    return d;
+  }
 }
 
 /**
@@ -74,7 +82,26 @@ function decodeEntities(s) {
 const first = (v) => decodeEntities((Array.isArray(v) ? v[0] : v) || '');
 const last = (v) => decodeEntities((Array.isArray(v) ? v[v.length - 1] : v) || '');
 
-function toCreators(people, creatorType) {
+/**
+ * Creator types valid per Zotero item type (from api.zotero.org/itemTypeCreatorTypes).
+ * A Crossref role the target type does not have is mapped to "contributor".
+ */
+export const VALID_CREATOR_TYPES = {
+  journalArticle: ['author', 'contributor', 'editor', 'reviewedAuthor', 'translator'],
+  bookSection: ['author', 'bookAuthor', 'contributor', 'editor', 'seriesEditor', 'translator'],
+  book: ['author', 'contributor', 'editor', 'seriesEditor', 'translator'],
+  report: ['author', 'contributor', 'editor', 'seriesEditor', 'translator'],
+  conferencePaper: ['author', 'contributor', 'editor', 'seriesEditor', 'translator'],
+  preprint: ['author', 'contributor', 'editor', 'reviewedAuthor', 'translator'],
+};
+
+/** The creator type to use for a role on an item type: the role if the type has it, else "contributor". */
+export function creatorTypeFor(itemType, role) {
+  return VALID_CREATOR_TYPES[itemType]?.includes(role) ? role : 'contributor';
+}
+
+function toCreators(people, role, itemType) {
+  const creatorType = creatorTypeFor(itemType, role);
   return (people || [])
     .map((p) => (p.family
       ? { creatorType, firstName: (p.given || '').trim(), lastName: p.family.trim() }
@@ -83,13 +110,11 @@ function toCreators(people, creatorType) {
 }
 
 function dateOf(w) {
-  const parts = w.issued?.['date-parts']?.[0]
-    || w['published-online']?.['date-parts']?.[0]
-    || w['published-print']?.['date-parts']?.[0]
-    || [];
-  return parts.filter((n) => n != null)
-    .map((n, i) => (i === 0 ? String(n) : String(n).padStart(2, '0')))
-    .join('-');
+  for (const src of [w.issued, w['published-online'], w['published-print'], w.created]) {
+    const parts = (src?.['date-parts']?.[0] || []).filter((n) => n != null);
+    if (parts.length) return parts.map((n, i) => (i === 0 ? String(n) : String(n).padStart(2, '0'))).join('-');
+  }
+  return '';
 }
 
 function abstractOf(w) {
@@ -117,7 +142,7 @@ export function crossrefWorkToZoteroItem(w) {
   const item = {
     itemType,
     title,
-    creators: [...toCreators(w.author, 'author'), ...toCreators(w.editor, 'editor')],
+    creators: [...toCreators(w.author, 'author', itemType), ...toCreators(w.editor, 'editor', itemType)],
     abstractNote: abstractOf(w),
     date: dateOf(w),
     DOI: w.DOI || '',

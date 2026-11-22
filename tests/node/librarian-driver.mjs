@@ -20,6 +20,19 @@ if (cmd === 'crossref-map') {
   const items = {};
   for (const type of Object.keys(cr.CROSSREF_TO_ZOTERO_TYPE)) items[type] = cr.crossrefWorkToZoteroItem({ ...base, type });
   out({ mapping: cr.CROSSREF_TO_ZOTERO_TYPE, items, unmapped: cr.crossrefWorkToZoteroItem({ ...base, type: 'dataset' }) });
+} else if (cmd === 'crossref-odd') {
+  const cr = await mod('scripts/zotero/_lib/crossref-item.mjs');
+  const w = { type: 'journal-article', title: ['T'], DOI: '10.1/x' };
+  const odd = { ...w, issued: { 'date-parts': [[null]] }, 'published-online': { 'date-parts': [[2024, 5]] } };
+  const created = { ...w, issued: { 'date-parts': [[null]] }, created: { 'date-parts': [[2023, 1, 2]] } };
+  out({ role_fallback: cr.creatorTypeFor('bookSection', 'reviewedAuthor'), role_kept: cr.creatorTypeFor('journalArticle', 'reviewedAuthor'), date_null_parts: cr.crossrefWorkToZoteroItem(odd).date, date_created: cr.crossrefWorkToZoteroItem(created).date });
+} else if (cmd === 'doi-cases') {
+  const cr = await mod('scripts/zotero/_lib/crossref-item.mjs');
+  const cases = [
+    ['https://www.doi.org/10.1234/ABC', '10.1234/abc'], ['https://doi.org/10.1234/abc.', '10.1234/abc'], ['doi:10.1234/abc;', '10.1234/abc'],
+    ['10.1234%2Fabc', '10.1234/abc'], ['10.1234/abc)', '10.1234/abc'], ['10.1234/abc(1)', '10.1234/abc(1)'], ['10.1234/abc(1),', '10.1234/abc(1)'],
+  ];
+  out(cases.map(([raw, want]) => [raw, { got: cr.normaliseDoi(raw), want }]));
 } else if (cmd === 'save-fail') {
   const q = await mod('scripts/zotero/approval-queue.mjs');
   const dir = path.dirname(arg);
