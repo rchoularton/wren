@@ -98,6 +98,10 @@ def crossref(doi, response):
     return {"method": "GET", "url": f"api.crossref.org/works/{quote(doi, safe='')}", "response": response}
 
 
+def doi_search(items=()):
+    return {"method": "GET", "url": f"{LIB}/items?q=", "response": {"json": list(items)}}
+
+
 def post_items(key="NEWKEY01"):
     return {"method": "POST", "url": f"{LIB}/items", "response": {"status": 200, "json": {"successful": {"0": {"key": key}}, "failed": {}}}}
 
@@ -139,7 +143,7 @@ def test_add_item_journal_article_from_crossref(run):
                         "volume": "7", "issued": {"date-parts": [[2025]]}, "author": [{"given": "A", "family": "Author"}]}}
     stored = zitem("NEWKEY01", "journalArticle", title="Crossref journal title", DOI="10.1234/journal.1",
                    tags=[{"tag": "librarian-team"}, {"tag": "source-paper-a"}, {"tag": "relevance-high"}])
-    p = run.go(QUEUE, ["approve", 1, q], [crossref("10.1234/journal.1", {"json": work}), post_items(), get_item("NEWKEY01", stored)])
+    p = run.go(QUEUE, ["approve", 1, q], [doi_search(), crossref("10.1234/journal.1", {"json": work}), post_items(), get_item("NEWKEY01", stored)])
     assert p.returncode == 0, p.stderr
     sent = json.loads(run.writes()[0]["body"])[0]
     assert sent["itemType"] == "journalArticle" and sent["publicationTitle"] == "Journal of Tests"
@@ -158,7 +162,7 @@ def test_add_item_book_chapter_has_no_journal_only_field(run):
                         "page": "10-20", "author": [{"given": "A", "family": "Author"}]}}
     stored = zitem("NEWKEY01", "bookSection", title="A chapter", DOI="10.1234/chapter.1",
                    tags=[{"tag": "librarian-team"}, {"tag": "source-paper-a"}, {"tag": "relevance-high"}])
-    p = run.go(QUEUE, ["approve", 1, q], [crossref("10.1234/chapter.1", {"json": work}), post_items(), get_item("NEWKEY01", stored)])
+    p = run.go(QUEUE, ["approve", 1, q], [doi_search(), crossref("10.1234/chapter.1", {"json": work}), post_items(), get_item("NEWKEY01", stored)])
     assert p.returncode == 0, p.stderr
     sent = json.loads(run.writes()[0]["body"])[0]
     assert sent["itemType"] == "bookSection" and sent["bookTitle"] == "The Book"
@@ -174,7 +178,7 @@ def test_add_item_falls_back_to_proposer_metadata_when_crossref_unreachable(run)
     q = write_queue(run, [add_item_action("10.1234/down.1")])
     stored = zitem("NEWKEY01", "journalArticle", title="Proposer title", DOI="10.1234/down.1",
                    tags=[{"tag": "librarian-team"}, {"tag": "source-paper-a"}, {"tag": "relevance-high"}])
-    p = run.go(QUEUE, ["approve", 1, q], [crossref("10.1234/down.1", {"status": 503, "text": "down"}), post_items(), get_item("NEWKEY01", stored)])
+    p = run.go(QUEUE, ["approve", 1, q], [doi_search(), crossref("10.1234/down.1", {"status": 503, "text": "down"}), post_items(), get_item("NEWKEY01", stored)])
     assert p.returncode == 0, p.stderr
     sent = json.loads(run.writes()[0]["body"])[0]
     assert sent["itemType"] == "journalArticle" and sent["title"] == "Proposer title" and sent["publicationTitle"] == "Proposer Journal"
@@ -460,17 +464,17 @@ def test_merge_duplicate_refuses_different_item_types(run):
 
 
 # --- lock
-def lock_body(ago_minutes):
-    return json.dumps({"pid": 4242, "at": (datetime.now(timezone.utc) - timedelta(minutes=ago_minutes)).isoformat()})
+def lock_body(ago_minutes, pid=4242):
+    return json.dumps({"pid": pid, "at": (datetime.now(timezone.utc) - timedelta(minutes=ago_minutes)).isoformat()})
 
 
 def test_second_command_exits_1_while_queue_is_locked(run):
     q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "pending", "details": {}}])
     lock = q.with_name(q.name + ".lock")
-    lock.write_text(lock_body(1))
+    lock.write_text(lock_body(1, pid=os.getpid()))  # a live process
     before = q.read_bytes()
     p = run.go(QUEUE, ["reject", 1, q])
-    assert p.returncode == 1 and "locked by pid 4242" in p.stderr
+    assert p.returncode == 1 and f"locked by pid {os.getpid()}" in p.stderr
     assert q.read_bytes() == before and lock.exists(), "a refused command must not touch the queue or the other holder's lock"
     assert run.go(QUEUE, ["status", q]).returncode == 0, "status takes no lock"
     assert run.go(QUEUE, ["reconcile", q]).returncode == 0, "dry-run reconcile takes no lock"
@@ -498,7 +502,7 @@ def test_failed_add_item_saves_created_key_before_verify_and_retry_adopts_it(run
     q = write_queue(run, [add_item_action("10.1234/retry.1")])
     work = {"message": {"type": "journal-article", "title": ["Retry title"], "DOI": "10.1234/retry.1"}}
     bad = zitem("NEWKEY01", "journalArticle", title="Retry title", DOI="10.1234/retry.1")  # tags missing -> verify fails
-    p = run.go(QUEUE, ["approve", 1, q], [crossref("10.1234/retry.1", {"json": work}), post_items(), get_item("NEWKEY01", bad)])
+    p = run.go(QUEUE, ["approve", 1, q], [doi_search(), crossref("10.1234/retry.1", {"json": work}), post_items(), get_item("NEWKEY01", bad)])
     assert p.returncode == 2
     act = load(q)["actions"][0]
     assert act["status"] == "failed" and act["created_key"] == "NEWKEY01"
@@ -611,3 +615,83 @@ def test_detect_duplicates_no_fuzzy_skips_title_pass(run):
     p = run.go(DUPES, ["--no-fuzzy"], [{"method": "GET", "url": "/items/top", "response": {"json": DUP_ITEMS}}])
     assert p.returncode == 0, p.stderr
     assert [c["method"] for c in json.loads(p.stdout)["clusters"]] == ["doi"]
+
+
+# ---------- review round 3 ----------
+
+def test_save_failure_after_create_does_not_lead_to_a_second_post(run):
+    q = write_queue(run, [add_item_action("10.1234/disk.1")])
+    work = {"message": {"type": "journal-article", "title": ["Disk title"], "DOI": "10.1234/disk.1"}}
+    p = run.go(LDRIVER, ["persist-fail", q], [doi_search(), crossref("10.1234/disk.1", {"json": work}), post_items()])
+    assert p.returncode == 0, p.stderr
+    res = json.loads(p.stdout)
+    assert "disk full" in res["thrown"]
+    assert "NEWKEY01" in p.stderr and '"created_key": "NEWKEY01"' in p.stderr and "action 1" in p.stderr
+    assert len([c for c in run.calls if c["method"] == "POST"]) == 1
+    assert "created_key" not in load(q)["actions"][0]  # the save really did not happen
+
+    q2 = write_queue(run, [{**add_item_action("10.1234/disk.1"), "status": "approved"}], "again.json")
+    existing = zitem("NEWKEY01", "journalArticle", title="Disk title", DOI="10.1234/disk.1")
+    p = run.go(QUEUE, ["approve", 1, q2], [doi_search([existing])])  # plain approve, no --retry
+    assert p.returncode == 0, p.stderr
+    assert run.writes() == []
+    act = load(q2)["actions"][0]
+    assert act["status"] == "applied" and act["result"]["key"] == "NEWKEY01" and act["created_key"] == "NEWKEY01"
+
+
+def test_doi_search_ignores_trashed_matches_and_asks_for_25(run):
+    q = write_queue(run, [add_item_action("10.1234/trash.1")])
+    work = {"message": {"type": "journal-article", "title": ["T"], "DOI": "10.1234/trash.1"}}
+    trashed = zitem("OLD00001", "journalArticle", DOI="10.1234/trash.1", deleted=1)
+    stored = zitem("NEWKEY01", "journalArticle", title="T", DOI="10.1234/trash.1", tags=NEWTAGS)
+    p = run.go(QUEUE, ["approve", 1, q], [doi_search([trashed]), crossref("10.1234/trash.1", {"json": work}), post_items(), get_item("NEWKEY01", stored)])
+    assert p.returncode == 0, p.stderr
+    assert len(run.writes()) == 1
+    assert any("limit=25" in c["url"] for c in run.calls)
+
+
+@pytest.mark.parametrize("state", ["trashed", "gone"])
+def test_retry_clears_created_key_when_that_item_is_trashed_or_gone(run, state):
+    q = write_queue(run, [{**add_item_action("10.1234/gone.1"), "status": "failed", "error": "e", "created_key": "OLD00001"}])
+    work = {"message": {"type": "journal-article", "title": ["T"], "DOI": "10.1234/gone.1"}}
+    old = {"method": "GET", "url": f"{LIB}/items/OLD00001", "response": {"json": zitem("OLD00001", deleted=1)} if state == "trashed" else {"status": 404, "text": "Not found"}}
+    stored = zitem("NEWKEY01", "journalArticle", title="T", DOI="10.1234/gone.1", tags=NEWTAGS)
+    p = run.go(QUEUE, ["approve", 1, q, "--retry"], [old, doi_search(), crossref("10.1234/gone.1", {"json": work}), post_items(), get_item("NEWKEY01", stored)])
+    assert p.returncode == 0, p.stderr
+    assert "clearing it" in p.stderr
+    act = load(q)["actions"][0]
+    assert act["status"] == "applied" and act["created_key"] == "NEWKEY01"
+
+
+def test_lock_with_dead_pid_is_stale_even_when_fresh(run):
+    dead = subprocess.Popen([NODE, "-e", "0"])
+    dead.wait()
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "pending", "details": {}}])
+    lock = q.with_name(q.name + ".lock")
+    lock.write_text(lock_body(0, pid=dead.pid))
+    p = run.go(QUEUE, ["reject", 1, q])
+    assert p.returncode == 0 and "not running" in p.stderr
+    assert load(q)["actions"][0]["status"] == "rejected"
+
+
+def test_release_leaves_a_lock_owned_by_another_process(run):
+    q = write_queue(run, [{"id": 1, "type": "add_tag", "status": "pending", "details": {}}])
+    p = run.go(LDRIVER, ["lock-steal", q])
+    assert p.returncode == 0, p.stderr
+    res = json.loads(p.stdout)
+    assert res["still_there"] is True and res["body_pid"] == 1
+
+
+def test_detect_duplicates_catches_one_word_typo_and_longer_subtitle(run):
+    items = [
+        top_item("TYPO0001", "Resiliance of smallholders"),
+        top_item("TYPO0002", "Resilience of smallholders"),
+        top_item("SUBT0001", "Early warning systems for riverine flood risk"),
+        top_item("SUBT0002", "Early warning systems for riverine flood risk: a review of cases"),
+        top_item("OTHER001", "Completely different title about glacier retreat rates"),
+    ]
+    p = run.go(DUPES, [], [{"method": "GET", "url": "/items/top", "response": {"json": items}}])
+    assert p.returncode == 0, p.stderr
+    found = [{i["key"] for i in c["items"]} for c in json.loads(p.stdout)["clusters"]]
+    assert {"TYPO0001", "TYPO0002"} in found
+    assert {"SUBT0001", "SUBT0002"} in found

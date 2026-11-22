@@ -33,6 +33,22 @@ if (cmd === 'crossref-map') {
     ['10.1234%2Fabc', '10.1234/abc'], ['10.1234/abc)', '10.1234/abc'], ['10.1234/abc(1)', '10.1234/abc(1)'], ['10.1234/abc(1),', '10.1234/abc(1)'],
   ];
   out(cases.map(([raw, want]) => [raw, { got: cr.normaliseDoi(raw), want }]));
+} else if (cmd === 'persist-fail') {
+  // add_item whose queue save throws right after the create succeeds.
+  const q = await mod('scripts/zotero/approval-queue.mjs');
+  const queue = q.loadQueue(arg);
+  const ctx = { ...(await q.createContext()), retry: false, persist: () => { throw new Error('disk full'); } };
+  let thrown = null;
+  try { await q.EXECUTORS.add_item(queue.actions[0], ctx); } catch (e) { thrown = e.message; }
+  out({ thrown });
+} else if (cmd === 'lock-steal') {
+  // The lock file is replaced by another process's lock while we hold ours; release must not remove it.
+  const q = await mod('scripts/zotero/approval-queue.mjs');
+  const release = q.acquireLock(arg);
+  fs.writeFileSync(`${arg}.lock`, JSON.stringify({ pid: 1, at: new Date().toISOString() }));
+  release();
+  const still = fs.existsSync(`${arg}.lock`);
+  out({ still_there: still, body_pid: still ? JSON.parse(fs.readFileSync(`${arg}.lock`, 'utf8')).pid : null });
 } else if (cmd === 'save-fail') {
   const q = await mod('scripts/zotero/approval-queue.mjs');
   const dir = path.dirname(arg);

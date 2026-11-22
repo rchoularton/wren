@@ -5,10 +5,11 @@
  * Groups top-level items by:
  *   1. exact DOI (normalised: lower-case, "https://doi.org/" and "doi:" prefixes stripped)
  *   2. fuzzy title (Jaro-Winkler >= 0.92) among items not already grouped by DOI. To stay fast
- *      on large libraries, only pairs sharing at least two title tokens (length >= 4, minus a
- *      small stopword list) with normalised lengths within 20 percent are compared, so titles
- *      with fewer than two such tokens are not fuzzy-matched. Progress goes to stderr every
- *      1,000 titles. --no-fuzzy skips this pass (DOI grouping only).
+ *      on large libraries only candidate pairs are compared: pairs sharing two title tokens
+ *      (length >= 4, minus stopwords) or one token of length >= 8 with normalised lengths within
+ *      20 percent, or pairs whose normalised titles share their first 12 characters. This trades
+ *      some recall for speed. Progress goes to stderr every 1,000 titles. --no-fuzzy skips this
+ *      pass (DOI grouping only).
  *
  * Never writes to Zotero: the only requests it makes are GETs through the client.
  * The report goes to stdout, or to a file with --out.
@@ -75,25 +76,42 @@ export function detectDuplicates(items, { fuzzy = true, progress = null } = {}) 
     .filter((t) => t.norm.length >= MIN_TITLE_LENGTH);
   titled.forEach((t) => { t.tokens = blockTokens(t.norm); });
 
-  // Blocking: only pairs that share at least two title tokens (length >= 4, minus a small
-  // stopword list) and whose normalised lengths differ by at most 20 percent are compared.
-  // An inverted index finds those pairs without the O(n^2) scan.
+  // Blocking: a pair is compared only if it meets one of three rules (all still need
+  // Jaro-Winkler >= 0.92 to count). An inverted index finds candidates without an O(n^2) scan.
+  //   1. shares at least two title tokens (length >= 4, minus stopwords), lengths within 20 percent
+  //   2. shares one token of length >= 8, lengths within 20 percent (catches a one-word typo)
+  //   3. normalised titles start with the same 12 characters (catches a title plus a subtitle)
   const index = new Map();
-  titled.forEach((t, i) => { for (const tok of t.tokens) { if (!index.has(tok)) index.set(tok, []); index.get(tok).push(i); } });
+  const prefixes = new Map();
+  titled.forEach((t, i) => {
+    for (const tok of t.tokens) { if (!index.has(tok)) index.set(tok, []); index.get(tok).push(i); }
+    const pre = t.norm.slice(0, 12);
+    if (!prefixes.has(pre)) prefixes.set(pre, []);
+    prefixes.get(pre).push(i);
+  });
 
   const taken = new Set();
   for (let i = 0; i < titled.length; i++) {
     if (progress && i > 0 && i % 1000 === 0) progress(i, titled.length);
     if (taken.has(titled[i].key)) continue;
+    const la = titled[i].norm.length;
+    const lenOk = (j) => Math.abs(la - titled[j].norm.length) <= 0.2 * Math.max(la, titled[j].norm.length);
     const shared = new Map();
-    for (const tok of titled[i].tokens) for (const j of index.get(tok)) if (j > i) shared.set(j, (shared.get(j) || 0) + 1);
-    const candidates = [...shared].filter(([, n]) => n >= 2).map(([j]) => j).sort((x, y) => x - y);
+    const longShared = new Set();
+    for (const tok of titled[i].tokens) {
+      for (const j of index.get(tok)) {
+        if (j <= i) continue;
+        shared.set(j, (shared.get(j) || 0) + 1);
+        if (tok.length >= 8) longShared.add(j);
+      }
+    }
+    const cand = new Set();
+    for (const [j, n] of shared) if (lenOk(j) && (n >= 2 || longShared.has(j))) cand.add(j);
+    for (const j of prefixes.get(titled[i].norm.slice(0, 12))) if (j > i) cand.add(j);
+    const candidates = [...cand].sort((x, y) => x - y);
     const cluster = [{ ...titled[i], similarity: 1.0 }];
     for (const j of candidates) {
       if (taken.has(titled[j].key)) continue;
-      const la = titled[i].norm.length;
-      const lb = titled[j].norm.length;
-      if (Math.abs(la - lb) > 0.2 * Math.max(la, lb)) continue;
       const sim = jaroWinkler(titled[i].norm, titled[j].norm);
       if (sim >= TITLE_THRESHOLD) {
         cluster.push({ ...titled[j], similarity: sim });

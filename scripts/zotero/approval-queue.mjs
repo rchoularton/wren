@@ -210,13 +210,20 @@ async function executeAddItem(action, ctx) {
   const tags = ['librarian-team', `source-${action.paper || 'unknown'}`, `relevance-${d.relevance || 'medium'}`];
   const doi = normaliseDoi(d.doi || d.DOI);
 
-  // Retry safety: never create a second item for an action that may already have created one.
+  // Never create a second item for an action that may already have created one.
   if (action.created_key) {
-    await verifyCreated(ctx, action.created_key, { DOI: doi, tags });
-    return { key: action.created_key, adopted: true, verified: true };
+    const existing = await getItemOrNull(ctx, action.created_key);
+    if (existing && !isTrashed(existing.data)) {
+      await verifyCreated(ctx, action.created_key, { DOI: doi, tags });
+      return { key: action.created_key, adopted: true, verified: true };
+    }
+    console.warn(`  note: created_key ${action.created_key} is ${existing ? 'in the trash' : 'gone (404)'}; clearing it and looking for the item again`);
+    delete action.created_key;
   }
-  if (ctx.retry && doi) {
-    const hits = (await ctx.client.getJson(`/items?${new URLSearchParams({ q: doi, qmode: 'everything', limit: '5' })}`)) || [];
+  // The queue save after a create can fail, so a plain re-approve must not POST again: look for
+  // the DOI in the library first, whatever the status, and adopt an existing non-trashed match.
+  if (doi) {
+    const hits = (await ctx.client.getJson(`/items?${new URLSearchParams({ q: doi, qmode: 'everything', limit: '25' })}`)) || [];
     const hit = hits.find((it) => normaliseDoi(it.data?.DOI) === doi && !isTrashed(it.data));
     if (hit) {
       action.created_key = hit.key;
@@ -248,7 +255,13 @@ async function executeAddItem(action, ctx) {
   if (!key) throw new Error(`Zotero rejected the item: ${JSON.stringify(created.data?.failed ?? created.data)}`);
   // Record the key before verifying, so a crash or a failed verify cannot lead to a second create.
   action.created_key = key;
-  ctx.persist?.();
+  try {
+    ctx.persist?.();
+  } catch (err) {
+    console.error(`Item ${key} WAS created in Zotero for action ${action.id}, but saving the queue failed (${err.message}).`);
+    console.error(`Add "created_key": "${key}" to action ${action.id} in the queue file by hand before approving it again.`);
+    throw new Error(`created item ${key} but could not save the queue: ${err.message}`);
+  }
 
   await verifyCreated(ctx, key, { itemType: item.itemType, title: item.title, DOI: item.DOI, tags });
   return { key, title: item.title, itemType: item.itemType, source, verified: true };
@@ -546,7 +559,21 @@ const findAction = (queue, id) => queue.actions.find((a) => a.id === parseId(id)
 
 const STALE_LOCK_MS = 30 * 60 * 1000;
 
-function removeLock(lockPath) { try { fs.unlinkSync(lockPath); } catch { /* already gone */ } }
+function removeLock(lockPath, onlyIfOwner = false) {
+  try {
+    if (onlyIfOwner) {
+      let held = {};
+      try { held = JSON.parse(fs.readFileSync(lockPath, 'utf8')); } catch { /* unreadable: not ours to judge, fall through */ }
+      if (held.pid !== undefined && held.pid !== process.pid) return; // another process owns it now
+    }
+    fs.unlinkSync(lockPath);
+  } catch { /* already gone */ }
+}
+
+function pidAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return true; // unknown: fall back to the age rule
+  try { process.kill(pid, 0); return true; } catch (err) { return err.code !== 'ESRCH'; }
+}
 
 export function acquireLock(file, { now = Date.now(), warn = console.error } = {}) {
   const lockPath = `${file}.lock`;
@@ -554,17 +581,18 @@ export function acquireLock(file, { now = Date.now(), warn = console.error } = {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       fs.writeFileSync(lockPath, body, { flag: 'wx' });
-      return () => removeLock(lockPath);
+      return () => removeLock(lockPath, true);
     } catch (err) {
       if (err.code !== 'EEXIST') throw err;
       let held = {};
       try { held = JSON.parse(fs.readFileSync(lockPath, 'utf8')); } catch { /* unreadable: fall back to mtime */ }
       let since = Date.parse(held.at);
       if (!Number.isFinite(since)) { try { since = fs.statSync(lockPath).mtimeMs; } catch { since = now; } }
-      if (now - since < STALE_LOCK_MS) {
+      const dead = !pidAlive(held.pid);
+      if (!dead && now - since < STALE_LOCK_MS) {
         throw new QueueFileError(`queue is locked by pid ${held.pid ?? 'unknown'} since ${new Date(since).toISOString()} (${lockPath}). If that process is gone, delete the lock file or wait 30 minutes.`);
       }
-      warn(`warning: replacing stale lock (pid ${held.pid ?? 'unknown'}, since ${new Date(since).toISOString()})`);
+      warn(`warning: replacing stale lock (${dead ? 'process not running' : 'older than 30 minutes'}; pid ${held.pid ?? 'unknown'}, since ${new Date(since).toISOString()})`);
       removeLock(lockPath);
     }
   }
@@ -740,16 +768,18 @@ function cmdDecide(status, id, file, reason) {
 
 const USAGE = 'Usage: approval-queue.mjs <status|approve|approve-all|reject|skip|reconcile> ...  (see the header of this file)';
 
+export async function createContext() {
+  const client = await createClientFromEnv();
+  for (const v of ['ZOTERO_API_KEY', 'ZOTERO_LIBRARY_ID']) {
+    if (!client.env[v]) throw new QueueFileError(`${v} is not set. Add it to .env (see scripts/zotero/README.md).`);
+  }
+  return { client, env: client.env, fetch: await loadFetch(client.env), sleep };
+}
+
 export async function main(argv) {
   const [command, ...rest] = argv;
   const need = (n, usage) => { if (rest.length < n) throw new QueueFileError(`Usage: approval-queue.mjs ${usage}`); };
-  const makeCtx = async () => {
-    const client = await createClientFromEnv();
-    for (const v of ['ZOTERO_API_KEY', 'ZOTERO_LIBRARY_ID']) {
-      if (!client.env[v]) throw new QueueFileError(`${v} is not set. Add it to .env (see scripts/zotero/README.md).`);
-    }
-    return { client, env: client.env, fetch: await loadFetch(client.env), sleep };
-  };
+  const makeCtx = createContext;
   switch (command) {
     case 'status': need(1, 'status <queue-file>'); return cmdStatus(rest[0]);
     case 'reject': need(2, 'reject <id> <queue-file> [reason]'); parseId(rest[0]); return withLock(rest[1], async () => cmdDecide('rejected', rest[0], rest[1], rest.slice(2).join(' ') || null));
