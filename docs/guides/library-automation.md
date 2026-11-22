@@ -61,8 +61,8 @@ missing `python3`, a crash) into a deny. The hook denies with a `deny` JSON and 
   and the rest of `scripts/`. Inside those places it still denies a file whose lower-cased name is `.env`,
   starts with `.env.` , or is `.mcp.json`, `settings.local.json` or `.npmrc`, anything under `.git/`, and any
   file with the same device and inode as the project's `.env*` files, `.mcp.json` or
-  `.claude/settings.local.json` (so a hard link does not work). A Grep or Glob filename filter that contains
-  `.e`, `[`, `{`, `?` or a dot followed by a wildcard is denied, because it could match `.env` on a
+  `.claude/settings.local.json` (so a hard link does not work). A filename filter (Grep's `glob` argument and Glob's `pattern` argument; Grep's `pattern` is a content regex and is not filtered) that contains
+  `.e`, `[`, `{`, `?` or a dot followed by a wildcard is denied, as is a Glob pattern that is absolute (`/` or `~`) or has a `..` segment, because it could match `.env` on a
   case-insensitive filesystem.
 - **WebFetch**: `https` only, no userinfo in the URL.
 - **Secret values**: for every tool the hook sees, a call is denied if its input contains a value (12+
@@ -79,12 +79,18 @@ missing `python3`, a crash) into a deny. The hook denies with a `deny` JSON and 
 and `build-queue.mjs` and `detect-duplicates.mjs` write only inside `outputs/librarian/`. Even attended,
 they refuse output paths outside the project root. `status` and a dry `reconcile` still work.
 
-**What stays outside this boundary.** The hook does not restrict `WebSearch` or `Agent` (it scans their input for
-secrets, but a search can still carry anything that is not a known secret), and it does not cover the sub-agents'
-own model calls or the optional Gmail draft. Loosening `.claude/settings.json`, removing the hook registration, or
-editing the generated runner removes the protection. The hook fails closed if `python3` is missing or the guard
-crashes. What Claude Code does when a hook times out is documented as not blocking the call, and I have not
-verified how this hook behaves under a timeout.
+**What stays outside this boundary.** The hook does not scan or restrict `Agent` input (that matcher only runs the
+model-advisory hook), and it does not cover the sub-agents' own model calls. `WebSearch` input is scanned for secrets,
+but a search can still carry anything that is not a known secret. The Gmail create-draft tool is allowed by the MCP
+rule and its input is scanned for secrets; its recipient and wording are not restricted. Loosening
+`.claude/settings.json`, removing the hook registration, or editing the generated runner removes the protection.
+The hook fails closed if `python3` is missing or the guard crashes. Claude Code documents that a hook timeout does
+not block the call; behaviour on a hook timeout is not verified here.
+
+Two more limits. A secret whose variable name has no separator before `KEY` or `TOKEN` (for example
+`ZOTERO_APIKEY`) is not recognised by the value scan, so name secrets with an underscore. And if an allowed
+directory such as `papers/` is a symlink to another location, unattended reads of it are denied, because the
+resolved path is outside the allowed roots.
 
 ## What no hook can remove
 

@@ -131,10 +131,15 @@ def check_read(tool, tool_input, project):
                     continue
         except OSError:
             pass  # target does not exist: the tool will report that itself
-    for gkey in ("glob", "pattern"):
-        g = tool_input.get(gkey)
-        if tool in ("Grep", "Glob") and isinstance(g, str) and RISKY_GLOB.search(g):
+    # Filename filters: Grep's `glob` and Glob's `pattern`. Grep's `pattern` is a content regex and is
+    # only subject to the secret-value check.
+    gkey = "glob" if tool == "Grep" else "pattern" if tool == "Glob" else None
+    g = tool_input.get(gkey) if gkey else None
+    if isinstance(g, str):
+        if RISKY_GLOB.search(g):
             return "unattended run: file filter could match secret files"
+        if tool == "Glob" and (g.startswith(("/", "~")) or ".." in g.replace("\\", "/").split("/")):
+            return "unattended run: Glob pattern must be relative and stay inside its path"
     return None
 
 

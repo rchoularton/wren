@@ -398,3 +398,17 @@ def test_status_with_absolute_queue_path(run_hook, proj):
     allowed(call(run_hook, proj, "Bash", {"command": f"npm run zotero:queue -- status {ok}"}))
     denied(call(run_hook, proj, "Bash", {"command": f"npm run zotero:queue -- status {proj}/package.json"}))
     denied(call(run_hook, proj, "Bash", {"command": f"npm run zotero:queue -- status /tmp/approval_queue_{D}.json"}))
+
+
+def test_grep_content_regex_is_not_a_filename_filter(run_hook, sproj):
+    papers = str(sproj / "papers")
+    for pat in ("[Dd]rought", "risks?", "x{2}"):
+        allowed(call(run_hook, sproj, "Grep", {"pattern": pat, "path": papers}))
+    denied(call(run_hook, sproj, "Grep", {"pattern": "x", "path": papers, "glob": ".[e]nv"}))
+
+
+def test_glob_pattern_must_be_relative_and_stay_inside(run_hook, sproj):
+    papers = str(sproj / "papers")
+    for pat in ("/etc/*", "~/x", "../*", "a/../b"):
+        denied(call(run_hook, sproj, "Glob", {"pattern": pat, "path": papers}))
+    allowed(call(run_hook, sproj, "Glob", {"pattern": "*/STATUS.md", "path": papers}))
