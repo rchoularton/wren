@@ -142,3 +142,68 @@ def test_malformed_json_reported_other_file_processed(d):
     assert f"cataloguer_{DATE}.proposals.json" in p.stdout
     assert len(queue(d)["actions"]) == 1
     assert rejected(d)["file_errors"]
+
+
+def test_merge_duplicate_accept_self_merge_and_dedupe(d):
+    ok = {"type": "merge_duplicate", "title": "Merge", "details": {"keep": "AAAA1111", "merge_keys": ["BBBB2222", "CCCC3333"]}}
+    same = {"type": "merge_duplicate", "title": "Merge again", "details": {"keep": "AAAA1111", "merge": ["CCCC3333"], "remove": "BBBB2222"}}
+    selfm = {"type": "merge_duplicate", "title": "Self", "details": {"keep": "AAAA1111", "merge_keys": ["AAAA1111"]}}
+    empty = {"type": "merge_duplicate", "title": "Empty", "details": {"keep": "AAAA1111"}}
+    write(d, f"cataloguer_{DATE}.proposals.json", cat_file([ok, same, selfm, empty]))
+    p = build(d)
+    assert p.returncode == 0, p.stderr
+    q = queue(d)
+    assert len(q["actions"]) == 1 and q["actions"][0]["details"]["merge_keys"] == ["BBBB2222", "CCCC3333"]
+    assert len(rejected(d)["rejected"]) == 2 and len(rejected(d)["duplicates_dropped"]) == 1
+    assert run(QUEUE, "status", d / f"approval_queue_{DATE}.json").returncode == 0
+
+
+@pytest.mark.parametrize("doi", ["10.12", "not-a-doi", "https://doi.org/abc"])
+def test_invalid_doi_rejected(d, doi):
+    bad_add = {"type": "add_item", "title": "x", "details": {"DOI": doi, "title": "T"}}
+    bad_fix = {"type": "fix_metadata", "title": "x", "details": {"item_key": "K1", "field_fixes": [{"field": "DOI", "proposed": doi}]}}
+    flat = {"type": "fix_metadata", "title": "x", "details": {"item_key": "K1", "field": "doi", "proposed": doi}}
+    write(d, f"scout_{DATE}.proposals.json", scout_file([bad_add, bad_fix, flat, TAG]))
+    assert build(d).returncode == 0
+    assert len(queue(d)["actions"]) == 1
+    assert len(rejected(d)["rejected"]) == 3
+
+
+def test_doi_normalised_under_any_spelling(d):
+    a = {"type": "add_item", "title": "x", "details": {"DOI": "HTTPS://DOI.ORG/10.1234/ABC", "title": "T"}}
+    f = {"type": "fix_metadata", "title": "x", "details": {"item_key": "K1", "field_fixes": [{"field": "DOI", "proposed": "doi:10.1234/XYZ"}]}}
+    write(d, f"scout_{DATE}.proposals.json", scout_file([a, f]))
+    assert build(d).returncode == 0
+    acts = queue(d)["actions"]
+    assert acts[0]["details"]["doi"] == "10.1234/abc" and "DOI" not in acts[0]["details"]
+    assert acts[1]["details"]["proposed_changes"]["DOI"] == "10.1234/xyz"
+
+
+def test_dedupe_per_field_and_per_tag(d):
+    f1 = {"type": "fix_metadata", "title": "a", "details": {"item_key": "K1", "proposed_changes": {"pages": "1-2"}}}
+    f2 = {"type": "fix_metadata", "title": "b", "details": {"item_key": "K1", "proposed_changes": {"pages": "1-2", "abstract": "Real text"}}}
+    f3 = {"type": "fix_metadata", "title": "c", "details": {"item_key": "K1", "proposed_changes": {"pages": "9"}}}
+    t1 = {"type": "add_tag", "title": "t", "details": {"item_key": "K1", "tags": ["Alpha", " alpha ", "beta"]}}
+    t2 = {"type": "add_tag", "title": "t2", "details": {"item_key": "K1", "tags": ["ALPHA", "gamma"]}}
+    write(d, f"cataloguer_{DATE}.proposals.json", cat_file([f1, f2, f3, t1, t2]))
+    assert build(d).returncode == 0
+    acts = queue(d)["actions"]
+    assert acts[1]["details"]["proposed_changes"] == {"abstract": "Real text"}
+    assert acts[2]["details"]["tags"] == ["Alpha", "beta"]
+    assert acts[3]["details"]["tags"] == ["gamma"]
+    assert len(acts) == 4 and len(rejected(d)["duplicates_dropped"]) == 1
+
+
+def test_authors_must_be_array(d):
+    s = {"type": "add_item", "title": "x", "details": {"doi": "10.1234/a", "authors": "Doe, Jane"}}
+    ok = {"type": "add_item", "title": "y", "details": {"doi": "10.1234/b", "authors": ["Doe, Jane", {"given": "J", "family": "Roe"}]}}
+    write(d, f"scout_{DATE}.proposals.json", scout_file([s, ok]))
+    assert build(d).returncode == 0
+    assert len(queue(d)["actions"]) == 1 and "authors" in rejected(d)["rejected"][0]["reason"]
+
+
+def test_empty_actions_exit_zero_no_queue(d):
+    write(d, f"cataloguer_{DATE}.proposals.json", cat_file([]))
+    p = build(d)
+    assert p.returncode == 0 and "no actions proposed" in p.stdout
+    assert not (d / f"approval_queue_{DATE}.json").exists()

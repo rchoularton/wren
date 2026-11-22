@@ -57,7 +57,7 @@ const FIELD_MAP = {
   issue: 'issue',
 };
 
-const zoteroField = (f) => (f === 'authors' || f === 'creators' ? 'creators' : (FIELD_MAP[f] || f));
+export const zoteroField = (f) => (f === 'authors' || f === 'creators' ? 'creators' : (FIELD_MAP[f] || f));
 
 // Collection membership and tags are not item fields; they belong to add_to_collection / add_tag.
 const NON_FIX_FIELDS = new Set(['collection', 'collections', 'tag', 'tags']);
