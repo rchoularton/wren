@@ -27,6 +27,7 @@
     "pdf:fill": "node scripts/zotero/pdf-fill.mjs",
     "zotero:reparent": "node scripts/zotero/reparent-orphan-attachments.mjs",
     "zotero:queue": "node scripts/zotero/approval-queue.mjs",
+    "zotero:build-queue": "node scripts/zotero/build-queue.mjs",
     "zotero:duplicates": "node scripts/zotero/detect-duplicates.mjs",
     "test": "python3 -m pytest -q"
   },
