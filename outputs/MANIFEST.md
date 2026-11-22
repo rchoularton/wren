@@ -8,5 +8,6 @@ Registry of every directory under `outputs/`. Add a one-line entry when you crea
 |-----------|--------|---------------|-------------|
 | `_logs/` | current | Processing logs from scripts | (various) |
 | `pdf-fill/` | current | `/pdf-fill` JSONL logs, manual-download lists (`<paper>-manual.md`), reparent log; created on `--apply` | `scripts/zotero/pdf-fill.mjs`, `reparent-orphan-attachments.mjs` |
+| `librarian/` | current | Approval queues (`*.json`, see `scripts/zotero/README.md`) and duplicate reports from the librarian scripts; queue files are rewritten in place as you decide | `scripts/zotero/approval-queue.mjs`, `scripts/zotero/detect-duplicates.mjs` |
 
 _Add rows as you create output directories. Name directories after the analysis script (snake_case)._

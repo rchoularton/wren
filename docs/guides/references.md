@@ -15,3 +15,7 @@ You can also add any other MCP server — a SQLite/DuckDB connector, a filesyste
 The full setup steps for each provider (API keys, `.mcp.json` wiring, the Mendeley REST API caveat, and general MCP-server instructions) live in [`docs/integrations.md`](../integrations.md), which stays the single source of truth for this content so it doesn't drift out of sync.
 
 With the `zotero` provider, `/pdf-fill` attaches missing PDFs to a paper's collection from open-access sources (needs `ZOTERO_API_KEY`, `ZOTERO_LIBRARY_ID`, and `UNPAYWALL_EMAIL` for the Unpaywall source); see `scripts/zotero/README.md`.
+
+`npm run zotero:queue -- status <queue.json>` reviews and applies a queue of proposed Zotero changes (approve, reject, skip, reconcile); every write is re-read and only then marked applied. Queue schema in `scripts/zotero/README.md`.
+
+`npm run zotero:duplicates` lists likely duplicate items (exact DOI, then fuzzy title) and never writes to Zotero.
