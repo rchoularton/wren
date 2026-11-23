@@ -68,11 +68,11 @@ If it fits in two places, the deeper / more specific home wins (3 > 2 > 1).
 Each paper moves through phases tracked in `STATUS.md` frontmatter (`phase: N`):
 
 1. Scoping  2. Data inventory  3. Exploratory analysis  4. Methods design
-5. Analysis build  6. QC review (`/qc-team` — planned)  **7. Gold Standard freeze (`/gold-standard`) ← no drafting before this**
-8. Drafting (`/draft`)  9. Figures (`/figure` — planned)  10. Internal review  11. QC of draft
+5. Analysis build  6. QC review (`/qc-team`)  **7. Gold Standard freeze (`/gold-standard`) ← no drafting before this**
+8. Drafting (`/draft`)  9. Figures (`/figure`)  10. Internal review  11. QC of draft
 12. Submission prep (`/cover-letter`)  13. Peer review response (`/revision-response`)  14. Publication
 
-Shipped skills for these phases: `/gold-standard`, `/draft`, `/cover-letter`, `/revision-response`, `/peer-review`, `/literature-scan`. `/qc-team` and `/figure` are planned add-ons (see `ROADMAP.md`) — until then, run those phases manually.
+Skills for these phases: `/qc-team` (6 and 11), `/gold-standard` (7), `/draft` (8), `/figure` (9), `/peer-review` (10), `/cover-letter`, `/revision-response`. `/methods-audit` checks analysis scripts before the freeze; `/literature-scan` supports discovery.
 
 **Phase 7 is the critical gate.** Analysis must be verified, git-tagged, and archived as canonical before any prose is written. This prevents drafting on numbers that later change.
 

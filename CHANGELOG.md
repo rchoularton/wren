@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are int
 
 ### Fixed
 - Docs and README brought up to date with 0.9 to 0.12: skill count and lists on the Welcome page, `/qc-team` and `/figure` no longer described as planned, the review suites, session memory and library automation added to the README and home page, a library automation caveat (tested with fakes only) in that guide, the guides linked from the home page, `weekly_librarian` in the configuration reference, and the rules and hooks listed on the Concepts page.
+- `CLAUDE_REFERENCE.template.md`, rendered into every new project, no longer describes `/qc-team` and `/figure` as planned.
 
 ## [0.12.0] - 2026-11-23
 
