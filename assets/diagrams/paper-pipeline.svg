@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img">
+<title>Wren 14-phase paper pipeline</title>
+<desc>A 14-phase pipeline. Analysis: 1 Scope, 2 Data, 3 Explore, 4 Methods, 5 Build, 6 QC (/qc-team). Phase 7 Freeze (/gold-standard) is a gate: no writing until the analysis is frozen. Writing: 8 Draft (/draft), 9 Figures (/figure), 10 Review, 11 QC draft, 12 Submit (/cover-letter), 13 Revise (/revision-response), 14 Publish.</desc>
+<rect x="0.5" y="0.5" width="1199" height="399" rx="12" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<rect x="181" y="20" width="838" height="130" rx="12" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="1001" y="48" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#3f51b5">Analysis</text>
+<rect x="201" y="68" width="104" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="253" y="103" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">1 · Scope</text>
+<rect x="335" y="68" width="100" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="385" y="103" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">2 · Data</text>
+<rect x="465" y="68" width="120" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="525" y="103" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">3 · Explore</text>
+<rect x="615" y="68" width="120" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="675" y="103" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">4 · Methods</text>
+<rect x="765" y="68" width="104" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="817" y="103" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">5 · Build</text>
+<rect x="899" y="68" width="100" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="949" y="93" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">6 · QC</text>
+<text x="949" y="113" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#57606a">/qc-team</text>
+<polyline points="305,98 327,98" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="335,98 327,102.5 327,93.5" fill="#57606a"/>
+<polyline points="435,98 457,98" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="465,98 457,102.5 457,93.5" fill="#57606a"/>
+<polyline points="585,98 607,98" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="615,98 607,102.5 607,93.5" fill="#57606a"/>
+<polyline points="735,98 757,98" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="765,98 757,102.5 757,93.5" fill="#57606a"/>
+<polyline points="869,98 891,98" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="899,98 891,102.5 891,93.5" fill="#57606a"/>
+<rect x="32" y="250" width="1136" height="130" rx="12" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="1150" y="278" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#3f51b5">Writing</text>
+<rect x="52" y="298" width="104" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="104" y="323" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">8 · Draft</text>
+<text x="104" y="343" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#57606a">/draft</text>
+<rect x="186" y="298" width="120" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="246" y="323" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">9 · Figures</text>
+<text x="246" y="343" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#57606a">/figure</text>
+<rect x="336" y="298" width="120" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="396" y="333" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">10 · Review</text>
+<rect x="486" y="298" width="137" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="554.5" y="333" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">11 · QC draft</text>
+<rect x="653" y="298" width="133" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="719.5" y="323" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">12 · Submit</text>
+<text x="719.5" y="343" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#57606a">/cover-letter</text>
+<rect x="816" y="298" width="173" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="902.5" y="323" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">13 · Revise</text>
+<text x="902.5" y="343" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#57606a">/revision-response</text>
+<rect x="1019" y="298" width="129" height="60" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+<text x="1083.5" y="333" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#1f2328">14 · Publish</text>
+<polyline points="156,328 178,328" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="186,328 178,332.5 178,323.5" fill="#57606a"/>
+<polyline points="306,328 328,328" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="336,328 328,332.5 328,323.5" fill="#57606a"/>
+<polyline points="456,328 478,328" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="486,328 478,332.5 478,323.5" fill="#57606a"/>
+<polyline points="623,328 645,328" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="653,328 645,332.5 645,323.5" fill="#57606a"/>
+<polyline points="786,328 808,328" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="816,328 808,332.5 808,323.5" fill="#57606a"/>
+<polyline points="989,328 1011,328" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="1019,328 1011,332.5 1011,323.5" fill="#57606a"/>
+<rect x="495" y="176" width="210" height="64" rx="10" fill="#fde68a" stroke="#b45309" stroke-width="2.5"/>
+<text x="600" y="203" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#000000">Phase 7 · Freeze</text>
+<text x="600" y="224" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#000000">/gold-standard</text>
+<polyline points="949,128 949,208 713,208" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="705,208 713,203.5 713,212.5" fill="#57606a"/>
+<polyline points="495,208 104,208 104,290" fill="none" stroke="#57606a" stroke-width="1.8"/>
+<polygon points="104,298 99.5,290 108.5,290" fill="#57606a"/>
+</svg>
