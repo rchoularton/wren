@@ -3,7 +3,12 @@
 All notable changes to Wren (`create-wren`) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions are integer-ish semver.
 
-## [Unreleased]
+## [0.12.0] - 2026-11-23
+
+Library automation: a dependency-free Zotero client, `/pdf-fill`, and `/librarian-team`, a
+weekly audit and discovery run whose proposals go to an approval queue you review. Unattended
+runs are confined by a fail-closed PreToolUse hook. The test suite uses fakes, so none of this has
+been run against a live library yet: start with a dry run on one paper.
 
 ### Added
 - Zotero client and `/pdf-fill` (#26): a dependency-free client (`scripts/zotero/_lib/zotero-client.mjs`: user/group URLs, 412/403/429 handling, the documented file-upload flow, a `.env` parser) and `npm run pdf:fill -- <paper>`, which attaches missing PDFs from Unpaywall, OpenAlex and publisher meta tags, verifies each by re-reading, and lists leftovers (optionally behind `INSTITUTION_PROXY_PREFIX`) in `outputs/pdf-fill/`. Dry run by default.

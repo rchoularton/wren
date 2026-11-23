@@ -6,6 +6,7 @@ while Wren is pre-1.0, every release that adds a tool is a MINOR bump.
 
 ## Shipped
 
+- **0.12.0** — library automation: a dependency-free Zotero client, `/pdf-fill`, and `/librarian-team` (cataloguer and scout agents, duplicate scan, approval queue, weekly scheduled run confined by a fail-closed hook).
 - **0.11.0** — `/research` front door with a deterministic status report (`npm run status`), `next:` line and generated papers table; opt-in session capture + `/recall` with a sandboxed summariser.
 - **0.10.0** — context diet with a size guard; always-run-the-check, Wren voice, and gold-standard versioning rules; document-to-Markdown cache (`npm run doc:md`); tighter npm tarball.
 - **0.9.0** — `/peer-review` agent suite; read-only reviewers, critique-tier pin, model-ID drift check; review-stage gate, post-compaction re-pin, and model-advisory hooks; pytest harness in CI.
@@ -25,7 +26,6 @@ for it, then the bigger skills.
 
 | Release | Theme | What ships |
 |---|---|---|
-| **0.12** | Library automation | `/librarian-team` — weekly Zotero audit + discovery with an approval queue; `/pdf-fill` with open-access sources and a configurable institution proxy; orphan-attachment repair |
 | **0.13** | Submission-grade audit | `/claim-audit` — enumerated, adversarial manuscript audit; `/code-capsule` — a reproducibility package from the gold standard; journal-submission-prep and reference-manager agents; `/consistency-check` as a multi-paper option |
 | **1.0** | Stable release | a light test suite, polish, docs, announcement |
 | **1.1** | Parallel sessions (opt-in) | one branch per unit of work and one worktree per session: a branch-discipline rule, `/branch`, `/sessions`, `/wrap-up`, guard hooks, tests; robot worktrees with a scheduled auto-merge for background jobs. Desktop-app aware, off by default |
