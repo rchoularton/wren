@@ -112,9 +112,13 @@ scheduler:
       enabled: false
       day: "Mon"
       at: "08:47"
+    weekly_librarian:               # /librarian-team --headless: proposals only, never writes to Zotero
+      enabled: false
+      day: "Wed"
+      at: "09:03"
 ```
 
-Optional add-on module for headless scheduled jobs (nightly memory tasks, weekly digests). See the roadmap — full scheduled-jobs tooling is a planned module.
+Optional add-on module for headless scheduled jobs (nightly memory tasks, weekly digests, the weekly librarian run). See [Scheduled jobs](guides/scheduled-jobs.md); for the `weekly_librarian` job, see [Library automation](guides/library-automation.md).
 
 ## `notifications`
 

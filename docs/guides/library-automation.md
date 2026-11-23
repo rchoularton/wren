@@ -3,6 +3,9 @@
 `/librarian-team` keeps a Zotero library tidy and current without writing to it behind your
 back. It needs `references.provider: zotero` (see [References](references.md)).
 
+!!! warning "Not yet run against a live library"
+    The test suite uses fakes. None of this has been run against a live Zotero library. Start with a dry run on one paper: `/pdf-fill` is a dry run unless you pass `--apply`, and a `/librarian-team --paper <id>` run proposes changes without writing to Zotero. Then review the queue yourself with `/librarian-team --review`, and only after that enable the `weekly_librarian` job, which ships disabled.
+
 ## The weekly run
 
 `/librarian-team` runs in four phases:

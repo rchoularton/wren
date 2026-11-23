@@ -85,6 +85,9 @@ mindmap
 | **Pluggable data** | Start with files (zero setup). Grow into local SQLite/DuckDB, a free self-hosted Directus (Docker, with its own MCP + admin UI), or any managed host. |
 | **Pluggable references** | Universal BibTeX/CSL-JSON adapter works with *any* manager. Opt into live Zotero via MCP. Mendeley supported via `.bib` export. |
 | **Ambient signals** | Long jobs post macOS notifications and log to `RUNNING.md`; degrade gracefully off macOS. |
+| **Review & QC agents** | `/peer-review` (three referee agents plus an editor), `/qc-team` (Skeptic, Responder, Team Leader) and the `/figure` critique loop. The reviewer agents run with the edit tools disabled. |
+| **Session memory** | Opt-in: a Stop hook captures each exchange as short bullets, and `/recall` searches them. |
+| **Library automation** | Opt-in, Zotero provider: `/pdf-fill`, and `/librarian-team` with an approval queue you review. |
 
 **Beyond Claude Code itself, nothing in the core needs Zotero, a database, a scheduler, or any other account.** Those are opt-in modules you enable in one config file.
 
@@ -120,7 +123,7 @@ Type these in Claude Code once the project is open. All 21 ship in the box:
 | **Discover** | `/literature-scan` (recent work, scooping risk, citation gaps) · `/lit-digest` (weekly cross-paper sweep → digest) · `/zotero-audit` (library hygiene) · `/pdf-fill` (attach open-access PDFs) · `/librarian-team` (weekly library audit + discovery, approval queue) |
 | **Rigor & memory** | `/gold-standard` (Phase-7 freeze) · `/qc-team` (3-agent adversarial QC) · `/rigor-check` (mid-task self-audit) · `/methods-audit` (script QC) · `/research-memory` (query/log corpus memory) · `/recall` (search session logs) · `/retro` (capture a learning) |
 
-Some skills — like `/qc-team` and `/figure` — spin up background sub-agents to run adversarial review and figure critique loops. What's next is on the [roadmap](https://rchoularton.github.io/wren/roadmap/).
+Some skills — like `/qc-team`, `/figure`, `/peer-review` and `/librarian-team` — spin up background sub-agents to run adversarial review, figure critique and library audit loops. What's next is on the [roadmap](https://rchoularton.github.io/wren/roadmap/).
 
 ---
 
@@ -139,7 +142,10 @@ See [`research-config.example.yml`](research-config.example.yml) for every field
 - **Config-selectable backends**: local/managed databases (`docs/database.md`) and reference managers including Zotero (`docs/integrations.md`).
 - **Token-aware** (as of 0.7): model-routing tiers + a `npm run tokens` usage report, so cheap work runs on cheap models.
 - **Scheduled jobs** (as of 0.8, opt-in): headless recurring tasks like a weekly `/lit-digest` drafted to your inbox — launchd (macOS) or cron (Linux).
-- **Planned** (see [`ROADMAP.md`](ROADMAP.md)): weekly library tooling (`/librarian-team`), a second-brain memory lens, and multi-author collaboration.
+- **Review suites and enforced rigor** (as of 0.9): `/peer-review` runs three referee agents plus a handling editor; a hook blocks an editor or QC-team verdict when an earlier-stage report is missing; the reviewer agents run with the edit tools disabled.
+- **Session memory** (as of 0.11, opt-in): a Stop hook captures each exchange as short summary bullets, and `/recall` searches them. See the [session memory guide](https://rchoularton.github.io/wren/guides/session-memory/).
+- **Library automation** (as of 0.12, opt-in, needs the Zotero provider): `/pdf-fill` attaches open-access PDFs, and `/librarian-team` proposes metadata fixes, new papers and duplicate merges into an approval queue you review; an optional weekly scheduled run only proposes. The tests use fakes and none of it has been run against a live library, so start with a dry run on one paper. See the [library automation guide](https://rchoularton.github.io/wren/guides/library-automation/).
+- **Planned** (see the [roadmap](https://rchoularton.github.io/wren/roadmap/)): `/claim-audit`, `/code-capsule`, journal-submission-prep and reference-manager agents, parallel sessions, a second-brain memory lens, and multi-author collaboration.
 
 Full guides on the [documentation site](https://rchoularton.github.io/wren/).
 
@@ -154,7 +160,7 @@ Full guides on the [documentation site](https://rchoularton.github.io/wren/).
 
 ## Contributing
 
-Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first contributions include porting the planned skills and adding database/reference adapters.
+Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Good first contributions include working on items from the roadmap and adding database/reference adapters.
 
 ## License
 

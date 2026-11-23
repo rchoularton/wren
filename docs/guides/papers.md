@@ -38,10 +38,13 @@ journal: "Target Journal"
 phase: 1
 tier: 2
 status: scoping
+next: ""
 tags: [paper]
 aliases: ["My Paper"]
 ---
 ```
+
+`next:` is a one-line next step for the paper. The status report shows it beside the paper. `npm run status` prints that report (papers by tier with their `next:` line, and each scheduled job's last run) without using model tokens. `npm run papers:table` regenerates the papers table in `papers/README.md` from each STATUS.md's frontmatter.
 
 ## The Markdown⇄Word build engine
 

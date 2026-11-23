@@ -95,6 +95,11 @@ npm run paper:extract my-first-paper    # .docx → Markdown (round-trip)
 | Set up a real database | [Databases](guides/databases.md) |
 | Connect Zotero / other MCPs | [References & integrations](guides/references.md) |
 | Toggle corpus memory | `research-config.yml` → `tiers.research_memory` — see [Corpus memory](guides/corpus-memory.md) |
+| See your workspace status | `/research` or `npm run status` |
+| Keep a searchable log of past sessions | [Session memory](guides/session-memory.md) |
+| Read PDFs and Word files cheaply | [Reading documents cheaply](guides/documents.md) — `npm run doc:md -- <file>` |
+| Tidy and extend a Zotero library | [Library automation](guides/library-automation.md) |
+| Run tasks on a schedule | [Scheduled jobs](guides/scheduled-jobs.md) |
 
 ## Troubleshooting
 

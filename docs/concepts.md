@@ -35,6 +35,36 @@ flowchart TD
 
 If it fits in two places, the deeper / more specific home wins (4 > 3 > 2 > 1).
 
+## Rules and hooks
+
+Two mechanisms keep the assistant consistent. **Rules** are Markdown files in `.claude/rules/` that Claude Code loads as guidance; **hooks** are scripts registered in `.claude/settings.json` that the harness runs on events. Background for each rule is in [Rules history](rules-history.md).
+
+| Rule | Purpose |
+|---|---|
+| `always-run-the-check.md` | Verify before asserting; read and verify without asking, ask before writing shared state. |
+| `gold-standard.md` | What gold standard means and the freeze and versioning discipline between freezes. |
+| `no-unapproved-tasks.md` | No tasks, scope or follow-ups on a task list without explicit approval. |
+| `one-at-a-time.md` | Present each item, question or decision one at a time and wait. |
+| `outputs.md` | Output and file-management conventions. Path-scoped to `outputs/`, `papers/`, `scripts/`. |
+| `reviewer-response-prose.md` | Reviewer-response format and prose standard. Path-scoped to `papers/*/reviews/`. |
+| `rigor.md` | Read existing work first, no embellishment, only frozen pipelines are canonical, run skills to their full process. |
+| `token-budget.md` | Route each task to the cheapest model tier that meets its bar; reserve the strong model for QC gates. |
+| `tooling.md` | Terminal-first workflow; tool output may not be visible in the editor. |
+| `wren-voice.md` | How Wren writes its own findings and summaries; never overrides the author's paper-writing rules. |
+
+| Hook | Event | What it does |
+|---|---|---|
+| `session-start-learnings.py` | SessionStart | Injects recent `/retro` learnings; after a compaction, re-pins the active paper, latest gold tag and recorded `AUTHOR DECISION` lines. |
+| `session-start-welcome.py` | SessionStart | Points a fresh project at `/setup wren` until onboarding completes. |
+| `user-prompt-paper-context.py` | UserPromptSubmit | Prepends a one-line tag for the active paper and phase. |
+| `pre-tool-unattended-guard.sh` | PreToolUse | Does nothing unless `WREN_UNATTENDED` is set; then it **blocks** (exit 2) any call off its allowlist. See [Library automation](guides/library-automation.md). |
+| `pre-write-safety-guard.sh` | PreToolUse (writes) | **Blocks** writes under paths listed in `paths.protected_write_paths`. |
+| `pre-task-model-advisory.py` | PreToolUse (sub-agents) | **Advises only**: reminds you to pin a model when `Explore` or `general-purpose` launches without one. |
+| `post-write-outputs-manifest.py` | PostToolUse (writes) | **Advises only**: reminds you to add a new `outputs/` subdirectory to `MANIFEST.md`. |
+| `post-agent-review-gate.py` | PostToolUse (sub-agents) | **Blocks** a `peer-review-editor` or `qc-team-leader` verdict when a required earlier-stage file in `papers/{id}/reviews/` is missing; a skipped comparative analysis only warns. |
+| `stop-retro-nudge.sh` | Stop | **Advises only**: suggests `/retro` after a longer session. |
+| `stop-session-capture.sh` | Stop | Opt-in (`tiers.session_capture`): captures the last exchange for `/recall` without delaying session end. See [Session memory](guides/session-memory.md). |
+
 ## The 14-phase paper pipeline
 
 Every paper moves through phases tracked in its `STATUS.md` frontmatter (`phase: N`). Phase 7 — the gold-standard freeze — is the critical gate: analysis must be verified, git-tagged, and archived as canonical **before any prose is written**. This stops drafting on numbers that later change.
@@ -42,10 +72,10 @@ Every paper moves through phases tracked in its `STATUS.md` frontmatter (`phase:
 ```mermaid
 flowchart LR
     P1[1 Scoping] --> P2[2 Data inventory] --> P3[3 Exploratory analysis] --> P4[4 Methods design] --> P5[5 Analysis build]
-    P5 --> P6["6 QC review<br/>(/qc-team — planned)"]
+    P5 --> P6["6 QC review<br/>/qc-team"]
     P6 --> P7{{"7 GOLD STANDARD FREEZE<br/>/gold-standard<br/>NO DRAFTING BEFORE THIS"}}
     P7 --> P8["8 Drafting<br/>/draft"]
-    P8 --> P9["9 Figures<br/>(/figure — planned)"]
+    P8 --> P9["9 Figures<br/>/figure"]
     P9 --> P10[10 Internal review] --> P11[11 QC of draft]
     P11 --> P12["12 Submission prep<br/>/cover-letter"]
     P12 --> P13["13 Peer review response<br/>/revision-response"]
@@ -54,7 +84,7 @@ flowchart LR
     style P7 fill:#f9a825,stroke:#e65100,stroke-width:3px,color:#000
 ```
 
-Shipped skills covering these phases: `/gold-standard`, `/draft`, `/cover-letter`, `/revision-response`, `/peer-review`, `/literature-scan`. `/qc-team` (phase 6) and `/figure` (phase 9) are **planned**, not shipped — until they land, run those phases manually.
+Skills covering these phases: `/qc-team` (phases 6 and 11), `/gold-standard` (7), `/draft` (8), `/figure` (9), `/peer-review` (10), then `/cover-letter` and `/revision-response` for submission and the reviewer response. `/methods-audit` audits a paper's analysis scripts before you freeze, and `/literature-scan` supports discovery.
 
 Each paper lives at `papers/{id}/` with `STATUS.md`, `PLAN.md`, `METHODS_LOG.md`, `NOTES.md`, `config.json`, and `drafts/ figures/ outputs/ reviews/ gold_standard/` subfolders. Duplicate `papers/example-paper/` to start a new one. See [Papers & the build engine](guides/papers.md) for the Markdown⇄Word tooling that sits inside this pipeline.
 
