@@ -24,54 +24,13 @@ It runs entirely on your own machine, adds no accounts or services beyond Claude
 
 Every paper runs through a **14-phase pipeline** with one hard gate: **no prose until the analysis is frozen.** Phase 7 verifies your results, git-tags them, and archives them as the paper's gold standard — so a draft can never drift away from the numbers beneath it.
 
-```mermaid
-flowchart LR
-    subgraph A["🔬 Analysis"]
-        direction LR
-        P1["1 · Scope"] --> P2["2 · Data"] --> P3["3 · Explore"] --> P4["4 · Methods"] --> P5["5 · Build"] --> P6["6 · QC · /qc-team"]
-    end
-    P6 --> GATE{{"🔒 Phase 7 · Freeze · /gold-standard"}}
-    subgraph B["✍️ Writing"]
-        direction LR
-        P8["8 · Draft · /draft"] --> P9["9 · Figures · /figure"] --> P10["10 · Review"] --> P11["11 · QC draft"] --> P12["12 · Submit · /cover-letter"] --> P13["13 · Revise · /revision-response"] --> P14["14 · Publish"]
-    end
-    GATE --> P8
-    style GATE fill:#fde68a,stroke:#b45309,stroke-width:2px,color:#000
-```
+![The 14-phase paper pipeline: Analysis (1 Scope, 2 Data, 3 Explore, 4 Methods, 5 Build, 6 QC), then the Phase 7 Freeze gate (/gold-standard), then Writing (8 Draft, 9 Figures, 10 Review, 11 QC draft, 12 Submit, 13 Revise, 14 Publish).](assets/diagrams/paper-pipeline.svg)
 
 ## Your research toolkit
 
 Twenty-one skills — each a slash-command you type in Claude Code — grouped by the job they do. Full one-line descriptions are in [Skills](#skills) below.
 
-```mermaid
-mindmap
-  root(("Wren — 21 skills"))
-    Orient
-      /research
-      /paper
-      /setup
-    Discover
-      /literature-scan
-      /lit-digest
-      /zotero-audit
-      /pdf-fill
-      /librarian-team
-    Write and submit
-      /draft
-      /figure
-      /ref-check
-      /cover-letter
-      /revision-response
-      /peer-review
-    Rigor and memory
-      /gold-standard
-      /qc-team
-      /methods-audit
-      /rigor-check
-      /research-memory
-      /recall
-      /retro
-```
+![Wren's 21 skills in four groups: Orient, Discover, Write and submit, and Rigor and memory.](assets/diagrams/skills.svg)
 
 ---
 
