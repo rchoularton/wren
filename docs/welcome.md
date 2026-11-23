@@ -44,27 +44,30 @@ full pipeline diagram in [Concepts → the 14-phase pipeline](concepts.md#the-14
 
 ## 3. The skills
 
-Type these as slash commands once your project is open. All 18 ship in the box —
+Type these as slash commands once your project is open. All 21 ship in the box —
 [full reference](skills.md).
 
 - **Orient & manage** — `/research`, `/paper`, `/setup`
-- **Write & submit** — `/draft`, `/cover-letter`, `/revision-response`, `/peer-review`
-- **Discover** — `/literature-scan`
-- **Rigor & memory** — `/gold-standard`, `/rigor-check`, `/research-memory`, `/retro`
+- **Write & submit** — `/draft`, `/cover-letter`, `/revision-response`, `/ref-check`, `/peer-review`, `/figure`
+- **Discover** — `/literature-scan`, `/lit-digest`, `/zotero-audit`, `/pdf-fill`, `/librarian-team`
+- **Rigor & memory** — `/gold-standard`, `/qc-team`, `/rigor-check`, `/methods-audit`, `/research-memory`, `/recall`, `/retro`
 
 ## 4. Audit, QC, and peer review
 
 The rigor gates that keep the research honest:
 
 - **`/gold-standard`** — freeze and verify an analysis as canonical (the Phase 7 gate).
-- **`/peer-review`** — an agentic reviewer that evaluates a draft against its target
-  journal's guidelines in four stages, and scores it.
+- **`/qc-team`** — a three-agent adversarial QC of a draft: a Skeptic attacks it against
+  the source data, a Responder defends it, and a Team Leader issues the verdict.
+- **`/peer-review`** — evaluates a draft against its target journal's guidelines in four
+  stages: guidelines ingestion, comparative analysis, three independent referee agents
+  (methods, significance, presentation), and a handling editor who scores it and issues a
+  decision.
 - **`/rigor-check`** — a mid-session self-audit that catches drift, shortcuts, and
   unjustified assumptions during long working sessions.
 
-Two more are **planned, not yet shipped**: `/qc-team` (adversarial QC of a draft, phases
-6 and 11) and `/figure` (figure design and critique, phase 9). Until they land, run those
-phases manually — see the [Roadmap](roadmap.md).
+A hook blocks the editor's or team leader's verdict when a required earlier-stage report
+is missing from `papers/{id}/reviews/`.
 
 ## 5. Pluggable tools
 

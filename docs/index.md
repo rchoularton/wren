@@ -30,6 +30,9 @@ flowchart LR
 | **Pluggable data** | Start with files (zero setup). Grow into local SQLite/DuckDB, a free self-hosted Directus (Docker, with its own MCP + admin UI), or any managed host. See [Databases](guides/databases.md). |
 | **Pluggable references** | Universal BibTeX/CSL-JSON adapter works with *any* manager. Opt into live Zotero via MCP. Mendeley supported via `.bib` export. See [References & integrations](guides/references.md). |
 | **Ambient signals** | Long jobs post macOS notifications and log to `RUNNING.md`; degrade gracefully off macOS. |
+| **Review & QC agents** | `/peer-review` (three referee agents plus an editor), `/qc-team` (Skeptic, Responder, Team Leader) and the `/figure` critique loop. The reviewer agents run with the edit tools disabled. See [Skills](skills.md). |
+| **Session memory** | Opt-in: a Stop hook captures each exchange as short bullets, and `/recall` searches them. See [Session memory](guides/session-memory.md). |
+| **Library automation** | Opt-in, Zotero provider: `/pdf-fill`, and `/librarian-team` with an approval queue you review. See [Library automation](guides/library-automation.md). |
 
 **Beyond Claude Code itself, nothing in the core needs Zotero, a database, a scheduler, or any other account.** Those are opt-in modules you enable in one config file.
 
@@ -41,11 +44,22 @@ cd my-research
 # answer ~11 prompts → writes research-config.yml, renders templates, installs hooks, inits git
 ```
 
-Then open the folder in Claude Code and run `/paper`. See [Getting Started](getting-started.md) for the full first-run walkthrough.
+Then open the folder in Claude Code and run `/setup wren` — a guided tour that interviews you, sets up the right tools, and starts your first paper. (Prefer to jump in? Run `/paper`.) See [Getting Started](getting-started.md) for the full first-run walkthrough.
 
 ## Skills
 
 All 21 shipped skills are documented on the [Skills](skills.md) page, grouped by what they do: orient & manage, write & submit, discover, and rigor & memory.
+
+## Guides
+
+- [Papers & the build engine](guides/papers.md) — the per-paper template and the Markdown ⇄ Word engine
+- [Corpus memory](guides/corpus-memory.md) — the optional episodic and semantic memory over your literature
+- [Session memory](guides/session-memory.md) — opt-in session capture and `/recall`
+- [Databases](guides/databases.md) — the data tiers, from files to a managed host
+- [References & integrations](guides/references.md) — BibTeX, Zotero and other managers
+- [Reading documents cheaply](guides/documents.md) — PDF and Word files read as cached Markdown
+- [Library automation](guides/library-automation.md) — `/pdf-fill` and `/librarian-team` for Zotero
+- [Scheduled jobs](guides/scheduled-jobs.md) — headless recurring tasks via launchd or cron
 
 ## Requirements
 
